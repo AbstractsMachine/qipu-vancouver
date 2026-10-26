@@ -10,6 +10,7 @@ from qipu_records.verify.privacy import (
     mask,
     mask_item,
     officials_on_page,
+    people_in,
     private_names,
 )
 
@@ -105,3 +106,57 @@ def test_an_official_named_with_a_title_is_kept() -> None:
 def test_masking_is_idempotent() -> None:
     item = _item(kind="claim", parties=[{"name": WITHHELD, "role": "claimant"}], summary=f"{WITHHELD}'s claim")
     assert private_names(item, set()) == set()
+
+
+def test_an_estate_and_a_couple_are_people_not_organisations() -> None:
+    assert not is_organisation("Estate of the late John Smith")
+    assert people_in("Estate of the late John Smith") == ["John Smith"]
+    assert people_in("John Smith and Mary Smith") == ["John Smith", "Mary Smith"]
+    assert people_in("Mr. and Mrs. J. Smith") == ["Mrs. J. Smith"]
+    assert people_in("Smith & Sons Ltd.") == []
+    assert people_in("Friends of the Library") == []
+
+
+def test_claim_by_an_estate_withholds_the_person_and_keeps_the_word_estate() -> None:
+    item = _item(
+        kind="claim",
+        summary="Council paid the claim of the Estate of John Smith for wrongful death.",
+        parties=[{"name": "Estate of John Smith", "role": "claimant"}],
+    )
+    masked, _ = mask_item(item, officials=set())
+    assert masked["summary"] == f"Council paid the claim of the Estate of {WITHHELD} for wrongful death."
+    assert "Smith" not in str(masked)
+
+
+def test_both_people_of_a_couple_are_withheld() -> None:
+    item = _item(
+        kind="claim",
+        quote="Claim of John Smith and Mary Smith",
+        summary="Claim of John Smith and Mary Smith for damage to their car; Mary Smith was injured.",
+        parties=[{"name": "John Smith and Mary Smith", "role": "claimant"}],
+    )
+    masked, _ = mask_item(item, officials=set())
+    assert "Smith" not in str(masked)
+    assert masked["parties"] == [{"name": WITHHELD, "role": "claimant"}]
+
+
+def test_a_payee_in_a_sensitive_payment_is_withheld() -> None:
+    item = _item(
+        summary="Payment for injuries suffered on a city sidewalk.",
+        money=[{"amount": 250, "purpose": "injury settlement", "payee": "Tom Wu"}],
+    )
+    assert item_is_sensitive(item)
+    masked, names = mask_item(item, officials=set())
+    assert names == {"Tom Wu"}
+    assert masked["money"][0]["payee"] == WITHHELD
+
+
+def test_a_claimant_who_shares_a_surname_with_an_alderman_is_still_withheld() -> None:
+    item = _item(
+        kind="claim",
+        summary="Claim of Mr. Peter Gibson for damages, referred on the motion of Ald. Gibson.",
+        parties=[{"name": "Peter Gibson", "role": "claimant"}],
+        mover="Gibson",
+    )
+    masked, _ = mask_item(item, officials={"gibson"})
+    assert masked["summary"] == f"Claim of {WITHHELD} for damages, referred on the motion of Ald. Gibson."

@@ -18,10 +18,13 @@ A name is replaced with `[name withheld]` when all of these hold:
   a prisoner or a child in care. The word list is `SENSITIVE` in `verify/privacy.py`.
 - **The person is private.** Not the mover or seconder, not in the roll call, not named next to a public role on the page
   ("Ald. Linnell", "Mayor Phillips", "City Clerk Little"), and not an organisation (a firm, society, association, union,
-  hospital, government body and the like).
+  hospital, government body and the like). An estate ("Estate of the late John Smith") and a couple ("John and Mary Smith")
+  are people. A claimant is never taken for an official only because an alderman on the page has the same surname.
 
-Then the name is withheld in the quote, the summary, the parties, the payee of any amount, and the text of any place, in every
-form it is printed: "Miss Jessie I. Hendry", "Jessie Hendry", "Miss Hendry", "Hendry's".
+Names are looked for in the parties, the payees of any amounts, and after a title ("Mr.", "Mrs.", "Miss", "Dr.") anywhere in
+the item's text. Each is withheld in the quote, the summary, the parties, the payees and the text of any place, in every form
+it is printed: "Miss Jessie I. Hendry", "Jessie Hendry", "Miss Hendry", "Hendry's". The same surname right after a public role
+("Ald. Hendry") is left alone.
 
 What stays: the decision, its date, its outcome, the amount and the address. Officials, businesses, petitioners, delegations
 and applicants stay named, because they acted in public.
