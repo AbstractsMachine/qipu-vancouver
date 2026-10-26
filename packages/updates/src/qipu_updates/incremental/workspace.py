@@ -1,9 +1,9 @@
 """The working copy of every document, kept between runs: one qipu-records collection folder per document.
 
-A new or changed document is staged next to its current folder (`<doc>.next`) and replaces it only once all its pages are
-read. Until then the current folder keeps the pages that the published records were read from, so the gates still check
-those records against the right text. Staging carries over every earlier reading whose page text is unchanged and that was
-made with the same prompt and model, so only new or changed pages go to the model.
+A new or changed document is staged next to its current folder (`<doc>.next`) and replaces it only once all its pages
+are read. Until then the current folder keeps the pages that the published records were read from, so the gates still
+check those records against the right text. Staging carries over every earlier reading whose page text is unchanged and
+that was made with the same prompt and model, so only new or changed pages go to the model.
 """
 
 from __future__ import annotations

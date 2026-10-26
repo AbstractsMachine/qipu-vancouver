@@ -42,7 +42,8 @@ def test_polite_retries_then_gives_up() -> None:
     http = Polite(FakeGet({}), pause=1.0, retries=2, sleep=sleeps.append)
     with pytest.raises(SourceError, match="no answer"):
         http.get("https://example.org/x")
-    assert http.requests == 3 and sleeps == [2.0, 4.0]
+    assert http.requests == 3
+    assert sleeps == [2.0, 4.0]
 
 
 def test_an_archive_item_is_fingerprinted_by_its_last_update() -> None:
@@ -60,7 +61,10 @@ def test_an_archive_item_is_fingerprinted_by_its_last_update() -> None:
 def test_the_archive_listing_follows_the_cursor_and_stops_at_as_of(tmp_path: Path) -> None:
     page1 = {"items": [{"identifier": "b", "publicdate": "2014-03-27T00:00:00Z"}], "cursor": "c2"}
     page2 = {
-        "items": [{"identifier": "a", "publicdate": "2014-03-27T00:00:00Z"}, {"identifier": "z", "publicdate": "2030-01-01"}]
+        "items": [
+            {"identifier": "a", "publicdate": "2014-03-27T00:00:00Z"},
+            {"identifier": "z", "publicdate": "2030-01-01"},
+        ]
     }
     http, fake = polite({"cursor=c2": json.dumps(page2).encode(), "scrape": json.dumps(page1).encode()})
     source = archive.ArchiveSource("cityofvancouvercouncilminutes", tmp_path, http)
@@ -89,7 +93,8 @@ def test_archive_content_uses_one_cache_folder_per_version(tmp_path: Path, monke
     source.content(Document("m1", None, "v1", "u"))
     content = source.content(Document("m1", None, "v2", "u"))
     assert content.pages == ["page"]
-    assert seen[0] != seen[1] and [p.name for p in (tmp_path / "m1").iterdir()] == [seen[1].name]
+    assert seen[0] != seen[1]
+    assert [p.name for p in (tmp_path / "m1").iterdir()] == [seen[1].name]
 
 
 def test_the_legistar_calendar_lists_meetings_and_their_minutes() -> None:
@@ -100,7 +105,8 @@ def test_the_legistar_calendar_lists_meetings_and_their_minutes() -> None:
         ("Public Safety and Neighborhood Services Committee", "2026-10-29", False),
     ]
     assert meetings[0]["minutes_url"].startswith("https://sfgov.legistar.com/View.ashx?M=M&ID=")
-    assert legistar.mdy("9/29/26") == "2026-09-29" and legistar.mdy("soon") is None
+    assert legistar.mdy("9/29/26") == "2026-09-29"
+    assert legistar.mdy("soon") is None
 
 
 def test_legistar_minutes_become_documents_fingerprinted_by_their_pdf() -> None:
@@ -112,7 +118,8 @@ def test_legistar_minutes_become_documents_fingerprinted_by_their_pdf() -> None:
         "budget-and-finance-committee",
         "public-safety-and-neighborhood-services-committee",
     ]
-    assert len({d.fingerprint for d in docs}) == 1 and len(docs[0].fingerprint) == 64
+    assert len({d.fingerprint for d in docs}) == 1
+    assert len(docs[0].fingerprint) == 64
     content = source.content(docs[0])
     assert content.pages == ["page one", "page two"]
     assert content.item.title == "Budget and Finance Committee, minutes of 2026-10-21"
@@ -132,12 +139,17 @@ def test_the_mirror_shows_the_collection_as_it_was_on_a_day() -> None:
     docs = source.discover(DAY)
     assert [(d.doc_id, d.date) for d in docs] == [("19700609", "1970-06-09"), ("19740219", "1974-02-19")]
     content = source.content(docs[0])
-    assert len(content.pages) == 13 and content.pages[0] == "" and content.pages[10]
-    assert content.page_map is not None and content.item.title.startswith("Council Meeting Minutes")
+    assert len(content.pages) == 13
+    assert content.pages[0] == ""
+    assert content.pages[10]
+    assert content.page_map is not None
+    assert content.item.title.startswith("Council Meeting Minutes")
 
 
 def test_the_mirror_needs_a_listing_first_and_a_readable_index(tmp_path: Path) -> None:
     with pytest.raises(SourceError, match="discover first"):
-        mirror.MirrorSource(EXAMPLE, EXAMPLE / "updates" / "arrivals.json").content(Document("19700609", None, "f", "u"))
+        mirror.MirrorSource(EXAMPLE, EXAMPLE / "updates" / "arrivals.json").content(
+            Document("19700609", None, "f", "u")
+        )
     with pytest.raises(SourceError, match=r"missing\.json"):
         mirror.MirrorSource(EXAMPLE, tmp_path / "missing.json").discover(DAY)

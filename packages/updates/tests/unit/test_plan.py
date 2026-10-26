@@ -21,7 +21,8 @@ def test_documents_are_new_changed_unchanged_or_missing() -> None:
 
 def test_a_new_build_key_makes_every_document_changed() -> None:
     plan = make_plan([doc("a"), doc("b")], {"a": Built("f1", "old"), "b": Built("f1", "old")}, "new")
-    assert len(plan.changed) == 2 and not plan.unchanged
+    assert len(plan.changed) == 2
+    assert not plan.unchanged
 
 
 def test_a_listing_with_less_than_half_the_known_documents_looks_short() -> None:

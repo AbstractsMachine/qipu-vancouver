@@ -1,8 +1,8 @@
 """An archive.org collection: Vancouver's council minutes (cityofvancouvercouncilminutes), one item per meeting.
 
-The listing comes from the scrape API, 1,000 items a request. An item's fingerprint is its last update time on archive.org
-(the newest `oai_updatedate`), so a re-scan or a new OCR makes it "changed". Its pages are read with qipu-records, into a cache
-folder per fingerprint: a changed item is downloaded again, an unchanged one never is.
+The listing comes from the scrape API, 1,000 items a request. An item's fingerprint is its last update time on
+archive.org (the newest `oai_updatedate`), so a re-scan or a new OCR makes it "changed". Its pages are read with
+qipu-records, into a cache folder per fingerprint: a changed item is downloaded again, an unchanged one never is.
 """
 
 from __future__ import annotations
@@ -68,10 +68,12 @@ class ArchiveSource:
         )
 
     def content(self, doc: Document) -> Content:
-        version = hashlib.sha1(doc.fingerprint.encode()).hexdigest()[:12]
+        version = hashlib.sha256(doc.fingerprint.encode()).hexdigest()[:12]
         folder = self.cache_dir / doc.doc_id
         client = ArchiveClient(folder / version)
-        content = Content(fetch_item(client, doc.doc_id), fetch_page_texts(client, doc.doc_id), fetch_map(client, doc.doc_id))
+        content = Content(
+            fetch_item(client, doc.doc_id), fetch_page_texts(client, doc.doc_id), fetch_map(client, doc.doc_id)
+        )
         for old in folder.iterdir():
             if old.name != version:
                 shutil.rmtree(old, ignore_errors=True)

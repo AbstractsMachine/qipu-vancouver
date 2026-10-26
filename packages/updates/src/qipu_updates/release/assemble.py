@@ -1,8 +1,8 @@
 """Put a release folder together from the documents built in this run and the ones carried over from the last release.
 
-Every record built in this run gets a provenance block: the run, the document's address and fingerprint, and the sha256 of
-the page text it was read from. With the record's own `reading` (model, prompt version) and `source` (item, page, viewer
-link), that is enough to trace each record to the page, prompt and run it came from.
+Every record built in this run gets a provenance block: the run, the document's address and fingerprint, and the sha256
+of the page text it was read from. With the record's own `reading` (model, prompt version) and `source` (item, page,
+viewer link), that is enough to trace each record to the page, prompt and run it came from.
 """
 
 from __future__ import annotations
@@ -86,14 +86,18 @@ def assemble(
         if records:
             (folder / "records").mkdir(exist_ok=True)
             write_jsonl(folder / name, records)
-        documents[doc_id] = DocEntry(entry.fingerprint, entry.build_key, entry.date, entry.url, name, len(records), entry.run_id)
+        documents[doc_id] = DocEntry(
+            entry.fingerprint, entry.build_key, entry.date, entry.url, name, len(records), entry.run_id
+        )
 
     published = sorted(fixed.records, key=lambda r: str(r["id"]))
     write_jsonl(folder / "decisions.jsonl", published)
     write_json(folder / "decisions.geojson", feature_collection(cast(list[DecisionRecord], published)))
     withdrawn = _jsonl(read_previous("withdrawn.jsonl")) if previous and "withdrawn.jsonl" in previous.files else []
     listed = {(w["id"], w["rule_id"]) for w in withdrawn}
-    withdrawn += [w for w in fixed.withdrawn if (w["id"], w["rule_id"]) not in listed]  # a rebuilt document is dropped again
+    withdrawn += [
+        w for w in fixed.withdrawn if (w["id"], w["rule_id"]) not in listed
+    ]  # a rebuilt document is dropped again
     if withdrawn:
         write_jsonl(folder / "withdrawn.jsonl", withdrawn)
 

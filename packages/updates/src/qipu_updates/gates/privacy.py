@@ -1,16 +1,16 @@
 """Two privacy gates, both on the published text: no leak, and no over-redaction.
 
-The rule (qipu-records' verify.privacy): in a record younger than the city's embargo, about a sensitive matter, the name of a
-private person is replaced by "[name withheld]". Nothing else is hidden: not the page, not the decision, not officials,
-firms, places or the record's source.
+The rule (qipu-records' verify.privacy): in a record younger than the city's embargo, about a sensitive matter, the name
+of a private person is replaced by "[name withheld]". Nothing else is hidden: not the page, not the decision, not
+officials, firms, places or the record's source.
 
-Leak: in every sensitive record under the embargo, the rule finds no private name still shown. The topic is read again from
-the published text rather than trusted from the extractor.
+Leak: in every sensitive record under the embargo, the rule finds no private name still shown. The topic is read again
+from the published text rather than trusted from the extractor.
 
 Over-redaction: a mask fails when it is in a record that is not sensitive or is older than the embargo; in the record's
-source, date, action or outcome, or on a mover, seconder or voter (officials); right after an official title, a delegation
-or petitioner word, or a contract award; or right before a word that makes the name a firm, an organisation, a place or a
-role. A payee is not on the list: in a damage claim the payee is the claimant, whom the rule withholds.
+source, date, action or outcome, or on a mover, seconder or voter (officials); right after an official title, a
+delegation or petitioner word, or a contract award; or right before a word that makes the name a firm, an organisation,
+a place or a role. A payee is not on the list: in a damage claim the payee is the claimant, whom the rule withholds.
 """
 
 from __future__ import annotations
@@ -56,10 +56,11 @@ KEEP_BEFORE = re.compile(
     re.I,
 )
 KEEP_AFTER = re.compile(
-    r"^\W{0,3}(?:the\s+)?(?:Ltd|Limited|Inc|Incorporated|Corp|Corporation|Company|Co\b|Society|Association|Foundation|Holdings"
-    r"|Enterprises|Investments|Developments|Properties|Construction|Contracting|Club|Church|Hospital|Centre|Center|Council|Union"
-    r"|Board|Bank|Hotel|Restaurant|Architects|Engineers|Consultants|Partnership|& Sons|Bros|Street|St\b|Avenue|Ave\b|Road|Rd\b"
-    r"|Drive|Park|Bridge|Building|School|Hall|Square|Way|Crescent|Place|Boulevard|Lane|Day|Award)\b"
+    r"^\W{0,3}(?:the\s+)?(?:Ltd|Limited|Inc|Incorporated|Corp|Corporation|Company|Co\b|Society|Association"
+    r"|Foundation|Holdings|Enterprises|Investments|Developments|Properties|Construction|Contracting|Club|Church"
+    r"|Hospital|Centre|Center|Council|Union|Board|Bank|Hotel|Restaurant|Architects|Engineers|Consultants|Partnership"
+    r"|& Sons|Bros|Street|St\b|Avenue|Ave\b|Road|Rd\b|Drive|Park|Bridge|Building|School|Hall|Square|Way|Crescent"
+    r"|Place|Boulevard|Lane|Day|Award)\b"
 )
 
 
@@ -88,7 +89,9 @@ def _context(text: str, at: int) -> str:
     return text[max(0, at - 60) : at + len(WITHHELD) + 60]
 
 
-def leaks(records: list[dict[str, Any]], pages: PageTexts, as_of: dt.date, embargo_years: int, limit: int = 0) -> GateResult:
+def leaks(
+    records: list[dict[str, Any]], pages: PageTexts, as_of: dt.date, embargo_years: int, limit: int = 0
+) -> GateResult:
     result = GateResult("privacy_leak", limit=limit)
     embargo = Embargo(embargo_years, today=as_of)
     for record in records:

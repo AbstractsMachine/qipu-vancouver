@@ -36,7 +36,8 @@ def test_the_quote_must_be_on_its_page_or_the_page_before() -> None:
     )
     assert (result.checked, result.skipped) == (4, 1)
     assert [f.record_id for f in result.findings] == ["m1:0/2", "m1:0/3"]
-    assert not result.passed and result.to_dict()["findings"] == 2
+    assert not result.passed
+    assert result.to_dict()["findings"] == 2
 
 
 def test_the_date_is_the_one_the_page_prints() -> None:
@@ -95,12 +96,16 @@ def test_a_mask_where_the_rule_keeps_the_name_is_over_redaction() -> None:
 
 
 def test_release_gates_catch_a_halved_release_a_zero_filled_file_and_a_bad_correction(tmp_path: Path) -> None:
-    assert not integrity.shrink(4, 10).passed and integrity.shrink(5, 10).passed and integrity.shrink(0, None).passed
+    assert not integrity.shrink(4, 10).passed
+    assert integrity.shrink(5, 10).passed
+    assert integrity.shrink(0, None).passed
     (tmp_path / "ok.json").write_text("{}", encoding="utf-8")
     (tmp_path / "zero.jsonl").write_bytes(b"\0" * 64)
     (tmp_path / "torn.json").write_bytes(b'{"a": 1' + b"\0" * 32)
     (tmp_path / "empty.geojson").write_bytes(b"")
     result = integrity.files(tmp_path)
     assert sorted(f.record_id for f in result.findings) == ["empty.geojson", "torn.json", "zero.jsonl"]
-    gate = integrity.corrections([Applied("c0", 1), Applied("c1", 3, "matches 3 records, more than max_rows 1: not applied")])
+    gate = integrity.corrections(
+        [Applied("c0", 1), Applied("c1", 3, "matches 3 records, more than max_rows 1: not applied")]
+    )
     assert (gate.passed, gate.findings[0].record_id) == (False, "c1")

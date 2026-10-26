@@ -1,8 +1,8 @@
 """Proposed vs decided: a step (a first reading, a referral, a hearing) is never published as a decision.
 
-The published stage and outcome must be what qipu-records' rule gives for the recorded action, and a rezoning is "rezoned"
-only when a by-law or resolution was finally passed. A correction, or a record carried over from an older extractor, can
-break either rule.
+The published stage and outcome must be what qipu-records' rule gives for the recorded action, and a rezoning is
+"rezoned" only when a by-law or resolution was finally passed. A correction, or a record carried over from an older
+extractor, can break either rule.
 """
 
 from __future__ import annotations
@@ -23,8 +23,10 @@ def check(records: list[dict[str, Any]], limit: int = 0) -> GateResult:
         stage, outcome = stage_and_outcome(action)
         rid = str(record["id"])
         if record.get("outcome") != outcome.value or record.get("stage") != stage:
-            why = f"outcome '{record.get('outcome')}' / stage '{record.get('stage')}' does not follow from action '{action}'"
-            result.findings.append(Finding(rid, why))
-        elif record.get("zoning") == "rezoned" and not (record.get("kind") in FINAL_KINDS and outcome.value in FINAL_OUTCOMES):
+            shown = f"outcome '{record.get('outcome')}' / stage '{record.get('stage')}'"
+            result.findings.append(Finding(rid, f"{shown} does not follow from action '{action}'"))
+        elif record.get("zoning") == "rezoned" and not (
+            record.get("kind") in FINAL_KINDS and outcome.value in FINAL_OUTCOMES
+        ):
             result.findings.append(Finding(rid, f"shown as rezoned, but the {record.get('kind')} was only {action}"))
     return result

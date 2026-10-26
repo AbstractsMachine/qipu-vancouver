@@ -2,11 +2,12 @@
 
 The schedule itself is the CI's (a cron in .github/workflows/updates.yml); this module holds what the cron cannot know.
 
-Pause has two levels: "publish" keeps building and checking but publishes nothing, "all" skips
-runs. A rollback pauses publishing, so the next scheduled run does not publish the same content again before someone looks.
+Pause has two levels: "publish" keeps building and checking but publishes nothing, "all" skips runs. A rollback pauses
+publishing, so the next scheduled run does not publish the same content again before someone looks.
 
-The lock is a marker in the store with an expiry. GitHub's concurrency group is what keeps two scheduled runs apart; the lock
-also stops a run started by hand from another machine. It is not atomic on object stores, which is fine for that purpose.
+The lock is a marker in the store with an expiry. GitHub's concurrency group is what keeps two scheduled runs apart; the
+lock also stops a run started by hand from another machine. It is not atomic on object stores, which is fine for that
+purpose.
 
 A source checked less often than the cron runs (a weekly collection on a daily cron) is skipped until it is due.
 """

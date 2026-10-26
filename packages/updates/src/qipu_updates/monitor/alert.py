@@ -1,8 +1,8 @@
 """Open a GitHub issue when a scheduled run fails, or comment on the one already open.
 
-One open issue per config, labelled `workflow-failure` (the label the other scheduled jobs use), so a source that fails every
-day makes one issue with a comment a day, not thirty issues. Close the issue once the run is green again. Uses the `gh` CLI
-with the workflow's own GITHUB_TOKEN; no other secret.
+One open issue per config, labelled `workflow-failure` (the label the other scheduled jobs use), so a source that fails
+every day makes one issue with a comment a day, not thirty issues. Close the issue once the run is green again. Uses the
+`gh` CLI with the workflow's own GITHUB_TOKEN; no other secret.
 """
 
 from __future__ import annotations
@@ -58,7 +58,9 @@ def title_for(config: str) -> str:
 def raise_alert(issues: Issues, config: str, summary: str, run_url: str) -> str:
     """Open or update the config's failure issue. Returns what was done, for the log."""
     title = title_for(config)
-    body = f"{summary}\n\nRun: {run_url}\n\nClose this issue once the scheduled run is green again. See docs/updates.md."
+    body = (
+        f"{summary}\n\nRun: {run_url}\n\nClose this issue once the scheduled run is green again. See docs/updates.md."
+    )
     number = issues.find_open(title)
     if number is None:
         return f"opened #{issues.create(title, body)}"

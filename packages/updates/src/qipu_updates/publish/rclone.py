@@ -15,8 +15,9 @@ Runner = Callable[..., "subprocess.CompletedProcess[bytes]"]
 
 
 NOT_FOUND = (3, 4)
-"""rclone's exit codes for a missing directory and a missing file. Any other failure raises: a network or credential error
-must never read as "no pause marker" or "nothing published yet"."""
+"""rclone's exit codes for a missing directory and a missing file. Any other failure raises: a network or credential
+error must never read as "no pause marker" or "nothing published yet".
+"""
 
 
 class StoreError(RuntimeError):
@@ -28,13 +29,17 @@ class RcloneStore:
         self.remote = remote.rstrip("/")
         self._run = runner
 
-    def _rclone(self, args: Sequence[str], missing_ok: bool = False, **kwargs: Any) -> subprocess.CompletedProcess[bytes] | None:
+    def _rclone(
+        self, args: Sequence[str], missing_ok: bool = False, **kwargs: Any
+    ) -> subprocess.CompletedProcess[bytes] | None:
         done = self._run(["rclone", *args], capture_output=True, **kwargs)
         if done.returncode == 0:
             return done
         if missing_ok and done.returncode in NOT_FOUND:
             return None
-        raise StoreError(f"rclone {args[0]} {args[1]}: exit {done.returncode}: {done.stderr.decode('utf-8', 'replace')[-300:]}")
+        raise StoreError(
+            f"rclone {args[0]} {args[1]}: exit {done.returncode}: {done.stderr.decode('utf-8', 'replace')[-300:]}"
+        )
 
     def _url(self, key: str) -> str:
         return f"{self.remote}/{key.lstrip('/')}"

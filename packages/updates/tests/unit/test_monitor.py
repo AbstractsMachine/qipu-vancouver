@@ -34,12 +34,15 @@ def test_the_summary_shows_failed_gates_with_their_first_findings() -> None:
         "checked": 3,
         "examples": [{"record_id": "m:0/1", "why": "no date", "text": ""}],
     }
-    text = metrics.markdown(report(status="refused", plan={"new": 1}, documents_left=["m2"], gates={"date_from_header": gate}))
+    text = metrics.markdown(
+        report(status="refused", plan={"new": 1}, documents_left=["m2"], gates={"date_from_header": gate})
+    )
     assert "### vancouver: refused" in text
     assert "| date_from_header | **FAIL** | 1 (limit 0) | 3 |" in text
     assert "- `m:0/1`: no date" in text
     assert "| left for the next run | m2 |" in text
-    assert report(status="refused").failed and not report(status="no-change").failed
+    assert report(status="refused").failed
+    assert not report(status="no-change").failed
 
 
 class FakeIssues:

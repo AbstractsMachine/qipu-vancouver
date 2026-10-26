@@ -1,8 +1,8 @@
 """Run qipu-records on one document: read the pages not read yet, then build its records.
 
-This is the one place that drives the extractor. Reading costs money, so a run has a page budget shared by all its documents;
-a document whose pages are not all read when the budget runs out is left for the next run, which picks up where this one
-stopped (readings already made are kept).
+This is the one place that drives the extractor. Reading costs money, so a run has a page budget shared by all its
+documents; a document whose pages are not all read when the budget runs out is left for the next run, which picks up
+where this one stopped (readings already made are kept).
 """
 
 from __future__ import annotations

@@ -2,17 +2,19 @@
 
 `corrections.jsonl`, append-only, one rule a line:
 
-    {"rule_id": "c1", "action": "drop", "where": {"id": "19740219:3/2"}, "reason": "...", "author": "...", "at": "2026-10-26",
+    {"rule_id": "c1", "action": "drop", "where": {"id": "19740219:3/2"}, "reason": "...", "author": "...", "at":
+    "2026-10-26",
      "evidence": "https://archive.org/details/19740219/page/n5", "min_rows": 1, "max_rows": 1}
-    {"rule_id": "c2", "action": "replace_text", "find": "Grandvlew", "replace": "Grandview", "fields": ["summary", "quote"]}
+    {"rule_id": "c2", "action": "replace_text", "find": "Grandvlew", "replace": "Grandview", "fields": ["summary",
+    "quote"]}
 
-`where` matches records whose fields equal the given values (dotted names reach inside: "source.item"). `drop` removes the
-records and lists them in withdrawn.jsonl with the rule and reason; `replace_text` replaces a string in the named fields of
-the records `where` selects (all records when it is absent).
+`where` matches records whose fields equal the given values (dotted names reach inside: "source.item"). `drop` removes
+the records and lists them in withdrawn.jsonl with the rule and reason; `replace_text` replaces a string in the named
+fields of the records `where` selects (all records when it is absent).
 
-A rule that matches more than `max_rows` changes nothing and fails the release (a typo in `where` must not drop thousands).
-A rule that matches fewer than `min_rows` fails as stale, unless an earlier release already applied it: published records
-already carry their corrections, so a rule applied once matches nothing afterwards.
+A rule that matches more than `max_rows` changes nothing and fails the release (a typo in `where` must not drop
+thousands). A rule that matches fewer than `min_rows` fails as stale, unless an earlier release already applied it:
+published records already carry their corrections, so a rule applied once matches nothing afterwards.
 """
 
 from __future__ import annotations
@@ -112,7 +114,9 @@ def apply(records: list[dict[str, Any]], rules: Iterable[Rule], applied_before: 
         if rule.action == "drop" and hits:
             gone = {id(r) for r in hits}
             out.records = [r for r in out.records if id(r) not in gone]
-            out.withdrawn += [{"id": r["id"], "rule_id": rule.rule_id, "reason": rule.reason, "release": release} for r in hits]
+            out.withdrawn += [
+                {"id": r["id"], "rule_id": rule.rule_id, "reason": rule.reason, "release": release} for r in hits
+            ]
         elif hits:
             for record in hits:
                 for name in rule.fields:

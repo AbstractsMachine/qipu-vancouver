@@ -1,9 +1,9 @@
 """Checks a release must pass before it is published.
 
-Each gate reads the release as it will be published, not the extractor's own flags, and re-derives what it checks from the
-page text: the quote is on the page, the date is the one the page's header gives, a proposal is not shown as decided, no
-private name is shown where the privacy rule hides it, and nothing is hidden that the rule keeps. A gate fails when its
-findings exceed its limit (0 unless the config says otherwise); one failed gate stops the publish.
+Each gate reads the release as it will be published, not the extractor's own flags, and re-derives what it checks from
+the page text: the quote is on the page, the date is the one the page's header gives, a proposal is not shown as
+decided, no private name is shown where the privacy rule hides it, and nothing is hidden that the rule keeps. A gate
+fails when its findings exceed its limit (0 unless the config says otherwise); one failed gate stops the publish.
 """
 
 from __future__ import annotations

@@ -1,6 +1,7 @@
 """A release: an immutable folder of records with a manifest saying where every one came from.
 
-    manifest.json           version, parent, run, extractor, prompt, model, config, per-document fingerprints, file hashes,
+    manifest.json           version, parent, run, extractor, prompt, model, config, per-document fingerprints, file
+    hashes,
                             corrections applied, gate results
     records/<doc>.jsonl     the records of one document (one archive.org item, one meeting)
     decisions.jsonl         all records, in the qipu-records format
@@ -81,5 +82,7 @@ def sha256_file(path: Path) -> str:
 def hash_files(folder: Path) -> dict[str, str]:
     """sha256 of every file in the release folder except the manifest itself."""
     return {
-        p.relative_to(folder).as_posix(): sha256_file(p) for p in sorted(folder.rglob("*")) if p.is_file() and p.name != MANIFEST
+        p.relative_to(folder).as_posix(): sha256_file(p)
+        for p in sorted(folder.rglob("*"))
+        if p.is_file() and p.name != MANIFEST
     }

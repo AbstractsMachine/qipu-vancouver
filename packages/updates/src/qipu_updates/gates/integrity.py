@@ -1,4 +1,5 @@
-"""Gates on the release as a whole: it did not shrink by half, no file is empty or zero-filled, every correction applied.
+"""Gates on the release as a whole: it did not shrink by half, no file is empty or zero-filled, every correction
+applied.
 
 A broken listing must not empty the published data, and a disk that drops mid-write leaves files of zero bytes that look
 fine to everything but a byte check.

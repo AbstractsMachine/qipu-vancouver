@@ -1,7 +1,7 @@
 """Command line: ``qipu-updates run | status | releases | pause | resume | rollback | alert``.
 
-Every command takes --config (a city's TOML file). --store replaces the config's publish target with a local folder, which is
-how CI and the demo run without credentials.
+Every command takes --config (a city's TOML file). --store replaces the config's publish target with a local folder,
+which is how CI and the demo run without credentials.
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ def cmd_run(args: argparse.Namespace, config: Config) -> int:
     summary = metrics.markdown(report)
     print(summary)
     if args.summary:
-        with open(args.summary, "a", encoding="utf-8") as out:
+        with Path(args.summary).open("a", encoding="utf-8") as out:
             out.write(summary)
     if args.report:
         Path(args.report).write_text(report.to_json(), encoding="utf-8")
@@ -129,7 +129,9 @@ def parser() -> argparse.ArgumentParser:
 
     p = command("run", "one scheduled run: find what changed, extract it, check, release, publish")
     p.add_argument("--work", help="the working copy kept between runs (default .updates-work/<name>)")
-    p.add_argument("--as-of", help="run as if today were this date (YYYY-MM-DD): for replays and tests, on a scratch store")
+    p.add_argument(
+        "--as-of", help="run as if today were this date (YYYY-MM-DD): for replays and tests, on a scratch store"
+    )
     p.add_argument("--run-id", default=os.environ.get("GITHUB_RUN_ID"))
     p.add_argument("--dry-run", action="store_true", help="do everything but write to the store")
     p.add_argument("--force", action="store_true", help="run even if the source is not due")

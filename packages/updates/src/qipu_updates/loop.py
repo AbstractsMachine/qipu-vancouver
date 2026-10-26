@@ -49,11 +49,21 @@ BuiltDocs = dict[str, tuple[Document, list[dict[str, Any]]]]
 
 
 class Run:
-    def __init__(self, config: Config, store: Store, workspace: Workspace, source: Source, extractor: Extractor) -> None:
-        self.config, self.store, self.workspace, self.source, self.extractor = config, store, workspace, source, extractor
+    def __init__(
+        self, config: Config, store: Store, workspace: Workspace, source: Source, extractor: Extractor
+    ) -> None:
+        self.config, self.store, self.workspace, self.source, self.extractor = (
+            config,
+            store,
+            workspace,
+            source,
+            extractor,
+        )
 
     def __call__(self, opts: Options) -> RunReport:
-        report = RunReport(opts.run_id, self.config.name, opts.as_of.isoformat(), opts.now.isoformat(), dry_run=opts.dry_run)
+        report = RunReport(
+            opts.run_id, self.config.name, opts.as_of.isoformat(), opts.now.isoformat(), dry_run=opts.dry_run
+        )
         pause = control.paused(self.store)
         if pause and pause.scope == "all":
             return self._end(report, "paused", f"paused since {pause.since}: {pause.reason}", opts)
@@ -87,7 +97,9 @@ class Run:
         known = previous.documents if previous else {}
         if self.source.complete and listing_looks_short(len(found), len(known)):
             raise SourceError(f"the source lists {len(found)} documents, the last release had {len(known)}")
-        return make_plan(found, {k: Built(v.fingerprint, v.build_key) for k, v in known.items()}, self.extractor.build_key)
+        return make_plan(
+            found, {k: Built(v.fingerprint, v.build_key) for k, v in known.items()}, self.extractor.build_key
+        )
 
     def _build(self, plan: Plan, previous: Manifest | None, report: RunReport) -> BuiltDocs:
         budget = Budget(self.config.reader.max_pages_per_run)
@@ -96,7 +108,9 @@ class Run:
         built: BuiltDocs = {}
         for doc in plan.work:
             same_text = (
-                doc.doc_id in known and known[doc.doc_id].fingerprint == doc.fingerprint and self.workspace.has(doc.doc_id)
+                doc.doc_id in known
+                and known[doc.doc_id].fingerprint == doc.fingerprint
+                and self.workspace.has(doc.doc_id)
             )
             content = self.workspace.current_content(doc.doc_id) if same_text else self.source.content(doc)
             report.readings_reused += self.workspace.stage(doc.doc_id, content, self.extractor.reusable)
@@ -142,11 +156,17 @@ class Run:
         report.release, report.records, report.gates = draft.manifest.version, len(draft.records), draft.manifest.gates
         failed = [r.name for r in results if not r.passed]
         if failed:
-            report.status, report.detail = "refused", f"gates failed: {', '.join(failed)}; {draft.manifest.version} not published"
+            report.status, report.detail = (
+                "refused",
+                f"gates failed: {', '.join(failed)}; {draft.manifest.version} not published",
+            )
         elif opts.dry_run:
             report.status, report.detail = "dry-run", f"{draft.manifest.version} built and checked, not published"
         elif control.paused(self.store) or not opts.publish:  # read again: a pause or rollback may have come in mid-run
-            report.status, report.detail = "publish-paused", f"{draft.manifest.version} built and checked; publishing is paused"
+            report.status, report.detail = (
+                "publish-paused",
+                f"{draft.manifest.version} built and checked; publishing is paused",
+            )
         else:
             rel.publish(self.store, draft.folder, draft.manifest, opts.now, opts.run_id)
             report.status, report.published = "published", True
@@ -175,4 +195,6 @@ class Run:
             return data
 
         rules = corrections.load(self.config.corrections)
-        return assemble(drafts / version, header, built=built, previous=previous, read_previous=read_previous, rules=rules)
+        return assemble(
+            drafts / version, header, built=built, previous=previous, read_previous=read_previous, rules=rules
+        )

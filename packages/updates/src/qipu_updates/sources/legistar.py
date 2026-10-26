@@ -1,11 +1,11 @@
 """A Legistar calendar: San Francisco's Board of Supervisors and its committees (sfgov.legistar.com).
 
-The calendar page lists each meeting with links to its agenda and, once approved, its minutes (a PDF). Only meetings with
-minutes are documents here: minutes record what was decided. The month shown is chosen with a cookie, as the site's own
-filter does. A document's fingerprint is the sha256 of its minutes PDF, so a corrected PDF is processed again; this means
-`discover` downloads every posted minutes PDF in the window (a few dozen a month, one request at a time). The calendar
-shows two months, so the listing is a window (`complete = False`). Page texts come from `pdftotext -layout`, one string per
-PDF page.
+The calendar page lists each meeting with links to its agenda and, once approved, its minutes (a PDF). Only meetings
+with minutes are documents here: minutes record what was decided. The month shown is chosen with a cookie, as the site's
+own filter does. A document's fingerprint is the sha256 of its minutes PDF, so a corrected PDF is processed again; this
+means `discover` downloads every posted minutes PDF in the window (a few dozen a month, one request at a time). The
+calendar shows two months, so the listing is a window (`complete = False`). Page texts come from `pdftotext -layout`,
+one string per PDF page.
 
 The calendar parser is the one behind qipu's San Francisco agenda pages.
 """
@@ -16,6 +16,7 @@ import datetime as dt
 import hashlib
 import html
 import re
+import shutil
 import subprocess
 import tempfile
 from collections.abc import Callable
@@ -67,7 +68,12 @@ def parse_calendar(page: str, base: str = SF_BASE) -> list[dict[str, Any]]:
         minutes = next((u for u in links if "M=M&" in u), None)
         ids = next((m for m in (_IDS.search(u) for u in links) if m), None)
         meetings.append(
-            {"body": visible_text(cells[0]), "date": date, "meeting_id": ids.group(1) if ids else None, "minutes_url": minutes}
+            {
+                "body": visible_text(cells[0]),
+                "date": date,
+                "meeting_id": ids.group(1) if ids else None,
+                "minutes_url": minutes,
+            }
         )
     return meetings
 
@@ -76,7 +82,11 @@ def pdftotext(data: bytes) -> list[str]:
     with tempfile.NamedTemporaryFile(suffix=".pdf") as pdf:
         pdf.write(data)
         pdf.flush()
-        out = subprocess.run(["pdftotext", "-layout", "-enc", "UTF-8", pdf.name, "-"], capture_output=True, check=True).stdout
+        tool = shutil.which("pdftotext")
+        if tool is None:
+            raise SourceError("pdftotext is not installed (poppler-utils)")
+        command = [tool, "-layout", "-enc", "UTF-8", pdf.name, "-"]
+        out = subprocess.run(command, capture_output=True, check=True).stdout  # noqa: S603 - fixed command, our own file
     pages = out.decode("utf-8", errors="replace").split("\f")
     return pages[:-1] if pages and not pages[-1].strip() else pages
 

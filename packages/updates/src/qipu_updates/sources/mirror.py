@@ -1,14 +1,15 @@
 """A local copy of a collection, in qipu-records' collection format: for tests, demos and offline runs.
 
-The copy is a collection folder (items.json, pages.jsonl, pagemaps.json, as in examples/vancouver) plus an index that says
+The copy is a collection folder (items.json, pages.jsonl, pagemaps.json, as in examples/vancouver) plus an index that
+says
 when each item appeared and, for an item scanned again, which pages file holds each version:
 
     [{"identifier": "19740219", "published": "2026-10-26",
       "versions": [{"updated": "2026-10-26", "pages": "../pages.jsonl"}]}]
 
 Pages files are paths from the index's folder, in pages.jsonl's format; only the item's own lines are read. Run with an
-earlier `as_of` and the mirror shows the collection as it was that day, so a test can play "a new meeting appeared" or "an
-item was re-scanned" without the network.
+earlier `as_of` and the mirror shows the collection as it was that day, so a test can play "a new meeting appeared" or
+"an item was re-scanned" without the network.
 """
 
 from __future__ import annotations

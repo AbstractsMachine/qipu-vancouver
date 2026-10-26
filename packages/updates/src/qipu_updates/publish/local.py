@@ -1,8 +1,9 @@
-"""A store in a local folder. Writes go to a temporary name and are renamed into place, so a reader never sees half a file."""
+"""A store in a local folder. Writes go to a temporary name and are renamed into place, so a reader never sees half a
+file.
+"""
 
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
 
@@ -27,7 +28,7 @@ class LocalStore:
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_name(path.name + ".tmp")
         tmp.write_bytes(data)
-        os.replace(tmp, path)
+        tmp.replace(path)
 
     def delete(self, key: str) -> None:
         self._path(key).unlink(missing_ok=True)
@@ -50,4 +51,6 @@ class LocalStore:
         base = self._path(prefix)
         if not base.is_dir():
             return []
-        return sorted(p.relative_to(base).as_posix() for p in base.rglob("*") if p.is_file() and not p.name.endswith(".tmp"))
+        return sorted(
+            p.relative_to(base).as_posix() for p in base.rglob("*") if p.is_file() and not p.name.endswith(".tmp")
+        )

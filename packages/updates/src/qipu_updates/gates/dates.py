@@ -1,9 +1,9 @@
 """Date from header: a record's date is the meeting date its page prints, read again from the pages of its document.
 
-Minutes print the meeting date in a running head or in the opening line of each meeting ("A Regular meeting of the Council
-... was held on Tuesday, February 19, 1974"). The date is read again here with qipu-records' date reader and compared with
-the published one. A mismatch means the record was dated some other way, for example by an older date reader in a record
-carried over from an earlier release.
+Minutes print the meeting date in a running head or in the opening line of each meeting ("A Regular meeting of the
+Council ... was held on Tuesday, February 19, 1974"). The date is read again here with qipu-records' date reader and
+compared with the published one. A mismatch means the record was dated some other way, for example by an older date
+reader in a record carried over from an earlier release.
 """
 
 from __future__ import annotations
@@ -42,7 +42,9 @@ def check(records: list[dict[str, Any]], pages: PageTexts, limit: int = 0) -> Ga
             n = int(record["source"]["ocr_page"])
             parts = pieces(str(record.get("quote") or ""))
             match = locate(parts[0], texts[n]) if parts and 0 <= n < len(texts) else None
-            expected, _ = dates[n].at(match.offset if match and match.found else None) if 0 <= n < len(dates) else (None, None)
+            expected, _ = (
+                dates[n].at(match.offset if match and match.found else None) if 0 <= n < len(dates) else (None, None)
+            )
             published = record.get("date")
             if not published:
                 result.findings.append(Finding(str(record["id"]), "no date"))

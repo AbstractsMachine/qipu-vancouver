@@ -29,8 +29,10 @@ def release_folder(tmp: Path, version: str) -> tuple[Path, Manifest]:
 def test_the_local_store_reads_writes_lists_and_deletes(tmp_path: Path) -> None:
     store = LocalStore(tmp_path / "s")
     store.write("a/b.json", b"1")
-    assert store.read("a/b.json") == b"1" and store.read("nope") is None
-    assert store.list("a") == ["b.json"] and store.list("nowhere") == []
+    assert store.read("a/b.json") == b"1"
+    assert store.read("nope") is None
+    assert store.list("a") == ["b.json"]
+    assert store.list("nowhere") == []
     store.delete("a/b.json")
     assert store.list("") == []
     with pytest.raises(ValueError, match="outside the store"):
@@ -116,4 +118,5 @@ def test_the_rclone_store_speaks_rclone(tmp_path: Path) -> None:
     with pytest.raises(StoreError, match="network down"):
         store.read("broken.json")
     assert [c[1] for c in fake.calls][:7] == ["cat", "cat", "rcat", "deletefile", "copy", "lsf", "lsf"]
-    assert fake.calls[4][2:4] == [str(tmp_path), "r2:bucket/van/releases/v1"] and "--checksum" in fake.calls[4]
+    assert fake.calls[4][2:4] == [str(tmp_path), "r2:bucket/van/releases/v1"]
+    assert "--checksum" in fake.calls[4]

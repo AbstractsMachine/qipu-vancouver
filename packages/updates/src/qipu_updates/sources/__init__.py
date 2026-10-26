@@ -38,8 +38,9 @@ class SourceError(RuntimeError):
 
 class Source(Protocol):
     complete: bool
-    """True when `discover` lists everything the source holds; False when it shows a window, such as the last two months.
-    Only a complete listing is compared with the last release to catch a listing that came back short."""
+    """True when `discover` lists everything the source holds; False when it shows a window, such as the last two
+    months. Only a complete listing is compared with the last release to catch a listing that came back short.
+    """
 
     def discover(self, as_of: dt.date) -> list[Document]: ...
 

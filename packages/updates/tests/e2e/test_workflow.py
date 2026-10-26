@@ -63,14 +63,17 @@ def run_step(tmp: Path, as_of: str | None = None, **env: str) -> subprocess.Comp
         "PUBLISH": "on",
         **env,
     }
-    return subprocess.run(["bash", "-c", script], cwd=PACKAGE, env=environment, capture_output=True, text=True, check=False)
+    return subprocess.run(
+        ["bash", "-c", script], cwd=PACKAGE, env=environment, capture_output=True, text=True, check=False
+    )
 
 
 def test_the_workflow_is_scheduled_needs_no_secret_and_alerts_on_failure() -> None:
     text = WORKFLOW.read_text(encoding="utf-8")
     assert "${{ secrets." not in text
     triggers = workflow().get("on") or workflow()[True]  # type: ignore[index]  # YAML 1.1 reads the key `on` as True
-    assert triggers["schedule"][0]["cron"] and "workflow_dispatch" in triggers
+    assert triggers["schedule"][0]["cron"]
+    assert "workflow_dispatch" in triggers
     assert job()["permissions"] == {"contents": "read", "issues": "write"}
     alert = next(s for s in job()["steps"] if "alert" in str(s.get("run", "")))
     assert alert["if"] == "failure() && github.event_name == 'schedule'"
@@ -83,7 +86,9 @@ def test_a_dry_run_builds_and_checks_but_writes_nothing(tmp_path: Path) -> None:
     report = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))
     assert (report["status"], report["plan"]["new"], report["records"]) == ("dry-run", 2, 33)
     assert all(g["passed"] for g in report["gates"].values())
-    assert not (tmp_path / "updates-state" / "store").exists() or not any((tmp_path / "updates-state" / "store").rglob("*"))
+    assert not (tmp_path / "updates-state" / "store").exists() or not any(
+        (tmp_path / "updates-state" / "store").rglob("*")
+    )
     assert "### vancouver: dry-run" in (tmp_path / "summary.md").read_text(encoding="utf-8")
 
 
@@ -93,7 +98,11 @@ def test_two_scheduled_days_publish_then_add_only_the_new_meeting(tmp_path: Path
     second = run_step(tmp_path, "2026-10-26", RUN_ID="102")
     assert second.returncode == 0, second.stdout + second.stderr
     report = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))
-    assert (report["status"], report["documents_built"], report["release"]) == ("published", ["19740219"], "2026-10-26.1")
+    assert (report["status"], report["documents_built"], report["release"]) == (
+        "published",
+        ["19740219"],
+        "2026-10-26.1",
+    )
     latest = json.loads((tmp_path / "updates-state" / "store" / "latest.json").read_text(encoding="utf-8"))
     assert latest["version"] == "2026-10-26.1"
 

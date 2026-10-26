@@ -1,8 +1,9 @@
 """Decide what a run has to do: compare what the source lists today with what the last release was built from.
 
-A document is new when the last release does not have it, changed when its fingerprint or its build key differs (the build key
-names the extractor version, prompt and model, so upgrading any of them rebuilds), and unchanged otherwise. A document the
-source no longer lists is kept in the release and reported: a listing that comes back short must never delete records.
+A document is new when the last release does not have it, changed when its fingerprint or its build key differs (the
+build key names the extractor version, prompt and model, so upgrading any of them rebuilds), and unchanged otherwise. A
+document the source no longer lists is kept in the release and reported: a listing that comes back short must never
+delete records.
 """
 
 from __future__ import annotations

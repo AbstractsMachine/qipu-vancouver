@@ -1,6 +1,7 @@
 """Where releases are published: a store of files addressed by key ("releases/2026-10-26.1/decisions.jsonl").
 
-Two stores: a local folder (the demo, CI, and a mirror served by any web server), and any rclone remote (S3, R2, GCS, ...).
+Two stores: a local folder (the demo, CI, and a mirror served by any web server), and any rclone remote (S3, R2, GCS,
+...).
 The layout in a store:
 
     latest.json                  the published version: {"version", "manifest_sha256", "published", "previous"}

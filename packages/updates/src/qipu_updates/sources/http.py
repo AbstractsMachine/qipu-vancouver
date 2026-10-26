@@ -18,14 +18,18 @@ Get = Callable[[str, dict[str, str]], bytes]
 
 
 def urlopen_get(url: str, headers: dict[str, str]) -> bytes:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})
-    with urllib.request.urlopen(request, timeout=120) as response:
+    if not url.startswith("https://"):
+        raise SourceError(f"only https is fetched: {url}")
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})  # noqa: S310 - https checked above
+    with urllib.request.urlopen(request, timeout=120) as response:  # noqa: S310 - https checked above
         body: bytes = response.read()
         return body
 
 
 class Polite:
-    def __init__(self, get: Get = urlopen_get, pause: float = 1.0, retries: int = 3, sleep: Callable[[float], None] = time.sleep):
+    def __init__(
+        self, get: Get = urlopen_get, pause: float = 1.0, retries: int = 3, sleep: Callable[[float], None] = time.sleep
+    ):
         self._get, self.pause, self.retries, self._sleep = get, pause, retries, sleep
         self.requests = 0
 

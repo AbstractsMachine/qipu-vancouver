@@ -15,7 +15,9 @@ MIN_PIECE = 12
 
 
 def pieces(quote: str) -> list[str]:
-    """The parts of a quote to look for: the whole of it, or the runs of text between masks long enough to be telling."""
+    """The parts of a quote to look for: the whole of it, or the runs of text between masks long enough to be
+    telling.
+    """
     if WITHHELD not in quote:
         return [quote.strip()] if quote.strip() else []
     return [p.strip(" ,.;:") for p in quote.split(WITHHELD) if len(p.strip(" ,.;:")) >= MIN_PIECE]

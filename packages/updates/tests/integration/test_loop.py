@@ -1,4 +1,6 @@
-"""Full runs on the Vancouver sample: a meeting arrives, an item is re-scanned, a gate fails, a run is paused or rolled back."""
+"""Full runs on the Vancouver sample: a meeting arrives, an item is re-scanned, a gate fails, a run is paused or rolled
+back.
+"""
 
 from __future__ import annotations
 
@@ -56,12 +58,19 @@ def rescan(example: Path, day: str, page: int, extra: str, replace: bool = False
 
 
 def set_rules(example: Path, *rules: dict[str, object]) -> None:
-    (example / "updates" / "corrections.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rules), encoding="utf-8")
+    (example / "updates" / "corrections.jsonl").write_text(
+        "".join(json.dumps(r) + "\n" for r in rules), encoding="utf-8"
+    )
 
 
 def test_a_new_meeting_is_the_only_thing_processed(example: Path, tmp_path: Path) -> None:
     first = run(example, tmp_path, DAY1, "day1")
-    assert (first.status, first.release, first.records, first.pages_read) == ("published", "2026-10-19.1", 11, PAGES_1970)
+    assert (first.status, first.release, first.records, first.pages_read) == (
+        "published",
+        "2026-10-19.1",
+        11,
+        PAGES_1970,
+    )
 
     second = run(example, tmp_path, DAY2, "day2")
     assert second.status == "published"
@@ -76,17 +85,21 @@ def test_a_new_meeting_is_the_only_thing_processed(example: Path, tmp_path: Path
     runs = {r["source"]["item"]: r["provenance"]["run_id"] for r in published_records(tmp_path, "2026-10-26.1")}  # type: ignore[index]
     assert runs == {"19700609": "day1", "19740219": "day2"}
     pointer = rel.current(store(tmp_path))
-    assert pointer is not None and (pointer.version, pointer.previous) == ("2026-10-26.1", "2026-10-19.1")
+    assert pointer is not None
+    assert (pointer.version, pointer.previous) == ("2026-10-26.1", "2026-10-19.1")
 
 
 def test_every_record_traces_to_a_page_a_prompt_and_a_run(example: Path, tmp_path: Path) -> None:
     run(example, tmp_path, DAY2, "day2")
     manifest = rel.manifest(store(tmp_path), "2026-10-26.1")
-    assert manifest is not None and manifest.counts == {"documents": 2, "records": 33, "withdrawn": 0}
+    assert manifest is not None
+    assert manifest.counts == {"documents": 2, "records": 33, "withdrawn": 0}
     for record in published_records(tmp_path, "2026-10-26.1"):
         assert record["reading"] == {"model": "claude-haiku-5-5", "prompt_version": manifest.build_key.split("|")[1]}
         provenance = record["provenance"]
-        assert isinstance(provenance, dict) and provenance["run_id"] == "day2" and len(provenance["page_sha256"]) == 64
+        assert isinstance(provenance, dict)
+        assert provenance["run_id"] == "day2"
+        assert len(provenance["page_sha256"]) == 64
         assert str(provenance["document"]).startswith("https://archive.org/details/")
 
 
@@ -119,7 +132,9 @@ def test_a_new_gazetteer_rebuilds_without_reading_again(example: Path, tmp_path:
 def test_a_correction_withdraws_a_record_in_every_later_release(example: Path, tmp_path: Path) -> None:
     run(example, tmp_path, DAY1, "day1")
     target = published_records(tmp_path, "2026-10-19.1")[0]["id"]
-    set_rules(example, {"rule_id": "c1", "action": "drop", "where": {"id": target}, "reason": "not a decision", "min_rows": 1})
+    set_rules(
+        example, {"rule_id": "c1", "action": "drop", "where": {"id": target}, "reason": "not a decision", "min_rows": 1}
+    )
     second = run(example, tmp_path, DAY2, "day2")
     assert (second.status, second.records) == ("published", 32)
     withdrawn = (tmp_path / "store" / "releases" / "2026-10-26.1" / "withdrawn.jsonl").read_text(encoding="utf-8")
@@ -137,13 +152,16 @@ def test_a_correction_withdraws_a_record_in_every_later_release(example: Path, t
 def test_a_failed_gate_stops_the_publish(example: Path, tmp_path: Path) -> None:
     run(example, tmp_path, DAY1, "day1")
     quote = str(published_records(tmp_path, "2026-10-19.1")[0]["quote"])
-    set_rules(example, {"rule_id": "bad", "action": "replace_text", "find": quote[:20], "replace": "Something else entirely"})
+    set_rules(
+        example, {"rule_id": "bad", "action": "replace_text", "find": quote[:20], "replace": "Something else entirely"}
+    )
     refused = run(example, tmp_path, DAY2, "day2")
     assert refused.status == "refused"
     assert not refused.gates["quote_on_page"]["passed"]
     assert not refused.published
     pointer = rel.current(store(tmp_path))
-    assert pointer is not None and pointer.version == "2026-10-19.1"
+    assert pointer is not None
+    assert pointer.version == "2026-10-19.1"
 
 
 def test_the_page_budget_carries_work_to_the_next_run(example: Path, tmp_path: Path) -> None:
@@ -161,7 +179,8 @@ def test_a_short_listing_fails_the_run_instead_of_dropping_records(example: Path
     run(example, tmp_path, DAY2, "day2")
     (example / "updates" / "arrivals.json").write_text("[]", encoding="utf-8")
     broken = run(example, tmp_path, DAY3, "day3")
-    assert broken.status == "failed" and "lists 0 documents, the last release had 2" in broken.detail
+    assert broken.status == "failed"
+    assert "lists 0 documents, the last release had 2" in broken.detail
     assert rel.versions(store(tmp_path)) == ["2026-10-26.1"]
 
 
@@ -210,9 +229,13 @@ def test_a_windowed_source_may_list_fewer_documents_than_the_release_holds(examp
     assert (later.status, later.plan["missing"], later.records) == ("no-change", 2, 33)
 
 
-def test_records_of_an_unfinished_rescan_are_still_checked_against_their_own_pages(example: Path, tmp_path: Path) -> None:
+def test_records_of_an_unfinished_rescan_are_still_checked_against_their_own_pages(
+    example: Path, tmp_path: Path
+) -> None:
     config = example / "updates" / "updates.toml"
-    config.write_text(config.read_text(encoding="utf-8").replace("max_pages_per_run = 50", f"max_pages_per_run = {PAGES_1974}"))
+    config.write_text(
+        config.read_text(encoding="utf-8").replace("max_pages_per_run = 50", f"max_pages_per_run = {PAGES_1974}")
+    )
     run(example, tmp_path, DAY1, "day1")
     rescan(example, "2026-10-26", 11, "A page scanned again, now showing other text entirely. " * 8, replace=True)
     second = run(example, tmp_path, DAY2, "day2")  # the new meeting takes the whole budget; the re-scan waits

@@ -25,7 +25,8 @@ def test_staging_keeps_readings_of_pages_whose_text_is_the_same(tmp_path: Path) 
     for n in range(3):
         space.collection("m1", staged=True).append_reading(reading(f"m1:{n}", "p1" if n else "p0"))
     space.promote("m1")
-    assert space.unread("m1") == 0 and not space.has("m1", staged=True)
+    assert space.unread("m1") == 0
+    assert not space.has("m1", staged=True)
 
     kept = space.stage("m1", content(LONG + "a", LONG + "b changed", LONG + "c"), lambda r: r.prompt_version == "p1")
     assert kept == 1  # page 0: another prompt; page 1: new text; page 2: kept
@@ -46,7 +47,8 @@ def test_the_current_copy_can_be_staged_again_without_downloading(tmp_path: Path
     space.stage("m1", content("", LONG), lambda r: True)
     space.promote("m1")
     again = space.current_content("m1")
-    assert again.pages == ["", LONG] and again.item == ITEM
+    assert again.pages == ["", LONG]
+    assert again.item == ITEM
 
 
 def test_gates_read_the_current_copy(tmp_path: Path) -> None:
@@ -57,8 +59,10 @@ def test_gates_read_the_current_copy(tmp_path: Path) -> None:
     space.promote("m1")
     assert WorkspacePages(space).document("m1") == (["cover", LONG], "1974-02-19")
     assert WorkspacePages(space).text("m1:1") == LONG
-    assert WorkspacePages(space).text("m1:7") is None and WorkspacePages(space).text("m2:0") is None
-    assert space.unread("m1") == 1 and set(space.page_hashes("m1")) == {"m1:0", "m1:1"}
+    assert WorkspacePages(space).text("m1:7") is None
+    assert WorkspacePages(space).text("m2:0") is None
+    assert space.unread("m1") == 1
+    assert set(space.page_hashes("m1")) == {"m1:0", "m1:1"}
 
 
 def test_document_ids_become_safe_folder_names() -> None:

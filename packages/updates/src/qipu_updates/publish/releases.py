@@ -1,7 +1,8 @@
 """Publish a release, see what is published, and roll back.
 
 A publish uploads the release folder, checks that every file the manifest lists arrived, then moves latest.json to it. A
-rollback moves latest.json back to an earlier release; nothing is deleted, so a rollback can itself be undone the same way.
+rollback moves latest.json back to an earlier release; nothing is deleted, so a rollback can itself be undone the same
+way.
 """
 
 from __future__ import annotations
@@ -117,5 +118,7 @@ def rollback(store: Store, now: dt.datetime, reason: str, to: str | None = None)
     if to not in published or target is None or not gates_passed(target):
         raise PublishError(f"release {to} was never published or did not pass its gates")
     pointer = _move_pointer(store, to, now)
-    record_event(store, {"event": "rollback", "version": to, "from": here.version, "at": now.isoformat(), "reason": reason})
+    record_event(
+        store, {"event": "rollback", "version": to, "from": here.version, "at": now.isoformat(), "reason": reason}
+    )
     return pointer

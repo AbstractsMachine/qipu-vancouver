@@ -25,11 +25,13 @@ def test_each_kind_of_source_reader_and_store_is_built(tmp_path: Path) -> None:
     )
     assert isinstance(wiring.make_reader(ReaderConfig("anthropic", "claude-haiku-5-5", 5)), AnthropicReader)
     openai = wiring.make_reader(ReaderConfig("openai", "qwen", 5, {"base_url": "http://localhost:8000/v1"}))
-    assert isinstance(openai, OpenAICompatibleReader) and openai.api_key_env == "OPENAI_API_KEY"
+    assert isinstance(openai, OpenAICompatibleReader)
+    assert openai.api_key_env == "OPENAI_API_KEY"
     assert isinstance(wiring.make_store(PublishConfig("rclone", "r2:b")), RcloneStore)
     assert isinstance(wiring.make_store(PublishConfig("local", str(tmp_path / "a"))), LocalStore)
     override = wiring.make_store(PublishConfig("rclone", "r2:b"), tmp_path / "ci")
-    assert isinstance(override, LocalStore) and override.root == tmp_path / "ci"
+    assert isinstance(override, LocalStore)
+    assert override.root == tmp_path / "ci"
 
 
 def test_unknown_kinds_are_config_errors(tmp_path: Path) -> None:

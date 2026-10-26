@@ -11,7 +11,12 @@ from tests.conftest import EXAMPLE
 
 def test_the_example_config_reads_its_files_from_its_own_folder() -> None:
     config = cfg.load(EXAMPLE / "updates" / "updates.toml")
-    assert (config.name, config.city, config.source.kind, config.reader.kind) == ("vancouver", "vancouver", "mirror", "replay")
+    assert (config.name, config.city, config.source.kind, config.reader.kind) == (
+        "vancouver",
+        "vancouver",
+        "mirror",
+        "replay",
+    )
     assert Path(config.source.options["index"]) == EXAMPLE / "updates" / "arrivals.json"
     assert Path(config.reader.options["readings"]) == EXAMPLE / "readings.jsonl"
     assert config.gazetteer == EXAMPLE / "gazetteer.csv"
