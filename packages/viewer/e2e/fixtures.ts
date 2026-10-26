@@ -39,9 +39,11 @@ export async function serveTiles(page: Page): Promise<{ requested: string[] }> {
     return route.fulfill({ status: 200, contentType: "image/png", body: solidPng(colour) });
   });
   /* a source link opens the Internet Archive in a new tab; answer it here */
-  await page.context().route("https://archive.org/**", (route) =>
-    route.fulfill({ status: 200, contentType: "text/html", body: "<title>Internet Archive</title>" }),
-  );
+  await page
+    .context()
+    .route("https://archive.org/**", (route) =>
+      route.fulfill({ status: 200, contentType: "text/html", body: "<title>Internet Archive</title>" }),
+    );
   return { requested };
 }
 

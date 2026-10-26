@@ -28,7 +28,5 @@ export interface Compositor {
   /** false once the GPU context is lost; the caller swaps in a CPU compositor */
   readonly ok: boolean;
   draw(target: HTMLCanvasElement, passes: readonly DrawPass[]): void;
-  /** drop anything held for a bitmap that is about to be closed */
-  forget(bitmap: ImageBitmap): void;
   dispose(): void;
 }

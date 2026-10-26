@@ -26,7 +26,12 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     build: {
-      lib: { entry: resolve(import.meta.dirname, "src/index.ts"), formats: ["es"], fileName: "index", cssFileName: "viewer" },
+      lib: {
+        entry: resolve(import.meta.dirname, "src/index.ts"),
+        formats: ["es"],
+        fileName: "index",
+        cssFileName: "viewer",
+      },
       rolldownOptions: { external: ["react", "react-dom", "react/jsx-runtime", "leaflet"] },
       sourcemap: true,
     },

@@ -41,7 +41,6 @@ export function createCpuCompositor(size: number): Compositor {
       compositeTile(out, resolved);
       ctx.putImageData(out, 0, 0);
     },
-    forget() {},
     dispose() {},
   };
 }

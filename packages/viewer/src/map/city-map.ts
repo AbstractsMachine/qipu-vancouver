@@ -89,11 +89,12 @@ export function createCityMap(options: CityMapOptions): CityMap {
     compositorKind = c.kind;
     return c;
   };
+  const images = tileImages({ capacity: phone ? 160 : 400 });
   const eraLayer = painting.eras
     ? new EraLayer({
         manifest: painting.eras,
         base: city.tiles.base,
-        images: tileImages(phone ? 64 : 160),
+        images,
         grid,
         compositor: makeCompositor,
         year: options.year,
@@ -141,7 +142,9 @@ export function createCityMap(options: CityMapOptions): CityMap {
     pendingEraTiles: () => eraLayer?.pending() ?? 0,
     compositorKind: () => compositorKind,
     destroy() {
+      /* removing the map removes the era layer, which disposes its compositor */
       map.remove();
+      images.clear();
     },
   };
 }

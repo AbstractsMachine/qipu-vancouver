@@ -50,7 +50,7 @@ void main() {
 const SLOTS = ["From", "To", "Clear", "Switch"] as const;
 const ENCODINGS = { c3: 0, c3c: 1, c3d: 2, q1: 3 } as const;
 
-export function createGlCompositor(size: number): Compositor | null {
+export function createGlCompositor(size: number, maxTextures = 128): Compositor | null {
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
@@ -85,10 +85,20 @@ export function createGlCompositor(size: number): Compositor | null {
   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
   gl.clearColor(0, 0, 0, 0);
 
+  /* uploaded images, least recently used first; past the cap the oldest texture is deleted */
   const textures = new Map<ImageBitmap, WebGLTexture>();
   const textureOf = (image: ImageBitmap, nearest: boolean): WebGLTexture | null => {
     const hit = textures.get(image);
-    if (hit) return hit;
+    if (hit) {
+      textures.delete(image);
+      textures.set(image, hit);
+      return hit;
+    }
+    while (textures.size >= maxTextures) {
+      const [oldest, t] = textures.entries().next().value as [ImageBitmap, WebGLTexture];
+      gl.deleteTexture(t);
+      textures.delete(oldest);
+    }
     const t = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, t);
     const filter = nearest ? gl.NEAREST : gl.LINEAR;
@@ -135,11 +145,6 @@ export function createGlCompositor(size: number): Compositor | null {
       if (!ctx) return;
       ctx.clearRect(0, 0, target.width, target.height);
       ctx.drawImage(canvas, 0, 0, target.width, target.height);
-    },
-    forget(bitmap) {
-      const t = textures.get(bitmap);
-      if (t) gl.deleteTexture(t);
-      textures.delete(bitmap);
     },
     dispose() {
       for (const t of textures.values()) gl.deleteTexture(t);

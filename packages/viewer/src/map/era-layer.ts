@@ -56,9 +56,6 @@ export class EraLayer extends L.GridLayer {
     this.year = options.year;
     this.compositor = options.compositor();
     closeSeams(this, options.grid.tileSize);
-    options.images.onEvict((b) => {
-      this.compositor.forget(b);
-    });
     this.on("tileunload", (e: L.TileEvent) => {
       this.live.delete(tileKey(e.coords));
     });
@@ -93,9 +90,14 @@ export class EraLayer extends L.GridLayer {
       seq: 0,
     };
     this.live.set(tileKey(coords), tile);
-    void this.draw(tile).then(() => {
-      done(undefined, canvas);
-    });
+    this.draw(tile).then(
+      () => {
+        done(undefined, canvas);
+      },
+      (error: unknown) => {
+        done(error instanceof Error ? error : new Error(String(error)), canvas);
+      },
+    );
     return canvas;
   }
 
@@ -103,6 +105,7 @@ export class EraLayer extends L.GridLayer {
     cancelAnimationFrame(this.frame);
     this.frame = 0;
     this.live.clear();
+    this.compositor.dispose();
     return super.onRemove(map);
   }
 
@@ -115,32 +118,44 @@ export class EraLayer extends L.GridLayer {
       tile.canvas.dataset.year = String(year);
       return;
     }
+    /* the images this draw holds, so none can drop out of the cache between loading and drawing */
+    const images = new Map<string, ImageBitmap | null>();
     const sources = sourcesOf(plans);
-    if (sources.some((s) => this.era.images.peek(s.url) === undefined)) {
-      await Promise.all(sources.map((s) => this.era.images.load(s.url, s.kind)));
-      if (seq !== tile.seq) return;
+    for (const s of sources) {
+      const hit = this.era.images.peek(s.url);
+      if (hit !== undefined) images.set(s.url, hit);
     }
-    if (!this.compositor.ok) this.compositor = this.era.compositor();
+    if (images.size < new Set(sources.map((s) => s.url)).size) {
+      const loaded = await Promise.all(
+        sources.map(async (s) => [s.url, await this.era.images.load(s.url, s.kind)] as const),
+      );
+      if (seq !== tile.seq) return;
+      for (const [url, bitmap] of loaded) images.set(url, bitmap);
+    }
+    if (!this.compositor.ok) {
+      this.compositor.dispose();
+      this.compositor = this.era.compositor();
+    }
     this.compositor.draw(
       tile.canvas,
-      plans.map((p) => this.resolve(p)),
+      plans.map((p) => resolve(p, images)),
     );
     tile.canvas.dataset.year = String(year);
   }
+}
 
-  private resolve(p: PassPlan): DrawPass {
-    const src = (s: SourceRef | null): DrawSource | null =>
-      s ? { image: this.era.images.peek(s.url) ?? null, window: s.window } : null;
-    return {
-      from: src(p.from),
-      to: src(p.to),
-      clear: src(p.clear),
-      switchMap: src(p.switchMap),
-      sw: p.sw,
-      t: p.t,
-      mid: p.mid,
-    };
-  }
+function resolve(p: PassPlan, images: ReadonlyMap<string, ImageBitmap | null>): DrawPass {
+  const src = (s: SourceRef | null): DrawSource | null =>
+    s ? { image: images.get(s.url) ?? null, window: s.window } : null;
+  return {
+    from: src(p.from),
+    to: src(p.to),
+    clear: src(p.clear),
+    switchMap: src(p.switchMap),
+    sw: p.sw,
+    t: p.t,
+    mid: p.mid,
+  };
 }
 
 const tileKey = (c: L.Coords): string => `${c.z}/${c.x}/${c.y}`;
