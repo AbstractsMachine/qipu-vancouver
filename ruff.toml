@@ -1,0 +1,19 @@
+# Shared by every Python package in the repository. A package may extend it with its own ruff.toml.
+line-length = 130
+target-version = "py311"
+src = ["packages/*/src", "packages/*"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "PL"]
+ignore = [
+  "PLR0913",  # pipeline steps take their context explicitly
+  "PLR2004",  # small literal thresholds read better inline, with a comment where they matter
+  "PLR0911",
+  "RUF001", "RUF002", "RUF003",  # typographic quotes and dashes are wanted in prose
+]
+
+[lint.per-file-ignores]
+"packages/*/tests/**" = ["PLR0915"]
+
+[format]
+docstring-code-format = true

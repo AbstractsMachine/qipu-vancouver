@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# JavaScript
+node_modules/
+dist/
+coverage/
+
+# Run output and caches
+build/
+work/
+.cache/
+*.tmp
+
+# Local
+.DS_Store
+.env
+.env.*
