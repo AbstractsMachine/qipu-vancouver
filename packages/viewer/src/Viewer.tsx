@@ -46,7 +46,8 @@ export function Viewer({ city, initial = {}, syncUrl = false, compositor = "auto
   const [view, setView] = useState<MapView | undefined>(initial.at);
   /* undefined until the reader picks or closes something: until then a block named in the link is open */
   const [picked, setPicked] = useState<Selection | null | undefined>(undefined);
-  const shownYear = clampYear(year, first, present);
+  /* until the eras arrive the range is unknown, so a linked year is kept as it is */
+  const shownYear = eras ? clampYear(year, first, present) : year;
 
   const map = useCityMap({
     container,
