@@ -1,14 +1,13 @@
 import type { Blocks } from "../data/blocks";
 import type { Point } from "../tiles/frame";
-import type { Projection } from "./projection";
 
 /**
  * Which block is under a point of the painted map.
  *
  * Blocks are not drawn as such; they are the unit the record is placed on.
- * Each ring is projected onto the plane at its own ground elevation, so on a
+ * Each ring is placed on the picture at its own ground elevation, so on a
  * hill it sits where the painting shows it, not where the flat ground plane
- * would put it. Where rings overlap on the plane (a slope seen from the
+ * would put it. Where rings overlap on the picture (a slope seen from the
  * south) the ray from the camera meets the higher ground first, so the
  * highest ring wins.
  *
@@ -17,17 +16,20 @@ import type { Projection } from "./projection";
  * that; this one trades it for needing nothing but the blocks file.
  */
 export interface BlockPicker {
-  /** the block at a plane point, as a geometry position, or null */
-  at(plane: Point): number | null;
-  /** a block's outline on the plane, for highlighting */
+  /** the block at a frame point, as a geometry position, or null */
+  at(point: Point): number | null;
+  /** a block's outline in the frame, for highlighting */
   outline(position: number): Point[];
-  /** a block's centre on the plane */
+  /** the centre of a block's box in the frame */
   centre(position: number): Point;
 }
 
-const CELL = 256;
+/** grid cell in frame units: a level-0 CSS pixel is tens of metres, so this is a few blocks */
+const CELL = 2;
 
-export function blockPicker(blocks: Blocks, proj: Projection): BlockPicker {
+type WorldToFrame = (x: number, y: number, z: number) => Point;
+
+export function blockPicker(blocks: Blocks, worldToFrame: WorldToFrame): BlockPicker {
   const { count, offsets, xs, ys, elevation } = blocks;
   const px = new Float32Array(xs.length);
   const py = new Float32Array(ys.length);
@@ -39,7 +41,7 @@ export function blockPicker(blocks: Blocks, proj: Projection): BlockPicker {
     let y1 = -Infinity;
     const z = elevation[i] as number;
     for (let k = offsets[i] as number; k < (offsets[i + 1] as number); k++) {
-      const [x, y] = proj.toPlane(xs[k] as number, ys[k] as number, z);
+      const [x, y] = worldToFrame(xs[k] as number, ys[k] as number, z);
       px[k] = x;
       py[k] = y;
       x0 = Math.min(x0, x);
@@ -50,7 +52,7 @@ export function blockPicker(blocks: Blocks, proj: Projection): BlockPicker {
     box.set([x0, y0, x1, y1], i * 4);
   }
 
-  /* a uniform grid over the plane, each cell listing the rings whose box touches it */
+  /* a uniform grid over the frame, each cell listing the rings whose box touches it */
   const grid = new Map<string, number[]>();
   const cellKey = (cx: number, cy: number) => `${cx},${cy}`;
   for (let i = 0; i < count; i++) {

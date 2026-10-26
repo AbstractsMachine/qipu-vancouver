@@ -5,8 +5,9 @@ import { FormatError } from "../data/validate";
 import { TILE_CSS, frameOf, level9BoxToFrame, tilesInBox } from "./frame";
 import { gridOptionsFor, levelAt, tilesForViewport } from "./levels";
 import { parseTileMask } from "./mask";
-import { parsePyramidIndex } from "./pyramid";
-import { tileTemplate, tileUrl, trimSlash } from "./urls";
+import { livePainting, parsePyramidIndex } from "./live-index";
+import { presentTileExists, tilesAt } from "./painting";
+import { keyTemplate, tileTemplate, tileUrl, trimSlash } from "./urls";
 
 describe("parsePyramidIndex", () => {
   it("reads the San Francisco pyramid as published", () => {
@@ -99,13 +100,32 @@ describe("tile mask", () => {
   });
 
   it("rejects a malformed row", () => {
-    expect(() => parseTileMask({ 1: [0, 0, 2] }, "have")).toThrow("have.1: expected [x0, y0, nx, bits]");
-    expect(() => parseTileMask({ 1: [0, 0, 0, "AA=="] }, "have")).toThrow("positive row width");
+    expect(() => parseTileMask({ 1: [0, 0, 2] }, "have")).toThrow("have.1: expected [x0, y0, cols, bits]");
+    expect(() => parseTileMask({ 1: [0, 0, 0, "AA=="] }, "have")).toThrow("positive count");
+  });
+});
+
+describe("tile mask, qipu-tiles/1 form", () => {
+  /* the example in docs/tiles-format.md: 6 x 4 tiles from (1, 0), most significant bit first */
+  const mask = parseTileMask({ 3: { x0: 1, y0: 0, cols: 6, rows: 4, bits: "/38P" } }, "have", "absent");
+
+  it("reads bits most significant first", () => {
+    /* bytes 0xff 0x7f 0x0f, bit i = row * 6 + column */
+    const row = (y: number) => [1, 2, 3, 4, 5, 6].map((x) => mask.has(3, x, y));
+    expect(row(0)).toEqual([true, true, true, true, true, true]);
+    expect(row(1)).toEqual([true, true, false, true, true, true]);
+    expect(row(2)).toEqual([true, true, true, true, false, false]);
+    expect(row(3)).toEqual([false, false, true, true, true, true]);
+  });
+
+  it("has no tiles on a level it does not list, or past its rows", () => {
+    expect(mask.has(2, 1, 0)).toBe(false);
+    expect(mask.has(3, 1, 4)).toBe(false);
   });
 });
 
 describe("tile URLs", () => {
-  const ref = { key: "render", zmax: 9, version: "r1-2", ext: "webp" } as const;
+  const ref = { template: keyTemplate("render", "webp"), zmax: 9, version: "r1-2" };
 
   it("puts the build stamp on every tile", () => {
     expect(tileUrl("https://t.example/sf/", ref, 3, 2, 1)).toBe("https://t.example/sf/render/3/2/1.webp?v=r1-2");
@@ -113,7 +133,9 @@ describe("tile URLs", () => {
   });
 
   it("leaves the query off when there is no stamp", () => {
-    expect(tileUrl("b", { ...ref, version: undefined, ext: "png" }, 0, 0, 0)).toBe("b/render/0/0/0.png");
+    expect(tileUrl("b", { template: "today/{z}/{x}/{y}.png", zmax: 1, version: undefined }, 0, 0, 0)).toBe(
+      "b/today/0/0/0.png",
+    );
     expect(tileTemplate("b", { ...ref, version: undefined })).toBe("b/render/{z}/{x}/{y}.webp");
     expect(trimSlash("a/")).toBe("a");
   });
@@ -137,5 +159,36 @@ describe("levels", () => {
     expect(tilesForViewport(1440, 900, gridOptionsFor(2))).toBe(7 * 5);
     expect(tilesForViewport(1440, 900, gridOptionsFor(1))).toBe(4 * 3);
     expect(tilesForViewport(390, 844, gridOptionsFor(3))).toBe(3 * 5);
+  });
+});
+
+describe("livePainting", () => {
+  const index = parsePyramidIndex(sfIndex);
+  const painting = livePainting(index, "render", null);
+
+  it("is the live index in the common model", () => {
+    expect(painting.format).toBe("qipu.org");
+    expect([painting.width, painting.height]).toEqual([160, 96]);
+    expect(painting.present).toMatchObject({ template: "render/{z}/{x}/{y}.webp", zmax: 9, version: index.version });
+  });
+
+  it("places world points through the renderer's projection", () => {
+    const [x0, y0] = painting.worldToFrame(0, 0, 0);
+    const [x1] = painting.worldToFrame(1000, 0, 0);
+    const [, yNorth] = painting.worldToFrame(0, 1000, 0);
+    const [, yHigh] = painting.worldToFrame(0, 0, 100);
+    expect(x1).toBeGreaterThan(x0);
+    expect(yNorth).toBeLessThan(y0);
+    expect(yHigh).toBeLessThan(y0);
+  });
+
+  it("knows which present tiles exist", () => {
+    expect(tilesAt(painting, 3)).toEqual([5, 3]);
+    expect(presentTileExists(painting, 3, 4, 2)).toBe(true);
+    expect(presentTileExists(painting, 3, 5, 0)).toBe(false);
+    expect(presentTileExists(painting, 10, 0, 0)).toBe(false);
+    const masked = livePainting(parsePyramidIndex(vanIndex), "render", null);
+    expect(presentTileExists(masked, 3, 0, 0)).toBe(false);
+    expect(presentTileExists(masked, 3, 1, 0)).toBe(true);
   });
 });

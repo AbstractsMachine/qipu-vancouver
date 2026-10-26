@@ -6,14 +6,7 @@
 export interface CityConfig {
   readonly id: string;
   readonly name: string;
-  readonly tiles: {
-    /** release folder holding the pyramids, e.g. https://tiles.qipu.org/us/sf/city/r20261001 */
-    readonly base: string;
-    /** key of the present-day pyramid under `base` */
-    readonly present: string;
-    /** eras manifest under `base`; omit for a map with no year slider */
-    readonly eras?: string;
-  };
+  readonly tiles: LiveTiles | QipuTiles;
   /** city data folder: manifest.json, base/blocks.qc, base/blocks-id.json, blocks/ */
   readonly data: { readonly base: string };
   readonly record: {
@@ -31,10 +24,30 @@ export interface CityConfig {
   readonly attribution: string;
 }
 
+/** A release as qipu.org serves it today: `<present>/index.json` and an eras manifest. */
+export interface LiveTiles {
+  readonly format: "qipu.org";
+  /** release folder, e.g. https://tiles.qipu.org/us/sf/city/r20261001 */
+  readonly base: string;
+  /** key of the present-day pyramid under `base` */
+  readonly present: string;
+  /** eras manifest under `base`; omit for a map with no year slider */
+  readonly eras?: string;
+}
+
+/** A release in the pipeline's format, docs/tiles-format.md. */
+export interface QipuTiles {
+  readonly format: "qipu-tiles/1";
+  readonly base: string;
+  /** manifest under `base`, `manifest.json` when omitted */
+  readonly manifest?: string;
+}
+
 export const SAN_FRANCISCO: CityConfig = {
   id: "sf",
   name: "San Francisco",
   tiles: {
+    format: "qipu.org",
     base: "https://tiles.qipu.org/us/sf/city/r20261001",
     present: "render",
     eras: "_preview_eras/render-years.json",
@@ -53,6 +66,7 @@ export const VANCOUVER: CityConfig = {
   id: "vancouver",
   name: "Vancouver",
   tiles: {
+    format: "qipu.org",
     base: "https://tiles.qipu.org/ca/vancouver/city/r20261007",
     present: "render",
     eras: "_preview_eras/render-years.json",

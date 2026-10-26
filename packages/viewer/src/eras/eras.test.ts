@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import sfEras from "../test/fixtures/sf-eras.json";
-import { type EraArea, parseEraManifest } from "./manifest";
+import { parseLiveEras as parseEraManifest } from "../tiles/live-eras";
+import { parseTileMask } from "../tiles/mask";
+import type { EraArea } from "./model";
 import { overlaps, planTile, sourceAt, sourcesOf } from "./plan";
 import { areaStateAt, clampYear, sliderTicks } from "./timeline";
 
@@ -8,9 +10,9 @@ const manifest = parseEraManifest(sfEras);
 const haight = manifest.areas.find((a) => a.id === "haight") as EraArea;
 const goldenGate = manifest.areas.find((a) => a.id === "cf_gg0") as EraArea;
 
-describe("parseEraManifest", () => {
+describe("the live eras manifest", () => {
   it("reads the present, the range and the key years", () => {
-    expect(manifest.present).toEqual({ key: "render", zmax: 9, version: "r20261001-10171833", ext: "webp" });
+    expect(manifest.present).toEqual({ template: "render/{z}/{x}/{y}.webp", zmax: 9, version: "r20261001-10171833" });
     expect(manifest.firstYear).toBe(1887);
     expect(manifest.presentYear).toBe(2026);
     expect(manifest.keyYears[0]).toBe(1887);
@@ -20,17 +22,18 @@ describe("parseEraManifest", () => {
     expect(haight.name).toBe("Haight-Ashbury");
     expect(haight.keys.map((k) => k.year)).toEqual([1900, 1905, 1906, 1915, 1959, 1985, 2026]);
     expect(haight.keys.at(-1)?.pyramid).toBeNull();
-    expect(haight.keys[0]?.pyramid?.key).toBe("_preview_eras/area/haight/1900");
+    expect(haight.keys[0]?.pyramid?.template).toBe("_preview_eras/area/haight/1900/{z}/{x}/{y}.webp");
     expect(haight.box).toEqual([65, 44, 75, 51]);
   });
 
   it("reads switch maps with their encoding", () => {
     const s = haight.switches.get("1906-1915");
-    expect(s).toMatchObject({ encoding: "c3c", offset: 1800, scale: 100, leadStep: 0.4, ext: "png" });
+    expect(s).toMatchObject({ encoding: "c3c", offset: 1800, scale: 100, leadStep: 0.4 });
+    expect(s?.template).toMatch(/\.png$/);
     expect(haight.switches.has("1905-1906")).toBe(false);
     const c3d = goldenGate.switches.get("1900-2026");
     expect(c3d?.encoding).toBe("c3d");
-    expect(c3d?.clear?.key).toBe("_preview_eras/area/cf_gg0/clear/1900-2026");
+    expect(c3d?.clear?.template).toBe("_preview_eras/area/cf_gg0/clear/1900-2026/{z}/{x}/{y}.webp");
   });
 
   it("drops eras not yet public unless asked", () => {
@@ -61,7 +64,7 @@ describe("areaStateAt", () => {
     expect(s.kind).toBe("between");
     if (s.kind !== "between") return;
     expect([s.from.year, s.to.year]).toEqual([1915, 1959]);
-    expect(s.switch?.key).toBe("_preview_eras/area/haight/switch/1915-1959");
+    expect(s.switch?.template).toBe("_preview_eras/area/haight/switch/1915-1959/{z}/{x}/{y}.png");
   });
 
   it("starts a segment exactly on its key year", () => {
@@ -72,6 +75,11 @@ describe("areaStateAt", () => {
   it("has no switch map where the pipeline wrote none", () => {
     const s = areaStateAt(haight, 1905.5);
     expect(s.kind === "between" && s.switch).toBeUndefined();
+  });
+
+  it("holds the first key before it where the format says so", () => {
+    const s = areaStateAt({ ...haight, holdsFirstKey: true }, 1850);
+    expect(s.kind === "key" && s.key.year).toBe(1900);
   });
 
   it("treats an area with a single key as empty", () => {
@@ -108,8 +116,8 @@ describe("planTile", () => {
     const [pass, ...rest] = planTile(manifest, base, 9, 135, 90, 1938);
     expect(rest).toEqual([]);
     expect(pass?.areaId).toBe("haight");
-    expect(pass?.from.url).toBe(`${base}/_preview_eras/area/haight/1915/9/135/90.webp?v=wtrfwe14`);
-    expect(pass?.to.url).toBe(`${base}/_preview_eras/area/haight/1959/9/135/90.webp?v=wtrfwe14`);
+    expect(pass?.from?.url).toBe(`${base}/_preview_eras/area/haight/1915/9/135/90.webp?v=wtrfwe14`);
+    expect(pass?.to?.url).toBe(`${base}/_preview_eras/area/haight/1959/9/135/90.webp?v=wtrfwe14`);
     expect(pass?.switchMap?.url).toBe(`${base}/_preview_eras/area/haight/switch/1915-1959/9/135/90.png?v=pv10171650`);
     expect(pass?.switchMap?.kind).toBe("data");
     expect(pass?.t).toBe((1938 - 1800) * 100);
@@ -118,7 +126,7 @@ describe("planTile", () => {
 
   it("draws the last segment towards the present pyramid", () => {
     const [pass] = planTile(manifest, base, 9, 135, 90, 2000);
-    expect(pass?.to.url).toBe(`${base}/render/9/135/90.webp?v=r20261001-10171833`);
+    expect(pass?.to?.url).toBe(`${base}/render/9/135/90.webp?v=r20261001-10171833`);
   });
 
   it("switches at the midpoint where there is no switch map", () => {
@@ -136,7 +144,7 @@ describe("planTile", () => {
 });
 
 describe("sourceAt", () => {
-  const ref = { key: "k", zmax: 6, version: undefined, ext: "webp" } as const;
+  const ref = { template: "k/{z}/{x}/{y}.webp", zmax: 6, version: undefined };
 
   it("uses the tile itself within the pyramid", () => {
     expect(sourceAt("b", ref, 5, 3, 4, "picture")).toEqual({
@@ -152,6 +160,12 @@ describe("sourceAt", () => {
       kind: "picture",
       window: [0.25, 0.5, 0.25],
     });
+  });
+
+  it("skips tiles the mask says are missing, at the ancestor's level", () => {
+    const mask = parseTileMask({ 6: { x0: 3, y0: 1, cols: 1, rows: 1, bits: "gA==" } }, "have", "absent");
+    expect(sourceAt("b", { ...ref, mask }, 8, 13, 6, "picture")).not.toBeNull();
+    expect(sourceAt("b", { ...ref, mask }, 8, 17, 6, "picture")).toBeNull();
   });
 
   it("tests box overlap with open edges", () => {

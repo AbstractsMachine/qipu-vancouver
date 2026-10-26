@@ -1,4 +1,4 @@
-import type { EraSwitch } from "./manifest";
+import type { EraSwitch } from "./model";
 import { decodeSwitchPixel, pixelWeights } from "./switch";
 
 /**

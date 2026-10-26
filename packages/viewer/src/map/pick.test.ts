@@ -3,11 +3,11 @@ import { decodeBlocks } from "../data/blocks";
 import { decodeChunk } from "../data/qct";
 import { twoBlocks } from "../test/builders";
 import { blockPicker } from "./pick";
-import { projection } from "./projection";
+import { projection } from "../tiles/projection";
 
 const proj = projection({ sA: 0.42, zex: 1 });
 const blocks = decodeBlocks(decodeChunk(twoBlocks()), { id: ["A", "B"] }, []);
-const picker = blockPicker(blocks, proj);
+const picker = blockPicker(blocks, (x, y, z) => proj.toPlane(x, y, z));
 
 describe("projection", () => {
   it("is north-up: x from x alone, y from y and height", () => {

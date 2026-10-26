@@ -1,4 +1,4 @@
-import type { Point } from "../tiles/frame";
+import type { Point } from "./frame";
 
 /**
  * World metres (x east, y north, z up) to the plane the city was painted on.

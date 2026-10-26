@@ -33,6 +33,13 @@ describe("decodeSwitchPixel", () => {
     expect(decodeSwitchPixel(1, 0, 0x31, 0, c3)).toEqual({ date: 256, fade: 0x31 * 0.5, lead: 0 });
   });
 
+  it("reads every qipu-tiles/1 code as a date, 0 included", () => {
+    const q1 = { ...c3c, encoding: "q1", leadStep: 0 } as const;
+    expect(decodeSwitchPixel(0, 0, 0, 11050, q1)).toEqual({ date: 0, fade: 0, lead: 0 });
+    expect(decodeSwitchPixel(54, 176, 9, 0, q1)).toEqual({ date: 14000, fade: 0, lead: 0 });
+    expect(decodeSwitchPixel(255, 255, 0, 0, q1).date).toBe(NEVER);
+  });
+
   it("reads a lead from blue's high bits, for c3d only", () => {
     expect(decodeSwitchPixel(1, 0, 0x31, 0, c3d).lead).toBeCloseTo(3 * 0.4 * 100, 10);
     expect(decodeSwitchPixel(1, 0, 0x31, 0, c3c).lead).toBe(0);

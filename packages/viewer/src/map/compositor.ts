@@ -1,4 +1,4 @@
-import type { EraSwitch } from "../eras/manifest";
+import type { EraSwitch } from "../eras/model";
 import type { Window } from "../eras/plan";
 
 export interface DrawSource {
@@ -8,8 +8,8 @@ export interface DrawSource {
 
 /** One area's pass with its images resolved; see `eras/plan.ts`. */
 export interface DrawPass {
-  readonly from: DrawSource;
-  readonly to: DrawSource;
+  readonly from: DrawSource | null;
+  readonly to: DrawSource | null;
   readonly clear: DrawSource | null;
   readonly switchMap: DrawSource | null;
   readonly sw: Pick<EraSwitch, "encoding" | "scale" | "leadStep">;

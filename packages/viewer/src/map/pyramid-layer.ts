@@ -1,11 +1,12 @@
 import * as L from "leaflet";
-import type { PyramidIndex } from "../tiles/pyramid";
 import type { GridOptions } from "../tiles/levels";
+import { type Painting, presentTileExists } from "../tiles/painting";
+import { tileTemplate } from "../tiles/urls";
 import { closeSeams } from "./seams";
 
 export interface PyramidLayerOptions {
-  readonly template: string;
-  readonly index: PyramidIndex;
+  readonly base: string;
+  readonly painting: Painting;
   readonly grid: GridOptions;
   readonly bounds: L.LatLngBounds;
   readonly attribution: string;
@@ -16,15 +17,15 @@ export interface PyramidLayerOptions {
  * grid, or missing from the pyramid's published mask, are never requested.
  */
 export class PyramidLayer extends L.TileLayer {
-  private readonly index: PyramidIndex;
+  private readonly painting: Painting;
   private readonly offset: number;
 
   constructor(options: PyramidLayerOptions) {
-    super(options.template, {
+    super(tileTemplate(options.base, options.painting.present), {
       tileSize: options.grid.tileSize,
       zoomOffset: options.grid.zoomOffset,
       minNativeZoom: -options.grid.zoomOffset,
-      maxNativeZoom: options.index.zmax - options.grid.zoomOffset,
+      maxNativeZoom: options.painting.present.zmax - options.grid.zoomOffset,
       bounds: options.bounds,
       noWrap: true,
       keepBuffer: 2,
@@ -32,13 +33,13 @@ export class PyramidLayer extends L.TileLayer {
       attribution: options.attribution,
       className: "qv-present-layer",
     });
-    this.index = options.index;
+    this.painting = options.painting;
     this.offset = options.grid.zoomOffset;
     closeSeams(this, options.grid.tileSize);
   }
 
   override createTile(coords: L.Coords, done: L.DoneCallback): HTMLElement {
-    if (!this.exists(coords.z + this.offset, coords.x, coords.y)) {
+    if (!presentTileExists(this.painting, coords.z + this.offset, coords.x, coords.y)) {
       const empty = document.createElement("div");
       queueMicrotask(() => {
         done(undefined, empty);
@@ -46,11 +47,5 @@ export class PyramidLayer extends L.TileLayer {
       return empty;
     }
     return super.createTile(coords, done);
-  }
-
-  private exists(level: number, x: number, y: number): boolean {
-    const l = this.index.levels.get(level);
-    if (!l || x < 0 || y < 0 || x >= l.tiles[0] || y >= l.tiles[1]) return false;
-    return this.index.mask?.has(level, x, y) ?? true;
   }
 }

@@ -1,0 +1,22 @@
+{
+  "format": "qipu-tiles/1",
+  "city": "ca/vancouver",
+  "area": "west-end",
+  "release": "r20261026",
+  "tile_size": 512,
+  "canvas": { "width": 2390, "height": 1720, "metres_per_px": 0.25, "zmax": 3 },
+  "camera": { "azimuth_deg": 0.0, "elevation_deg": 30.709 },
+  "projection": { "kind": "local-equirectangular", "lon0": -123.1302, "lat0": 49.2565, "metres_per_degree": 111320.0 },
+  "world_to_px": [
+    [4.0, 0.0, 0.0, 5650.1],
+    [0.0, -2.0428, -3.4396, 6700.3]
+  ],
+  "today": { "year": 2026, "path": "today/{z}/{x}/{y}.webp", "zmax": 3, "v": "3f9a1c2e", "have": {} },
+  "years": [{ "year": 1950, "path": "years/1950/{z}/{x}/{y}.webp", "zmax": 3, "v": "8b0e44d1", "have": {} }],
+  "switch": [{ "from": 1950, "to": 2026, "path": "switch/1950-2026/{z}/{x}/{y}.png", "zmax": 3, "v": "c2d9e0aa", "have": {} }],
+  "ground": "ground.json",
+  "attribution": [
+    "Contains information licensed under the Open Government Licence – Vancouver.",
+    "© OpenStreetMap contributors (ODbL)."
+  ]
+}

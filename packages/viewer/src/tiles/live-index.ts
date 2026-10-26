@@ -1,5 +1,10 @@
 import { type Json, FormatError, int, num, optional, record, pair, str } from "../data/validate";
+import type { EraManifest } from "../eras/model";
+import { frameOf } from "./frame";
 import { type TileMask, parseTileMask } from "./mask";
+import type { Painting } from "./painting";
+import { projection } from "./projection";
+import { keyTemplate } from "./urls";
 
 /** One zoom level of a painted pyramid, as `index.json` states it. */
 export interface PyramidLevel {
@@ -68,5 +73,24 @@ export function parsePyramidIndex(json: Json): PyramidIndex {
     },
     version: optional(o.v, (v) => str(v, "index.v")),
     mask: optional(o.have, (v) => parseTileMask(v, "index.have")),
+  };
+}
+
+/**
+ * The live index as a `Painting`: the present pyramid under `presentKey`, and
+ * world metres placed through the renderer's projection and the index's frame.
+ */
+export function livePainting(index: PyramidIndex, presentKey: string, eras: EraManifest | null): Painting {
+  const frame = frameOf(index);
+  const proj = projection(index.proj);
+  return {
+    format: "qipu.org",
+    tile: index.tile,
+    width: frame.width,
+    height: frame.height,
+    present: { template: keyTemplate(presentKey, "webp"), zmax: index.zmax, version: index.version, mask: index.mask },
+    eras,
+    worldToFrame: (x, y, z) => frame.toFrame(proj.toPlane(x, y, z)),
+    attribution: [],
   };
 }

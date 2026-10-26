@@ -1,15 +1,15 @@
-import { type Json, FormatError, int, isRecord, list, num, optional, record, str, quad } from "../data/validate";
-import { type Box, level9BoxToFrame } from "../tiles/frame";
+import type { Box } from "../tiles/frame";
 import type { PyramidRef } from "../tiles/urls";
 
 /**
- * The eras manifest (`render-years.json`): the present pyramid, and the city
- * split into areas, each painted at a few key years. Between two key years a
- * "switch" pyramid stores, per pixel, the date that pixel changes from the
- * earlier picture to the later one, so a year slider can rebuild the city one
+ * The past, as the viewer models it, whichever format it was read from: the
+ * city split into areas, each painted at a few key years. Between two key
+ * years a switch map stores, per pixel, the date that pixel changes from the
+ * earlier picture to the later one, so the slider rebuilds the city one
  * building at a time instead of cross-fading whole pictures.
  */
 export interface EraManifest {
+  /** the present-day pyramid, which every area ends on */
   readonly present: PyramidRef;
   /** the earliest year the slider offers */
   readonly firstYear: number;
@@ -17,6 +17,7 @@ export interface EraManifest {
   readonly presentYear: number;
   /** key years across all areas, for the slider's tick marks */
   readonly keyYears: readonly number[];
+  /** drawn in this order, each over the one before */
   readonly areas: readonly EraArea[];
 }
 
@@ -26,8 +27,12 @@ export interface EraKey {
   readonly pyramid: PyramidRef | null;
 }
 
-/** c3: the first form, a fade in blue; c3c: a fade code; c3d: a fade code and a lead */
-export type SwitchEncoding = "c3" | "c3c" | "c3d";
+/**
+ * How a switch map packs a date (see `switch.ts`):
+ *   c3, c3c, c3d   the live qipu.org forms; date code 0 means "at the midpoint"
+ *   q1             qipu-tiles/1: every code is a date, blue is unused
+ */
+export type SwitchEncoding = "c3" | "c3c" | "c3d" | "q1";
 
 export interface EraSwitch extends PyramidRef {
   readonly encoding: SwitchEncoding;
@@ -47,95 +52,10 @@ export interface EraArea {
   readonly box: Box;
   /** ascending; the last is the present */
   readonly keys: readonly EraKey[];
-  /** switch pyramids by segment name, `"1906-1915"` */
+  /** switch maps by segment name, `"1906-1915"` */
   readonly switches: ReadonlyMap<string, EraSwitch>;
-}
-
-export interface ParseOptions {
-  /** the pyramids' tile size in image pixels, for converting area boxes */
-  readonly tile?: number;
-  /** keep eras the manifest marks as not yet public */
-  readonly includeUnpublished?: boolean;
+  /** before its first key the area shows that key (qipu-tiles/1) rather than nothing (live) */
+  readonly holdsFirstKey: boolean;
 }
 
 export const segmentName = (a: number, b: number): string => `${a}-${b}`;
-
-export function parseEraManifest(json: Json, options: ParseOptions = {}): EraManifest {
-  const o = record(json, "eras");
-  const present = pyramidRef(o.now, "eras.now", "webp");
-  const years = record(o.years ?? {}, "eras.years");
-  const keyYears = Object.entries(years)
-    .filter(([, v]) => options.includeUnpublished || !isRecord(v) || v.public !== false)
-    .map(([y]) => yearKey(y, "eras.years"))
-    .sort((a, b) => a - b);
-
-  const quarters = record(o.quarters ?? {}, "eras.quarters");
-  const areas = Object.entries(quarters).map(([id, q]) => parseArea(id, q, options.tile ?? 512));
-  const presentYear = Math.max(...areas.map((a) => a.keys.at(-1)?.year ?? 0), ...keyYears);
-  const firstYear = optional(o.min, (v) => int(v, "eras.min")) ?? Math.min(...keyYears, presentYear);
-  return { present, firstYear, presentYear, keyYears, areas };
-}
-
-function parseArea(id: string, json: Json, tile: number): EraArea {
-  const p = `eras.quarters.${id}`;
-  const q = record(json, p);
-  const keysJson = record(q.keys ?? {}, `${p}.keys`);
-  const years = list(q.years, `${p}.years`).map((y, i) =>
-    int(record(y, `${p}.years[${i}]`).year, `${p}.years[${i}].year`),
-  );
-  if (years.length < 2) throw new FormatError(`${p}.years`, "at least a key year and the present");
-  const last = years.length - 1;
-  const keys: EraKey[] = [];
-  years.forEach((year, i) => {
-    const k = keysJson[String(year)];
-    if (k !== undefined) keys.push({ year, pyramid: pyramidRef(k, `${p}.keys.${year}`, "webp") });
-    else if (i === last) keys.push({ year, pyramid: null });
-  });
-  keys.sort((a, b) => a.year - b.year);
-
-  const switches = new Map<string, EraSwitch>();
-  for (const [name, s] of Object.entries(record(q.switch ?? {}, `${p}.switch`))) {
-    switches.set(name, parseSwitch(s, `${p}.switch.${name}`));
-  }
-  return {
-    id,
-    name: optional(q.name, (v) => str(v, `${p}.name`)) ?? id,
-    box: level9BoxToFrame(quad(q.l9, `${p}.l9`), tile),
-    keys,
-    switches,
-  };
-}
-
-function parseSwitch(json: Json, path: string): EraSwitch {
-  const s = record(json, path);
-  const enc = optional(s.enc, (v) => str(v, `${path}.enc`)) ?? "c3";
-  if (enc !== "c3" && enc !== "c3c" && enc !== "c3d") {
-    throw new FormatError(`${path}.enc`, `"c3", "c3c" or "c3d" (got "${enc}")`);
-  }
-  return {
-    ...pyramidRef(s, path, "png"),
-    encoding: enc,
-    offset: optional(s.offset, (v) => num(v, `${path}.offset`)) ?? 1800,
-    scale: optional(s.scale, (v) => num(v, `${path}.scale`)) ?? 100,
-    leadStep: optional(s.leadStep, (v) => num(v, `${path}.leadStep`)) ?? 0.2,
-    clear: optional(s.clear, (v) => pyramidRef(v, `${path}.clear`, "webp")),
-  };
-}
-
-function pyramidRef(json: Json, path: string, ext: "webp" | "png"): PyramidRef {
-  const o = record(json, path);
-  const e = optional(o.ext, (v) => str(v, `${path}.ext`)) ?? ext;
-  if (e !== "webp" && e !== "png") throw new FormatError(`${path}.ext`, '"webp" or "png"');
-  return {
-    key: str(o.key, `${path}.key`),
-    zmax: int(o.zmax, `${path}.zmax`),
-    version: optional(o.v, (v) => str(v, `${path}.v`)),
-    ext: e,
-  };
-}
-
-function yearKey(text: string, path: string): number {
-  const y = Number(text);
-  if (!Number.isInteger(y)) throw new FormatError(`${path}.${text}`, "a year");
-  return y;
-}

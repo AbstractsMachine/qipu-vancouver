@@ -1,4 +1,4 @@
-import type { PyramidIndex } from "./pyramid";
+import type { PyramidIndex } from "./live-index";
 
 /** A tile is shown at this many CSS pixels, half its image size, so it is sharp on a 2x screen. */
 export const TILE_CSS = 256;

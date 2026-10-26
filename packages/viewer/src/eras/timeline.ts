@@ -1,9 +1,11 @@
-import { type EraArea, type EraKey, type EraSwitch, segmentName } from "./manifest";
+import { type EraArea, type EraKey, type EraSwitch, segmentName } from "./model";
 
 /** What an area shows at a year. */
 export type AreaState =
   /** before its first key: nothing, the layers under it show */
   | { readonly kind: "empty" }
+  /** one key, whole (an area that holds its first key before its first year) */
+  | { readonly kind: "key"; readonly key: EraKey }
   /** at or after the present: nothing, the present pyramid shows */
   | { readonly kind: "present" }
   /** between two keys, `from` changing into `to` pixel by pixel */
@@ -20,7 +22,7 @@ export function areaStateAt(area: EraArea, year: number): AreaState {
   const first = keys[0];
   const last = keys.at(-1);
   if (!first || !last || keys.length < 2) return { kind: "empty" };
-  if (year < first.year) return { kind: "empty" };
+  if (year < first.year) return area.holdsFirstKey ? { kind: "key", key: first } : { kind: "empty" };
   if (year >= last.year) return { kind: "present" };
   let i = 0;
   while (i + 2 < keys.length && year >= (keys[i + 1] as EraKey).year) i++;

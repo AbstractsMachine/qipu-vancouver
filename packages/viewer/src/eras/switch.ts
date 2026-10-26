@@ -1,4 +1,4 @@
-import type { EraSwitch } from "./manifest";
+import type { EraSwitch } from "./model";
 
 /**
  * The per-pixel switch, written once in TypeScript. The WebGL shader in
@@ -11,7 +11,8 @@ import type { EraSwitch } from "./manifest";
  * fields: the low one is the fade length (0 = a hard switch, else
  * 0.0015 * 2^(w - 1) years), the high one (c3d only) a lead in `leadStep`
  * years during which the cleared site shows before the new building appears.
- * In the older c3 form blue is the fade alone, in steps of 0.005 years.
+ * In the older c3 form blue is the fade alone, in steps of 0.005 years. In
+ * qipu-tiles/1 (q1) every code is a date, 0 included, and blue is unused.
  */
 export interface SwitchPixel {
   /** date code from which the later picture shows */
@@ -41,7 +42,8 @@ export function decodeSwitchPixel(
   sw: Pick<EraSwitch, "encoding" | "scale" | "leadStep">,
 ): SwitchPixel {
   const code = r * 256 + g;
-  const date = code === 0 ? mid : code === 65535 ? NEVER : code;
+  const date = code === 65535 ? NEVER : code === 0 && sw.encoding !== "q1" ? mid : code;
+  if (sw.encoding === "q1") return { date, fade: 0, lead: 0 };
   if (sw.encoding === "c3") return { date, fade: b * 0.005 * sw.scale, lead: 0 };
   const w = b & 15;
   const fade = w > 0 ? 0.0015 * 2 ** (w - 1) * sw.scale : 0;

@@ -1,7 +1,7 @@
 import { type RefObject, useEffect, useEffectEvent, useState } from "react";
 import type { CityConfig } from "../config";
 import { type CityMap, type MapView, createCityMap } from "../map/city-map";
-import type { Painting } from "../tiles/load";
+import type { Painting } from "../tiles/painting";
 
 export interface CityMapHookOptions {
   readonly container: RefObject<HTMLDivElement | null>;
@@ -36,8 +36,7 @@ export function useCityMap(options: CityMapHookOptions): CityMap | null {
     const m = createCityMap({
       element,
       city,
-      index: painting.index,
-      eras: painting.eras,
+      painting,
       year,
       view,
       compositor,

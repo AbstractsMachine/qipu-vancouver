@@ -1,6 +1,6 @@
 import { type Box, TILE_CSS } from "../tiles/frame";
 import { type PyramidRef, tileUrl } from "../tiles/urls";
-import type { EraArea, EraManifest, EraSwitch } from "./manifest";
+import type { EraArea, EraManifest, EraSwitch } from "./model";
 import { midCode, yearCode } from "./switch";
 import { areaStateAt } from "./timeline";
 
@@ -16,8 +16,9 @@ export interface SourceRef {
 /** Everything needed to draw one area onto one tile at one year. */
 export interface PassPlan {
   readonly areaId: string;
-  readonly from: SourceRef;
-  readonly to: SourceRef;
+  /** null where the pyramid has no tile here (transparent) */
+  readonly from: SourceRef | null;
+  readonly to: SourceRef | null;
   readonly clear: SourceRef | null;
   readonly switchMap: SourceRef | null;
   readonly sw: Pick<EraSwitch, "encoding" | "scale" | "leadStep">;
@@ -55,9 +56,13 @@ export function planTile(
 
 function planArea(area: EraArea, present: PyramidRef, base: string, z: number, x: number, y: number, year: number) {
   const state = areaStateAt(area, year);
+  const src = (ref: PyramidRef, kind: SourceRef["kind"]) => sourceAt(base, ref, z, x, y, kind);
+  if (state.kind === "key") {
+    const whole = src(state.key.pyramid ?? present, "picture");
+    return { areaId: area.id, from: whole, to: whole, clear: null, switchMap: null, sw: NO_SWITCH, t: 1, mid: 0 };
+  }
   if (state.kind !== "between") return null;
   const sw = state.switch ?? NO_SWITCH;
-  const src = (ref: PyramidRef, kind: SourceRef["kind"]) => sourceAt(base, ref, z, x, y, kind);
   return {
     areaId: area.id,
     from: src(state.from.pyramid ?? present, "picture"),
@@ -72,7 +77,8 @@ function planArea(area: EraArea, present: PyramidRef, base: string, z: number, x
 
 /**
  * A tile of `ref`, or, past the pyramid's deepest level, the part of its
- * deepest ancestor tile that covers it (drawn enlarged).
+ * deepest ancestor tile that covers it (drawn enlarged). Null where the
+ * pyramid's mask says the tile does not exist.
  */
 export function sourceAt(
   base: string,
@@ -81,12 +87,13 @@ export function sourceAt(
   x: number,
   y: number,
   kind: SourceRef["kind"],
-): SourceRef {
+): SourceRef | null {
   const dz = Math.max(0, z - ref.zmax);
-  if (dz === 0) return { url: tileUrl(base, ref, z, x, y), kind, window: [0, 0, 1] };
   const k = 2 ** dz;
   const ax = Math.floor(x / k);
   const ay = Math.floor(y / k);
+  if (ref.mask && !ref.mask.has(z - dz, ax, ay)) return null;
+  if (dz === 0) return { url: tileUrl(base, ref, z, x, y), kind, window: [0, 0, 1] };
   return {
     url: tileUrl(base, ref, ref.zmax, ax, ay),
     kind,
@@ -102,9 +109,7 @@ export function overlaps(a: Box, b: Box): boolean {
 export function sourcesOf(passes: readonly PassPlan[]): SourceRef[] {
   const out: SourceRef[] = [];
   for (const p of passes) {
-    out.push(p.from, p.to);
-    if (p.clear) out.push(p.clear);
-    if (p.switchMap) out.push(p.switchMap);
+    for (const s of [p.from, p.to, p.clear, p.switchMap]) if (s) out.push(s);
   }
   return out;
 }

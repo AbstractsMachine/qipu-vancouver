@@ -23,20 +23,30 @@ function dataFor(city: CityConfig): CityConfig {
 
 const initial = readViewState(window.location.search);
 
+/* ?tiles=<release folder> opens a qipu-tiles/1 release written by packages/map-pipeline, over Vancouver's records */
+const release = new URLSearchParams(window.location.search).get("tiles");
+const cities: readonly CityConfig[] = release
+  ? CITIES.map((c) => (c.id === "vancouver" ? { ...c, tiles: { format: "qipu-tiles/1", base: release } } : c))
+  : CITIES;
+
 function App() {
-  const [cityId, setCityId] = useState(initial.city ?? "sf");
-  const city = CITIES.find((c) => c.id === cityId) ?? CITIES[0];
+  const [cityId, setCityId] = useState(initial.city ?? (release ? "vancouver" : "sf"));
+  const city = cities.find((c) => c.id === cityId) ?? cities[0];
   if (!city) return null;
   return (
     <div className="demo">
       <nav className="demo-cities" aria-label="City">
-        {CITIES.map((c) => (
+        {cities.map((c) => (
           <button
             key={c.id}
             type="button"
             aria-pressed={c.id === city.id}
             onClick={() => {
-              window.history.replaceState(null, "", `?city=${c.id}`);
+              window.history.replaceState(
+                null,
+                "",
+                `?city=${c.id}${release ? `&tiles=${encodeURIComponent(release)}` : ""}`,
+              );
               setCityId(c.id);
             }}
           >

@@ -1,5 +1,5 @@
 import * as L from "leaflet";
-import type { EraManifest } from "../eras/manifest";
+import type { EraManifest } from "../eras/model";
 import { type PassPlan, type SourceRef, planTile, sourcesOf } from "../eras/plan";
 import type { GridOptions } from "../tiles/levels";
 import type { Compositor, DrawPass, DrawSource } from "./compositor";
@@ -132,8 +132,8 @@ export class EraLayer extends L.GridLayer {
     const src = (s: SourceRef | null): DrawSource | null =>
       s ? { image: this.era.images.peek(s.url) ?? null, window: s.window } : null;
     return {
-      from: src(p.from) ?? { image: null, window: p.from.window },
-      to: src(p.to) ?? { image: null, window: p.to.window },
+      from: src(p.from),
+      to: src(p.to),
       clear: src(p.clear),
       switchMap: src(p.switchMap),
       sw: p.sw,

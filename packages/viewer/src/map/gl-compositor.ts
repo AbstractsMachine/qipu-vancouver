@@ -26,9 +26,11 @@ void main() {
   if (hasSwitch > 0.5) {
     vec3 c = texture2D(uSwitch, wSwitch.xy + v * wSwitch.z).rgb;
     float code = floor(c.r * 255.0 + 0.5) * 256.0 + floor(c.g * 255.0 + 0.5);
-    d = code < 0.5 ? uMid : (code > 65534.5 ? 1.0e9 : code);
+    d = code > 65534.5 ? 1.0e9 : (code < 0.5 && uEncoding < 2.5 ? uMid : code);
     float blue = floor(c.b * 255.0 + 0.5);
-    if (uEncoding < 0.5) {
+    if (uEncoding > 2.5) {
+      w = 0.0;
+    } else if (uEncoding < 0.5) {
       w = blue * 0.005 * uScale;
     } else {
       float fade = mod(blue, 16.0);
@@ -46,7 +48,7 @@ void main() {
 }`;
 
 const SLOTS = ["From", "To", "Clear", "Switch"] as const;
-const ENCODINGS = { c3: 0, c3c: 1, c3d: 2 } as const;
+const ENCODINGS = { c3: 0, c3c: 1, c3d: 2, q1: 3 } as const;
 
 export function createGlCompositor(size: number): Compositor | null {
   const canvas = document.createElement("canvas");

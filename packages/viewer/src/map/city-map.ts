@@ -1,17 +1,14 @@
 import * as L from "leaflet";
 import type { CityConfig } from "../config";
 import type { Blocks } from "../data/blocks";
-import type { EraManifest } from "../eras/manifest";
-import { type Frame, type Point, frameOf } from "../tiles/frame";
+import type { Point } from "../tiles/frame";
 import { gridOptionsFor } from "../tiles/levels";
-import type { PyramidIndex } from "../tiles/pyramid";
-import { tileTemplate } from "../tiles/urls";
+import type { Painting } from "../tiles/painting";
 import type { Compositor } from "./compositor";
 import { createCpuCompositor } from "./cpu-compositor";
 import { EraLayer } from "./era-layer";
 import { createGlCompositor } from "./gl-compositor";
 import { type BlockPicker, blockPicker } from "./pick";
-import { projection } from "./projection";
 import { PyramidLayer } from "./pyramid-layer";
 import { tileImages } from "./tile-images";
 
@@ -25,8 +22,7 @@ export interface MapView {
 export interface CityMapOptions {
   readonly element: HTMLElement;
   readonly city: CityConfig;
-  readonly index: PyramidIndex;
-  readonly eras: EraManifest | null;
+  readonly painting: Painting;
   readonly year: number;
   readonly view?: MapView | undefined;
   /** "cpu" skips WebGL, for browsers or tests where it is unreliable */
@@ -39,7 +35,6 @@ export interface CityMapOptions {
 
 export interface CityMap {
   readonly leaflet: L.Map;
-  readonly frame: Frame;
   setYear(year: number): void;
   /** blocks arrive after the tiles; until then a click picks nothing */
   setBlocks(blocks: Blocks): void;
@@ -57,17 +52,16 @@ const toLatLng = ([x, y]: Point): L.LatLng => L.latLng(-y, x);
 const toFrame = (ll: L.LatLng): Point => [ll.lng, -ll.lat];
 
 export function createCityMap(options: CityMapOptions): CityMap {
-  const { index, city } = options;
-  const frame = frameOf(index);
+  const { painting, city } = options;
+  const zmax = painting.present.zmax;
   const grid = gridOptionsFor(options.devicePixelRatio ?? window.devicePixelRatio);
-  const bounds = L.latLngBounds(toLatLng([0, 0]), toLatLng([frame.width, frame.height]));
-  const proj = projection(index.proj);
+  const bounds = L.latLngBounds(toLatLng([0, 0]), toLatLng([painting.width, painting.height]));
   const phone = window.matchMedia("(pointer: coarse)").matches;
 
   const map = L.map(options.element, {
     crs: L.CRS.Simple,
     minZoom: -1,
-    maxZoom: index.zmax + 2,
+    maxZoom: zmax + 2,
     zoomSnap: 0.25,
     zoomDelta: 0.5,
     wheelPxPerZoomLevel: 120,
@@ -81,36 +75,31 @@ export function createCityMap(options: CityMapOptions): CityMap {
   options.element.setAttribute("aria-label", `Painted map of ${city.name}`);
 
   new PyramidLayer({
-    template: tileTemplate(city.tiles.base, {
-      key: city.tiles.present,
-      zmax: index.zmax,
-      version: index.version,
-      ext: "webp",
-    }),
-    index,
+    base: city.tiles.base,
+    painting,
     grid,
     bounds,
-    attribution: city.attribution,
+    attribution: [city.attribution, ...painting.attribution].join(" · "),
   }).addTo(map);
 
   let compositorKind: "webgl" | "cpu" | "none" = "none";
   const makeCompositor = (): Compositor => {
-    const gl = options.compositor === "cpu" ? null : createGlCompositor(index.tile);
-    const c = gl ?? createCpuCompositor(index.tile);
+    const gl = options.compositor === "cpu" ? null : createGlCompositor(painting.tile);
+    const c = gl ?? createCpuCompositor(painting.tile);
     compositorKind = c.kind;
     return c;
   };
-  const eraLayer = options.eras
+  const eraLayer = painting.eras
     ? new EraLayer({
-        manifest: options.eras,
+        manifest: painting.eras,
         base: city.tiles.base,
         images: tileImages(phone ? 64 : 160),
         grid,
         compositor: makeCompositor,
         year: options.year,
-        tilePx: index.tile,
+        tilePx: painting.tile,
         bounds,
-        maxNativeZoom: index.zmax - grid.zoomOffset,
+        maxNativeZoom: zmax - grid.zoomOffset,
       }).addTo(map)
     : null;
 
@@ -128,26 +117,24 @@ export function createCityMap(options: CityMapOptions): CityMap {
 
   map.on("click", (e: L.LeafletMouseEvent) => {
     if (!picker) return;
-    options.onPick(picker.at(frame.toPlane(toFrame(e.latlng))));
+    options.onPick(picker.at(toFrame(e.latlng)));
   });
   map.on("moveend", () => options.onViewChange?.(view()));
 
   return {
     leaflet: map,
-    frame,
     setYear: (year) => eraLayer?.setYear(year),
     setBlocks(blocks) {
-      picker = blockPicker(blocks, proj);
+      picker = blockPicker(blocks, painting.worldToFrame);
     },
     select(position, fly = false) {
       outline?.remove();
       outline = null;
       if (position === null || !picker) return;
-      const ring = picker.outline(position).map((p) => toLatLng(frame.toFrame(p)));
+      const ring = picker.outline(position).map(toLatLng);
       outline = L.polygon(ring, { className: "qv-block-outline", interactive: false, weight: 2.5 }).addTo(map);
       if (fly) {
-        const centre = toLatLng(frame.toFrame(picker.centre(position)));
-        map.flyTo(centre, Math.max(map.getZoom(), index.zmax - 3), { duration: 0.6 });
+        map.flyTo(toLatLng(picker.centre(position)), Math.max(map.getZoom(), zmax - 3), { duration: 0.6 });
       }
     },
     view,
