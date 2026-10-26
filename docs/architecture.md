@@ -1,12 +1,15 @@
 # Architecture
 
-qipu-open is three packages that hand files to each other. None of them imports another: what passes between them is a folder
-of plain files with a documented format, so each package can be run, tested and replaced on its own.
+qipu-open is four packages that hand files to each other. What passes between them is a folder of plain files with a
+documented format, so each package can be run, tested and replaced on its own. The one import between packages is
+packages/updates, which runs packages/records on a schedule and publishes the same files.
 
 ```mermaid
 flowchart LR
     IA[(archive.org<br/>scanned minutes)] -->|fetch, read, verify| R[packages/records]
     R -->|decisions.jsonl<br/>decisions.geojson| V[packages/viewer]
+    U[packages/updates<br/>daily] -->|runs on new and changed minutes| R
+    U -->|releases/version/,<br/>latest.json| V
     S[(rendered city<br/>one image per era)] -->|cut, encode| M[packages/map-pipeline]
     M -->|tiles + manifest.json| V
     V --> B[browser: painted map,<br/>year slider, records]
@@ -21,6 +24,15 @@ archive.org viewer. [packages/records/ARCHITECTURE.md](../packages/records/ARCHI
 
 Output: `decisions.jsonl` (one record per decision, see [data-model.md](data-model.md)) and `decisions.geojson` (one point per
 placed place).
+
+## packages/updates
+
+Keeps the records current. Every day it lists the source (an archive.org collection, or a Legistar calendar), runs records on
+only the new and changed meetings, checks the whole release against the page text, and publishes it as a new version with a
+manifest of where every record came from. Earlier versions stay, so a rollback is one command. See [updates.md](updates.md).
+
+Output: `releases/<version>/` holding the same `decisions.jsonl` and `decisions.geojson`, plus `manifest.json`, and a
+`latest.json` that names the published version.
 
 ## packages/map-pipeline
 
