@@ -1,5 +1,5 @@
 # Every package has its own Makefile with the same targets. These run them in each package that has one.
-PACKAGES := records map-pipeline viewer
+PACKAGES := records updates map-pipeline viewer
 TARGETS := install check test e2e demo build clean
 
 .PHONY: $(TARGETS) help

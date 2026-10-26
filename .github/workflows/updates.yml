@@ -1,0 +1,86 @@
+name: updates
+
+# The scheduled refresh (docs/updates.md): find new or changed minutes, extract only those, check, release, publish.
+# Here it runs on the Vancouver sample (examples/vancouver/updates) and publishes to a local store that is kept between runs
+# in the Actions cache and uploaded as an artifact, so it needs no secret. For a real deployment, point the config at the
+# archive.org collection and an rclone remote, and add the reader's API key and the remote's credentials as secrets.
+#
+# Pause publishing: set the repository variable UPDATES_PUBLISH to `off` (runs still build and check). Stop the job:
+# `gh workflow disable updates.yml`. A failed scheduled run opens or updates one issue labelled `workflow-failure`.
+
+on:
+  schedule:
+    - cron: "17 14 * * *" # 14:17 UTC every day, 07:17 in Vancouver
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "build and check, write nothing to the store"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: updates-vancouver
+  cancel-in-progress: false
+
+jobs:
+  vancouver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      issues: write # the failure issue only
+    defaults:
+      run:
+        working-directory: packages/updates
+    env:
+      CONFIG: ../../examples/vancouver/updates/updates.toml
+      STORE: ${{ github.workspace }}/updates-state/store
+      WORK: ${{ github.workspace }}/updates-state/work
+      DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+      PUBLISH: ${{ vars.UPDATES_PUBLISH || 'on' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packages/updates/requirements-dev.txt
+      - name: the store and working copy left by the last run
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: updates-state
+          key: updates-vancouver-${{ github.run_id }}
+          restore-keys: updates-vancouver-
+      - run: make install PYTHON=python
+      - name: run
+        id: run
+        run: |
+          set -euo pipefail
+          args=(--config "$CONFIG" --store "$STORE" --work "$WORK" --report "$RUNNER_TEMP/report.json")
+          if [ -n "${DRY_RUN:-}" ]; then args+=(--dry-run); fi
+          if [ "${PUBLISH:-on}" = off ]; then args+=(--no-publish); fi
+          .venv/bin/qipu-updates run "${args[@]}"
+      - name: keep the store and working copy for the next run
+        if: always() && env.DRY_RUN == ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: updates-state
+          key: updates-vancouver-${{ github.run_id }}
+      - name: the published store, to download and look at
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: updates-vancouver-store
+          path: updates-state/store
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: open or update the failure issue
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          .venv/bin/qipu-updates alert --config "$CONFIG" --report "$RUNNER_TEMP/report.json"
+          --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
