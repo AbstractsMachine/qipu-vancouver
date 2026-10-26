@@ -27,7 +27,18 @@ function money(p) {
   return el("div", { class: "meta" }, amounts.map((a) => fmt.format(a)).join(", "));
 }
 
+// The data file can come from any URL (?data=), so only links to archive.org pages are made clickable.
+function archiveLink(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && parsed.hostname === "archive.org" ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function card(p) {
+  const link = p.page_url ? archiveLink(p.page_url) : null;
   return el(
     "div",
     {},
@@ -36,7 +47,7 @@ function card(p) {
     el("div", { class: "meta" }, `${p.place} (${p.placed_as})`),
     money(p),
     el("blockquote", {}, `“${p.quote}”`),
-    p.page_url ? el("a", { href: p.page_url, target: "_blank", rel: "noopener" }, "See the page on archive.org") : null,
+    link ? el("a", { href: link, target: "_blank", rel: "noopener" }, "See the page on archive.org") : null,
   );
 }
 

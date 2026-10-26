@@ -1,6 +1,7 @@
 """`make demo`, then the map page in a headless browser: the expected decisions are listed and placed, and their links work.
 
-Needs a Chromium for Playwright (`playwright install chromium`) and the network, for MapLibre and the basemap.
+Needs a Chromium for Playwright (`playwright install chromium`) and the network: MapLibre and the basemap load from the web,
+and two of the archive.org page links are requested to check they resolve.
 """
 
 from __future__ import annotations
@@ -92,6 +93,13 @@ def test_the_year_slider_filters_the_list(page: Page) -> None:
     assert page.text_content("#caption") == "1 of 9 placed decisions"
     page.fill("#year", "1974")
     page.dispatch_event("#year", "input")
+    assert page.text_content("#caption") == "9 of 9 placed decisions"
+
+
+def test_a_data_file_cannot_smuggle_in_a_script_link(page: Page) -> None:
+    href = page.evaluate("() => archiveLink('javascript:alert(1)')")
+    assert href is None
+    assert page.evaluate("() => archiveLink('https://archive.org/details/19740219/page/n4')") is not None
 
 
 def test_page_links_point_at_the_right_scan(page: Page, demo: list[dict[str, object]]) -> None:
