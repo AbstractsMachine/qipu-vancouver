@@ -1,0 +1,9 @@
+# Development and CI tools, pinned. The package's one runtime dependency is qipu-records, installed from ../records.
+coverage==7.17.0
+mypy==2.4.0
+pytest==9.1.1
+pytest-cov==7.1.0
+pyyaml==6.0.2
+ruff==0.17.2
+setuptools==80.9.0
+types-PyYAML==6.0.12.20240917
