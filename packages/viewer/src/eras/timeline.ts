@@ -39,12 +39,7 @@ export function clampYear(year: number, first: number, present: number): number 
  * Tick marks for the slider: the key years, thinned so no two are closer than
  * `minGap` years, always keeping the first and the present.
  */
-export function sliderTicks(
-  keyYears: readonly number[],
-  first: number,
-  present: number,
-  minGap = 8,
-): number[] {
+export function sliderTicks(keyYears: readonly number[], first: number, present: number, minGap = 8): number[] {
   const inner = keyYears.filter((y) => y > first && y < present).sort((a, b) => a - b);
   const out = [first];
   for (const y of inner) if (y - (out.at(-1) as number) >= minGap) out.push(y);

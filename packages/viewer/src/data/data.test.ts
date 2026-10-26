@@ -99,9 +99,7 @@ describe("records", () => {
       outcome: "pending",
       address: null,
     });
-    expect(d.source.href).toBe(
-      "https://archive.org/details/journalseptdecofproceed71sanfrich/page/n292/mode/1up",
-    );
+    expect(d.source.href).toBe("https://archive.org/details/journalseptdecofproceed71sanfrich/page/n292/mode/1up");
   });
 
   it("keeps unknown codes out rather than guessing", () => {
@@ -190,9 +188,7 @@ describe("sourceOf", () => {
   });
 
   it("handles a citation with no page", () => {
-    expect(sourceOf({ u: "volume", c: undefined, approx: false }).href).toBe(
-      "https://archive.org/details/volume",
-    );
+    expect(sourceOf({ u: "volume", c: undefined, approx: false }).href).toBe("https://archive.org/details/volume");
   });
 });
 
@@ -226,9 +222,7 @@ describe("loadCityData", () => {
   });
 
   it("works without a money file", async () => {
-    const rest = Object.fromEntries(
-      Object.entries(routes).filter(([url]) => !url.endsWith("block-money.json")),
-    );
+    const rest = Object.fromEntries(Object.entries(routes).filter(([url]) => !url.endsWith("block-money.json")));
     const data = await loadCityData(city, fakeFetch(rest));
     expect(await data.places("A")).toEqual([]);
     expect(await data.placePath()).toBeNull();

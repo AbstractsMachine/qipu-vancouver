@@ -56,16 +56,8 @@ export function blockPicker(blocks: Blocks, proj: Projection): BlockPicker {
   for (let i = 0; i < count; i++) {
     const b = i * 4;
     if (!((box[b + 2] as number) >= (box[b] as number))) continue;
-    for (
-      let cx = Math.floor((box[b] as number) / CELL);
-      cx <= Math.floor((box[b + 2] as number) / CELL);
-      cx++
-    ) {
-      for (
-        let cy = Math.floor((box[b + 1] as number) / CELL);
-        cy <= Math.floor((box[b + 3] as number) / CELL);
-        cy++
-      ) {
+    for (let cx = Math.floor((box[b] as number) / CELL); cx <= Math.floor((box[b + 2] as number) / CELL); cx++) {
+      for (let cy = Math.floor((box[b + 1] as number) / CELL); cy <= Math.floor((box[b + 3] as number) / CELL); cy++) {
         const key = cellKey(cx, cy);
         const list = grid.get(key);
         if (list) list.push(i);
@@ -115,10 +107,7 @@ export function blockPicker(blocks: Blocks, proj: Projection): BlockPicker {
     },
     centre(i) {
       const b = i * 4;
-      return [
-        ((box[b] as number) + (box[b + 2] as number)) / 2,
-        ((box[b + 1] as number) + (box[b + 3] as number)) / 2,
-      ];
+      return [((box[b] as number) + (box[b + 2] as number)) / 2, ((box[b + 1] as number) + (box[b + 3] as number)) / 2];
     },
   };
 }

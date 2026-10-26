@@ -42,9 +42,9 @@ describe("parseEraManifest", () => {
   it("rejects what it cannot draw", () => {
     const bad = (q: object) => ({ ...sfEras, quarters: { x: { ...sfEras.quarters.haight, ...q } } });
     expect(() => parseEraManifest(bad({ years: [{ year: 2026 }] }))).toThrow("at least a key year");
-    expect(() =>
-      parseEraManifest(bad({ switch: { "1900-1905": { key: "s", zmax: 9, enc: "rise" } } })),
-    ).toThrow('"c3c" or "c3d" (got "rise")');
+    expect(() => parseEraManifest(bad({ switch: { "1900-1905": { key: "s", zmax: 9, enc: "rise" } } }))).toThrow(
+      '"c3", "c3c" or "c3d" (got "rise")',
+    );
     expect(() => parseEraManifest(bad({ l9: [1, 2, 3] }))).toThrow("eras.quarters.x.l9: expected 4 numbers");
   });
 });
@@ -87,9 +87,7 @@ describe("slider years", () => {
   });
 
   it("thins ticks and always keeps both ends", () => {
-    expect(sliderTicks([1887, 1890, 1906, 1915, 1938, 2020], 1887, 2026)).toEqual([
-      1887, 1906, 1915, 1938, 2026,
-    ]);
+    expect(sliderTicks([1887, 1890, 1906, 1915, 1938, 2020], 1887, 2026)).toEqual([1887, 1906, 1915, 1938, 2026]);
     expect(sliderTicks([], 1930, 2026)).toEqual([1930, 2026]);
     expect(sliderTicks([2000], 2000, 2000)).toEqual([2000]);
   });
@@ -112,9 +110,7 @@ describe("planTile", () => {
     expect(pass?.areaId).toBe("haight");
     expect(pass?.from.url).toBe(`${base}/_preview_eras/area/haight/1915/9/135/90.webp?v=wtrfwe14`);
     expect(pass?.to.url).toBe(`${base}/_preview_eras/area/haight/1959/9/135/90.webp?v=wtrfwe14`);
-    expect(pass?.switchMap?.url).toBe(
-      `${base}/_preview_eras/area/haight/switch/1915-1959/9/135/90.png?v=pv10171650`,
-    );
+    expect(pass?.switchMap?.url).toBe(`${base}/_preview_eras/area/haight/switch/1915-1959/9/135/90.png?v=pv10171650`);
     expect(pass?.switchMap?.kind).toBe("data");
     expect(pass?.t).toBe((1938 - 1800) * 100);
     expect(pass?.mid).toBe((1937 - 1800) * 100);

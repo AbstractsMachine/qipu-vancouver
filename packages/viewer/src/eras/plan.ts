@@ -53,15 +53,7 @@ export function planTile(
   return passes;
 }
 
-function planArea(
-  area: EraArea,
-  present: PyramidRef,
-  base: string,
-  z: number,
-  x: number,
-  y: number,
-  year: number,
-) {
+function planArea(area: EraArea, present: PyramidRef, base: string, z: number, x: number, y: number, year: number) {
   const state = areaStateAt(area, year);
   if (state.kind !== "between") return null;
   const sw = state.switch ?? NO_SWITCH;

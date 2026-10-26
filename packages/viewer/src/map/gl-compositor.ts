@@ -12,7 +12,7 @@ varying vec2 v;
 uniform sampler2D uFrom, uTo, uClear, uSwitch;
 uniform vec3 wFrom, wTo, wClear, wSwitch;
 uniform float hasFrom, hasTo, hasClear, hasSwitch;
-uniform float uT, uMid, uScale, uLeadStep, uC3d;
+uniform float uT, uMid, uScale, uLeadStep, uEncoding;
 
 vec4 tex(sampler2D s, vec3 w, float has) { return has > 0.5 ? texture2D(s, w.xy + v * w.z) : vec4(0.0); }
 float progress(float t, float d, float w) { return w > 0.0 ? smoothstep(0.4, 0.6, clamp((t - d) / w, 0.0, 1.0)) : step(d, t); }
@@ -28,9 +28,13 @@ void main() {
     float code = floor(c.r * 255.0 + 0.5) * 256.0 + floor(c.g * 255.0 + 0.5);
     d = code < 0.5 ? uMid : (code > 65534.5 ? 1.0e9 : code);
     float blue = floor(c.b * 255.0 + 0.5);
-    float fade = mod(blue, 16.0);
-    w = fade > 0.5 ? 0.0015 * exp2(fade - 1.0) * uScale : 0.0;
-    if (uC3d > 0.5) lead = floor(blue / 16.0) * uLeadStep * uScale;
+    if (uEncoding < 0.5) {
+      w = blue * 0.005 * uScale;
+    } else {
+      float fade = mod(blue, 16.0);
+      w = fade > 0.5 ? 0.0015 * exp2(fade - 1.0) * uScale : 0.0;
+      if (uEncoding > 1.5) lead = floor(blue / 16.0) * uLeadStep * uScale;
+    }
   }
   vec4 site = a;
   if (lead > 0.0 && hasClear > 0.5) {
@@ -42,6 +46,7 @@ void main() {
 }`;
 
 const SLOTS = ["From", "To", "Clear", "Switch"] as const;
+const ENCODINGS = { c3: 0, c3c: 1, c3d: 2 } as const;
 
 export function createGlCompositor(size: number): Compositor | null {
   const canvas = document.createElement("canvas");
@@ -112,7 +117,7 @@ export function createGlCompositor(size: number): Compositor | null {
     gl.uniform1f(u("uMid"), p.mid);
     gl.uniform1f(u("uScale"), p.sw.scale);
     gl.uniform1f(u("uLeadStep"), p.sw.leadStep);
-    gl.uniform1f(u("uC3d"), p.sw.encoding === "c3d" ? 1 : 0);
+    gl.uniform1f(u("uEncoding"), ENCODINGS[p.sw.encoding]);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   };
 

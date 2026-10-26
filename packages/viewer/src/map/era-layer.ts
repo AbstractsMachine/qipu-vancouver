@@ -3,6 +3,7 @@ import type { EraManifest } from "../eras/manifest";
 import { type PassPlan, type SourceRef, planTile, sourcesOf } from "../eras/plan";
 import type { GridOptions } from "../tiles/levels";
 import type { Compositor, DrawPass, DrawSource } from "./compositor";
+import { closeSeams } from "./seams";
 import type { TileImages } from "./tile-images";
 
 export interface EraLayerOptions {
@@ -54,6 +55,7 @@ export class EraLayer extends L.GridLayer {
     this.era = options;
     this.year = options.year;
     this.compositor = options.compositor();
+    closeSeams(this, options.grid.tileSize);
     options.images.onEvict((b) => {
       this.compositor.forget(b);
     });

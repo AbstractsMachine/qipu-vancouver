@@ -15,8 +15,7 @@ import { FormatError, int, list, record, str } from "./validate";
  * read, so an HTML error page or a truncated download throws instead of
  * decoding into plausible numbers.
  */
-export type FieldArray =
-  Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array | Float32Array;
+export type FieldArray = Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array | Float32Array;
 
 export interface Chunk {
   readonly key: string;
@@ -52,10 +51,7 @@ export function decodeChunk(buffer: ArrayBuffer): Chunk {
   const payload = new Uint8Array(buffer, payloadStart, payloadLength);
   if (crc32(payload) !== crc) throw new FormatError("chunk", "a payload matching its CRC-32");
 
-  const header = record(
-    JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 16, headerLength))),
-    "chunk.header",
-  );
+  const header = record(JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 16, headerLength))), "chunk.header");
   const fields = new Map<string, FieldArray>();
   list(header.fields, "chunk.header.fields").forEach((f, i) => {
     const p = `chunk.header.fields[${i}]`;

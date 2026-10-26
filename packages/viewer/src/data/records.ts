@@ -1,17 +1,5 @@
 import { sourceOf, type Source } from "./sources";
-import {
-  type Json,
-  FormatError,
-  int,
-  isRecord,
-  list,
-  num,
-  numbers,
-  optional,
-  record,
-  str,
-  strings,
-} from "./validate";
+import { type Json, FormatError, int, isRecord, list, num, numbers, optional, record, str, strings } from "./validate";
 
 /** How a decision was placed on its block, weakest first. The tier travels with every row. */
 export const PRECISIONS = ["street", "corner", "segment", "address", "stated"] as const;

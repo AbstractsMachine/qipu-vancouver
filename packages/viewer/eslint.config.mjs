@@ -32,4 +32,5 @@ export default tseslint.config(
     rules: { "@typescript-eslint/no-non-null-assertion": "off" },
   },
   { files: ["*.mjs", "scripts/**"], ...tseslint.configs.disableTypeChecked },
+  { files: ["scripts/**"], languageOptions: { globals: { ...globals.node } }, rules: { "no-console": "off" } },
 );

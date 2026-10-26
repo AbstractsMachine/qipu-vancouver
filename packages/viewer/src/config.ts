@@ -46,8 +46,7 @@ export const SAN_FRANCISCO: CityConfig = {
     scope: "Board of Supervisors decisions, 1906 to today, placed on the block they name.",
   },
   site: { base: "https://www.qipu.org/en", cityPath: "/usa/san-francisco/the-city" },
-  attribution:
-    "Painted by qipu from DataSF and USGS data · Records: SF Board of Supervisors via the Internet Archive",
+  attribution: "Painted by qipu from DataSF and USGS data · Records: SF Board of Supervisors via the Internet Archive",
 };
 
 export const VANCOUVER: CityConfig = {

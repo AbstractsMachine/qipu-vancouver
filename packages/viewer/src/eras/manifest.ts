@@ -1,15 +1,4 @@
-import {
-  type Json,
-  FormatError,
-  int,
-  isRecord,
-  list,
-  num,
-  optional,
-  record,
-  str,
-  quad,
-} from "../data/validate";
+import { type Json, FormatError, int, isRecord, list, num, optional, record, str, quad } from "../data/validate";
 import { type Box, level9BoxToFrame } from "../tiles/frame";
 import type { PyramidRef } from "../tiles/urls";
 
@@ -37,7 +26,8 @@ export interface EraKey {
   readonly pyramid: PyramidRef | null;
 }
 
-export type SwitchEncoding = "c3c" | "c3d";
+/** c3: the first form, a fade in blue; c3c: a fade code; c3d: a fade code and a lead */
+export type SwitchEncoding = "c3" | "c3c" | "c3d";
 
 export interface EraSwitch extends PyramidRef {
   readonly encoding: SwitchEncoding;
@@ -118,8 +108,10 @@ function parseArea(id: string, json: Json, tile: number): EraArea {
 
 function parseSwitch(json: Json, path: string): EraSwitch {
   const s = record(json, path);
-  const enc = str(s.enc, `${path}.enc`);
-  if (enc !== "c3c" && enc !== "c3d") throw new FormatError(`${path}.enc`, `"c3c" or "c3d" (got "${enc}")`);
+  const enc = optional(s.enc, (v) => str(v, `${path}.enc`)) ?? "c3";
+  if (enc !== "c3" && enc !== "c3c" && enc !== "c3d") {
+    throw new FormatError(`${path}.enc`, `"c3", "c3c" or "c3d" (got "${enc}")`);
+  }
   return {
     ...pyramidRef(s, path, "png"),
     encoding: enc,

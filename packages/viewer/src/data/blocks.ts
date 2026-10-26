@@ -1,5 +1,5 @@
 import type { Chunk, FieldArray } from "./qct";
-import { FormatError, record, strings } from "./validate";
+import { FormatError, numbers, record, strings } from "./validate";
 
 /**
  * The city's blocks: the unit a council decision is placed on. Geometry comes
@@ -29,16 +29,14 @@ export function decodeBlocks(chunk: Chunk, idsJson: unknown, neighbourhoods: rea
   const vy = field(chunk, "vy");
   const z = field(chunk, "z");
   const hoodField = chunk.fields.get("hood");
-  const ids = strings(record(idsJson, "blocks-id").id, "blocks-id.id");
+  const ids = blockIds(idsJson);
   const count = cnt.length;
-  if (ids.length !== count)
-    throw new FormatError("blocks-id.id", `${count} ids, one per ring (got ${ids.length})`);
+  if (ids.length !== count) throw new FormatError("blocks-id.id", `${count} ids, one per ring (got ${ids.length})`);
 
   const offsets = new Uint32Array(count + 1);
   for (let i = 0; i < count; i++) offsets[i + 1] = (offsets[i] as number) + (cnt[i] as number);
   const total = offsets[count] as number;
-  if (vx.length < total || vy.length < total)
-    throw new FormatError("blocks", "a vertex for every ring count");
+  if (vx.length < total || vy.length < total) throw new FormatError("blocks", "a vertex for every ring count");
 
   const xs = new Float32Array(total);
   const ys = new Float32Array(total);
@@ -59,6 +57,18 @@ export function decodeBlocks(chunk: Chunk, idsJson: unknown, neighbourhoods: rea
     hood[i] = h < neighbourhoods.length ? h : -1;
   }
   return { count, ids, offsets, xs, ys, elevation, hood, neighbourhoods };
+}
+
+/**
+ * Block ids, in ring order. A city keyed by an assessor's block number lists
+ * them as strings (`id`); a city whose blocks have no printed number numbers
+ * them (`block_idx`), and the record index uses the same numbers as strings.
+ */
+function blockIds(json: unknown): string[] {
+  const o = record(json, "blocks-id");
+  if (o.id !== undefined) return strings(o.id, "blocks-id.id");
+  if (o.block_idx !== undefined) return numbers(o.block_idx, "blocks-id.block_idx").map(String);
+  throw new FormatError("blocks-id", "an `id` or `block_idx` list");
 }
 
 export function blockIndexOf(blocks: Blocks, id: string): number {

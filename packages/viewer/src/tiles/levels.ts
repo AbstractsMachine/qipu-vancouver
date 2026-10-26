@@ -15,9 +15,7 @@ export interface GridOptions {
 }
 
 export function gridOptionsFor(devicePixelRatio: number): GridOptions {
-  return devicePixelRatio < 1.5
-    ? { tileSize: TILE_CSS * 2, zoomOffset: -1 }
-    : { tileSize: TILE_CSS, zoomOffset: 0 };
+  return devicePixelRatio < 1.5 ? { tileSize: TILE_CSS * 2, zoomOffset: -1 } : { tileSize: TILE_CSS, zoomOffset: 0 };
 }
 
 /** The level a grid loads at a map zoom, clamped to the pyramid. */

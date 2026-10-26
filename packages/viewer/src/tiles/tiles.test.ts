@@ -108,12 +108,8 @@ describe("tile URLs", () => {
   const ref = { key: "render", zmax: 9, version: "r1-2", ext: "webp" } as const;
 
   it("puts the build stamp on every tile", () => {
-    expect(tileUrl("https://t.example/sf/", ref, 3, 2, 1)).toBe(
-      "https://t.example/sf/render/3/2/1.webp?v=r1-2",
-    );
-    expect(tileTemplate("https://t.example/sf", ref)).toBe(
-      "https://t.example/sf/render/{z}/{x}/{y}.webp?v=r1-2",
-    );
+    expect(tileUrl("https://t.example/sf/", ref, 3, 2, 1)).toBe("https://t.example/sf/render/3/2/1.webp?v=r1-2");
+    expect(tileTemplate("https://t.example/sf", ref)).toBe("https://t.example/sf/render/{z}/{x}/{y}.webp?v=r1-2");
   });
 
   it("leaves the query off when there is no stamp", () => {

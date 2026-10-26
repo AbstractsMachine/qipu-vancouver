@@ -28,6 +28,11 @@ describe("decodeSwitchPixel", () => {
     expect(decodeSwitchPixel(1, 0, 4, 0, c3c).fade).toBeCloseTo(1.2, 10);
   });
 
+  it("reads the older c3 form's fade from all of blue", () => {
+    const c3 = { ...c3c, encoding: "c3" } as const;
+    expect(decodeSwitchPixel(1, 0, 0x31, 0, c3)).toEqual({ date: 256, fade: 0x31 * 0.5, lead: 0 });
+  });
+
   it("reads a lead from blue's high bits, for c3d only", () => {
     expect(decodeSwitchPixel(1, 0, 0x31, 0, c3d).lead).toBeCloseTo(3 * 0.4 * 100, 10);
     expect(decodeSwitchPixel(1, 0, 0x31, 0, c3c).lead).toBe(0);

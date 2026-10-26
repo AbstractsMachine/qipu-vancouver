@@ -74,7 +74,8 @@ export function createCityMap(options: CityMapOptions): CityMap {
     maxBounds: bounds.pad(0.5),
     maxBoundsViscosity: 0.8,
     attributionControl: true,
-    zoomControl: true,
+    /* phones pinch; the +/- buttons would sit under a thumb and a notice */
+    zoomControl: !phone,
   });
   map.attributionControl.setPrefix(false);
   options.element.setAttribute("aria-label", `Painted map of ${city.name}`);
@@ -143,9 +144,7 @@ export function createCityMap(options: CityMapOptions): CityMap {
       outline = null;
       if (position === null || !picker) return;
       const ring = picker.outline(position).map((p) => toLatLng(frame.toFrame(p)));
-      outline = L.polygon(ring, { className: "qv-block-outline", interactive: false, weight: 2.5 }).addTo(
-        map,
-      );
+      outline = L.polygon(ring, { className: "qv-block-outline", interactive: false, weight: 2.5 }).addTo(map);
       if (fly) {
         const centre = toLatLng(frame.toFrame(picker.centre(position)));
         map.flyTo(centre, Math.max(map.getZoom(), index.zmax - 3), { duration: 0.6 });

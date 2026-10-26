@@ -81,10 +81,7 @@ export function neighbourhoodNames(manifest: Json): string[] {
  */
 export function assertSameBlocks(blocks: Blocks, index: BlockIndex): void {
   if (blocks.ids.length !== index.ids.length) {
-    throw new FormatError(
-      "block-index.b",
-      `${blocks.ids.length} blocks, as in the geometry (got ${index.ids.length})`,
-    );
+    throw new FormatError("block-index.b", `${blocks.ids.length} blocks, as in the geometry (got ${index.ids.length})`);
   }
   const at = blocks.ids.findIndex((id, i) => id !== index.ids[i]);
   if (at >= 0) throw new FormatError(`block-index.b[${at}]`, `"${blocks.ids[at]}", as in the geometry`);

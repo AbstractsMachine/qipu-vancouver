@@ -2,15 +2,16 @@ import type { EraSwitch } from "./manifest";
 
 /**
  * The per-pixel switch, written once in TypeScript. The WebGL shader in
- * `shader.ts` is a line-for-line port and the CPU compositor calls this
+ * `map/gl-compositor.ts` is a line-for-line port and the CPU compositor calls this
  * directly, so the tests here pin down what both draw.
  *
  * A switch pixel stores a date code in red and green (`r * 256 + g`), where a
  * code is `(year - offset) * scale`. 0 means "switches at the segment's
- * midpoint" and 65535 "never switches". Blue holds two 4-bit fields: the low
- * one is the fade length (0 = a hard switch, else 0.0015 * 2^(w - 1) years),
- * the high one (c3d only) a lead in `leadStep` years during which the cleared
- * site shows before the new building appears.
+ * midpoint" and 65535 "never switches". In c3c and c3d, blue holds two 4-bit
+ * fields: the low one is the fade length (0 = a hard switch, else
+ * 0.0015 * 2^(w - 1) years), the high one (c3d only) a lead in `leadStep`
+ * years during which the cleared site shows before the new building appears.
+ * In the older c3 form blue is the fade alone, in steps of 0.005 years.
  */
 export interface SwitchPixel {
   /** date code from which the later picture shows */
@@ -41,6 +42,7 @@ export function decodeSwitchPixel(
 ): SwitchPixel {
   const code = r * 256 + g;
   const date = code === 0 ? mid : code === 65535 ? NEVER : code;
+  if (sw.encoding === "c3") return { date, fade: b * 0.005 * sw.scale, lead: 0 };
   const w = b & 15;
   const fade = w > 0 ? 0.0015 * 2 ** (w - 1) * sw.scale : 0;
   const lead = sw.encoding === "c3d" ? (b >> 4) * sw.leadStep * sw.scale : 0;

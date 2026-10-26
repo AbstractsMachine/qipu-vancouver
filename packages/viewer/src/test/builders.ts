@@ -69,8 +69,6 @@ export function fakeFetch(routes: Record<string, unknown>): typeof fetch {
     if (!(url in routes)) return Promise.resolve(new Response("missing", { status: 404 }));
     const body = routes[url];
     if (body instanceof ArrayBuffer) return Promise.resolve(new Response(body));
-    return Promise.resolve(
-      new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } }),
-    );
+    return Promise.resolve(new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } }));
   };
 }

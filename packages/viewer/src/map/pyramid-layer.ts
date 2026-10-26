@@ -1,6 +1,7 @@
 import * as L from "leaflet";
 import type { PyramidIndex } from "../tiles/pyramid";
 import type { GridOptions } from "../tiles/levels";
+import { closeSeams } from "./seams";
 
 export interface PyramidLayerOptions {
   readonly template: string;
@@ -33,6 +34,7 @@ export class PyramidLayer extends L.TileLayer {
     });
     this.index = options.index;
     this.offset = options.grid.zoomOffset;
+    closeSeams(this, options.grid.tileSize);
   }
 
   override createTile(coords: L.Coords, done: L.DoneCallback): HTMLElement {
