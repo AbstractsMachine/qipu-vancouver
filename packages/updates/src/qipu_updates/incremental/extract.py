@@ -12,7 +12,7 @@ import hashlib
 from dataclasses import dataclass, field
 from importlib import metadata
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from qipu_records.cities import City
 from qipu_records.export.records import Context
@@ -92,4 +92,5 @@ class Extractor:
         if workspace.unread(doc.doc_id):
             return DocResult(doc, complete=False, pages_read=read)
         records, rejected, _ = build_records(context, collection)
-        return DocResult(doc, complete=True, pages_read=read, records=records, rejected=len(rejected))
+        # From here a record is JSON: release.assemble adds its provenance.
+        return DocResult(doc, complete=True, pages_read=read, records=cast(list[dict[str, Any]], records), rejected=len(rejected))

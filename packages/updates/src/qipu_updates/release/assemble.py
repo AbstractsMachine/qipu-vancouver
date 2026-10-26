@@ -12,10 +12,11 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from qipu_records.collection import write_json, write_jsonl
 from qipu_records.export.geojson import feature_collection
+from qipu_records.export.records import DecisionRecord
 from qipu_updates.incremental.workspace import safe_name
 from qipu_updates.release import corrections
 from qipu_updates.release.manifest import MANIFEST, DocEntry, Manifest, hash_files
@@ -89,7 +90,7 @@ def assemble(
 
     published = sorted(fixed.records, key=lambda r: str(r["id"]))
     write_jsonl(folder / "decisions.jsonl", published)
-    write_json(folder / "decisions.geojson", feature_collection(published))
+    write_json(folder / "decisions.geojson", feature_collection(cast(list[DecisionRecord], published)))
     withdrawn = _jsonl(read_previous("withdrawn.jsonl")) if previous and "withdrawn.jsonl" in previous.files else []
     withdrawn += fixed.withdrawn
     if withdrawn:

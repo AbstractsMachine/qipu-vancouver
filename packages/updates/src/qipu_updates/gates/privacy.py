@@ -20,8 +20,9 @@ from __future__ import annotations
 import datetime as dt
 import re
 from collections.abc import Iterator
-from typing import Any
+from typing import Any, cast
 
+from qipu_records.read.schema import ModelItem
 from qipu_records.verify.privacy import (
     ROLE_WORDS,
     WITHHELD,
@@ -69,9 +70,9 @@ def _year(record: dict[str, Any]) -> int | None:
     return int(date[:4]) if date[:4].isdigit() else None
 
 
-def _as_item(record: dict[str, Any]) -> dict[str, Any]:
-    """The record in the shape qipu-records' privacy rule reads: vote names at the top level."""
-    return {**record, **(record.get("vote") or {})}
+def _as_item(record: dict[str, Any]) -> ModelItem:
+    """The record in the shape qipu-records' privacy rule reads (a model item): vote names at the top level."""
+    return cast(ModelItem, {**record, **(record.get("vote") or {})})
 
 
 def _masked_texts(record: dict[str, Any]) -> Iterator[tuple[str, str]]:
