@@ -1,6 +1,9 @@
 from qipu_records.verify.quotes import QuoteStatus, locate
 
-PAGE = "Regular Council, February 19, 1974 3\nCOMMUNICATIONS OR PETITIONS (cont'd)\nMotor Vehicle   Inspection\nStation (cont'd)"
+PAGE = (
+    "Regular Council, February 19, 1974 3\nCOMMUNICATIONS OR PETITIONS (cont'd)\n"
+    "Motor Vehicle   Inspection\nStation (cont'd)"
+)
 
 
 def test_exact_match_ignores_case_and_line_breaks() -> None:

@@ -5,8 +5,8 @@
     pagemaps.json     {item: [viewer page or null per OCR page]}
     readings.jsonl    the model's answer for each page: {"page_id", "model", "prompt_version", "items"}
 
-`build` writes its output next to them: decisions.jsonl, decisions.geojson, rejected.jsonl and summary.json. Every file is
-plain JSON, so it can be read without this package.
+`build` writes its output next to them: decisions.jsonl, decisions.geojson, rejected.jsonl and summary.json. Every file
+is plain JSON, so it can be read without this package.
 """
 
 from __future__ import annotations

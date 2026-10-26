@@ -1,8 +1,9 @@
 """Find the quote a model gave as evidence on the page it was read from.
 
-Every decision the model lists carries a quote: the first words of the item's heading, copied from the OCR. A decision is only as
-good as that quote, so each one is looked up again in the page text before it is published. OCR text is noisy and models tidy
-it up a little, so the lookup ignores case and runs of whitespace, and falls back to a fuzzy match of the quote's opening words.
+Every decision the model lists carries a quote: the first words of the item's heading, copied from the OCR. A decision
+is only as good as that quote, so each one is looked up again in the page text before it is published. OCR text is noisy
+and models tidy it up a little, so the lookup ignores case and runs of whitespace, and falls back to a fuzzy match of
+the quote's opening words.
 """
 
 from __future__ import annotations
@@ -76,7 +77,9 @@ def locate(quote: str, text: str) -> QuoteMatch:
 
 def _fuzzy(needle: str, haystack: str, offsets: list[int]) -> QuoteMatch:
     head = needle[:FUZZY_PREFIX_CHARS]
-    block = difflib.SequenceMatcher(None, haystack, head, autojunk=False).find_longest_match(0, len(haystack), 0, len(head))
+    block = difflib.SequenceMatcher(None, haystack, head, autojunk=False).find_longest_match(
+        0, len(haystack), 0, len(head)
+    )
     if block.size < FUZZY_MIN_BLOCK:
         return NOT_FOUND
     start = max(0, block.a - block.b)

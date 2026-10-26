@@ -9,7 +9,9 @@ LISTING = """<a href="/download/x/x_jp2.zip/x_jp2%2Fx_0000.jp2">x_0000.jp2</a>
 
 
 def _manifest(files: list[str]) -> dict[str, object]:
-    pages = [{"uri": f"https://ia.example/BookReader/BookReaderImages.php?zip=/x/x_jp2.zip&file=x_jp2/{f}"} for f in files]
+    pages = [
+        {"uri": f"https://ia.example/BookReader/BookReaderImages.php?zip=/x/x_jp2.zip&file=x_jp2/{f}"} for f in files
+    ]
     return {"data": {"brOptions": {"data": [[page] for page in pages]}}}
 
 
@@ -42,7 +44,10 @@ def test_page_outside_the_map_has_no_link() -> None:
 
 
 def test_book_prefix_is_read_from_the_file_list() -> None:
-    record = {"metadata": {"identifier": "19700609"}, "files": [{"name": "1970-06-09_jp2.zip"}, {"name": "1970-06-09.pdf"}]}
+    record = {
+        "metadata": {"identifier": "19700609"},
+        "files": [{"name": "1970-06-09_jp2.zip"}, {"name": "1970-06-09.pdf"}],
+    }
     assert book_prefix(record) == "1970-06-09"
     assert book_prefix({"metadata": {"identifier": "abc"}, "files": []}) == "abc"
 

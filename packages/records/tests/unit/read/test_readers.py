@@ -73,7 +73,9 @@ def test_openai_compatible_reader_asks_for_strict_json(monkeypatch: pytest.Monke
         return SimpleNamespace(choices=[SimpleNamespace(message=message)], usage=usage)
 
     reader = OpenAICompatibleReader(model="open-model", base_url="http://localhost:8000/v1")
-    monkeypatch.setattr(reader, "_client", SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create))))
+    monkeypatch.setattr(
+        reader, "_client", SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+    )
     reading = reader.read("19740219:4", "SYSTEM", "USER")
     assert reading.model == "open-model"
     assert reading.items[0]["quote"] == "Acquisition for Park Site"

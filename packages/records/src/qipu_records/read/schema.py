@@ -1,8 +1,8 @@
 """The JSON the model must answer with, and the message it gets for one page.
 
-The model reads one page at a time and returns ``{"items": [...]}``: one entry per decision on the page, each with the quote
-that shows where it is. The schema is strict (every field required, nothing extra) so it can be enforced by the model API's
-structured output mode. Fields the page does not print come back as "" or [] and are dropped later.
+The model reads one page at a time and returns ``{"items": [...]}``: one entry per decision on the page, each with the
+quote that shows where it is. The schema is strict (every field required, nothing extra) so it can be enforced by the
+model API's structured output mode. Fields the page does not print come back as "" or [] and are dropped later.
 """
 
 from __future__ import annotations
@@ -16,20 +16,21 @@ CONTEXT_CHARS = 2500
 """How much of the previous page goes with each request, so an item that starts there can be read."""
 
 TOPICS = [
-    "homelessness-shelter", "landmarks-old-buildings", "housing", "whats-being-built", "schools", "fire", "redevelopment",
-    "libraries", "police", "health", "water-sewers", "transit", "parks",
+    "homelessness-shelter", "landmarks-old-buildings", "housing", "whats-being-built", "schools", "fire",
+    "redevelopment", "libraries", "police", "health", "water-sewers", "transit", "parks",
 ]  # fmt: skip
 ACTIONS = [
-    "adopted", "passed_final", "passed_first_reading", "ordered_submitted_to_voters", "amended", "referred", "continued",
-    "tabled", "failed", "vetoed", "veto_overridden", "withdrawn", "hearing_held", "continues_next_page", "other",
+    "adopted", "passed_final", "passed_first_reading", "ordered_submitted_to_voters", "amended", "referred",
+    "continued", "tabled", "failed", "vetoed", "veto_overridden", "withdrawn", "hearing_held", "continues_next_page",
+    "other",
 ]  # fmt: skip
 KINDS = [
     "ordinance", "resolution", "motion", "claim", "appointment", "permit", "license", "contract", "hearing", "appeal",
     "charter_amendment", "ballot_measure", "other",
 ]  # fmt: skip
 PARTY_ROLES = [
-    "claimant", "contractor", "appointee", "owner", "applicant", "payee", "grantee", "grantor", "petitioner", "employee",
-    "sponsor", "other",
+    "claimant", "contractor", "appointee", "owner", "applicant", "payee", "grantee", "grantor", "petitioner",
+    "employee", "sponsor", "other",
 ]  # fmt: skip
 PLACE_PRECISIONS = ["address", "segment", "intersection", "block_lot", "street", "area", "city"]
 DATE_ROLES = ["effective", "continued_to", "hearing", "deadline", "other"]
@@ -97,7 +98,8 @@ ITEM = _object(
 RESPONSE = _object(items=_array(ITEM))
 
 
-# The same shapes as Python types. The schema above is what the model API enforces; these let the type checker follow the
+# The same shapes as Python types. The schema above is what the model API enforces; these let the type checker follow
+# the
 # fields through the checks. Answers replayed from a file or read by a model without strict structured output can lack
 # fields, so every field is optional here and the code reads them with .get(). A test keeps the two in step.
 
@@ -165,7 +167,7 @@ class ModelItem(TypedDict, total=False):
 
 def prompt_version(system_prompt: str) -> str:
     """A short hash of the system prompt, recorded with every response so a run can be traced to its exact prompt."""
-    return "v21-" + hashlib.sha1(system_prompt.encode("utf-8")).hexdigest()[:10]
+    return "v21-" + hashlib.sha1(system_prompt.encode("utf-8"), usedforsecurity=False).hexdigest()[:10]
 
 
 def user_message(previous_page: str, page: str, year: int | None) -> str:

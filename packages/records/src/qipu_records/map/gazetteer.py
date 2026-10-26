@@ -1,9 +1,10 @@
 """Put decisions on the map from the places they name.
 
-The model reports places as printed ("#680 East 5th Avenue", "Alberni and Bidwell Streets", "Strathcona"). They are matched
-against a gazetteer of present-day civic addresses, street intersections and neighbourhoods published by the city as open data.
-Only exact matches are placed: an address, a corner, or a neighbourhood's centre. A street name alone is not placed, because a
-point in the middle of a long street would mislead. Old addresses that no longer exist stay unplaced.
+The model reports places as printed ("#680 East 5th Avenue", "Alberni and Bidwell Streets", "Strathcona"). They are
+matched against a gazetteer of present-day civic addresses, street intersections and neighbourhoods published by the
+city as open data. Only exact matches are placed: an address, a corner, or a neighbourhood's centre. A street name alone
+is not placed, because a point in the middle of a long street would mislead. Old addresses that no longer exist stay
+unplaced.
 
 The gazetteer is a CSV of ``kind,name,lat,lon`` rows, where ``name`` is already normalised by ``street_key``.
 """
@@ -28,9 +29,10 @@ ORDINALS = {
     "nineteenth": "19th", "twentieth": "20th",
 }  # fmt: skip
 STREET_TYPES = {
-    "street": "st", "st": "st", "avenue": "av", "ave": "av", "av": "av", "road": "rd", "rd": "rd", "drive": "dr", "dr": "dr",
-    "crescent": "cres", "cres": "cres", "place": "pl", "pl": "pl", "boulevard": "blvd", "blvd": "blvd", "court": "ct",
-    "lane": "ln", "highway": "hwy", "square": "sq", "mews": "mews", "way": "way", "walk": "walk", "parade": "parade",
+    "street": "st", "st": "st", "avenue": "av", "ave": "av", "av": "av", "road": "rd", "rd": "rd", "drive": "dr",
+    "dr": "dr", "crescent": "cres", "cres": "cres", "place": "pl", "pl": "pl", "boulevard": "blvd", "blvd": "blvd",
+    "court": "ct", "lane": "ln", "highway": "hwy", "square": "sq", "mews": "mews", "way": "way", "walk": "walk",
+    "parade": "parade",
 }  # fmt: skip
 PLURAL_TYPES = {"streets": "street", "avenues": "avenue", "roads": "road", "drives": "drive"}
 DIRECTIONS = {"east": "e", "e": "e", "west": "w", "w": "w", "north": "n", "n": "n", "south": "s", "s": "s"}
@@ -135,8 +137,9 @@ VANCOUVER_DATASETS = "https://opendata.vancouver.ca/api/explore/v2.1/catalog/dat
 
 
 def _open_data_rows(dataset: str) -> Iterator[dict[str, str]]:
-    request = urllib.request.Request(VANCOUVER_DATASETS.format(dataset), headers={"User-Agent": "qipu-records/0.1"})
-    with urllib.request.urlopen(request, timeout=600) as response:
+    url = VANCOUVER_DATASETS.format(dataset)  # a fixed https URL
+    request = urllib.request.Request(url, headers={"User-Agent": "qipu-records/0.1"})  # noqa: S310
+    with urllib.request.urlopen(request, timeout=600) as response:  # noqa: S310
         yield from csv.DictReader(io.StringIO(response.read().decode("utf-8-sig")))
 
 

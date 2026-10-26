@@ -36,7 +36,9 @@ def test_meeting_opening_is_found_where_it_is() -> None:
 
 def test_items_after_an_opening_take_the_new_meeting() -> None:
     first = "MONDAY, JANUARY 28, 1907\nold business " + "x" * 400
-    second = "more old business " + "y" * 300 + " JOURNAL OF PROCEEDINGS BOARD OF SUPERVISORS MONDAY, FEBRUARY 4, 1907 new"
+    second = (
+        "more old business " + "y" * 300 + " JOURNAL OF PROCEEDINGS BOARD OF SUPERVISORS MONDAY, FEBRUARY 4, 1907 new"
+    )
     pages = date_pages([first, second])
     assert pages[1].at(10) == (dt.date(1907, 1, 28), DateSource.CARRIED)
     assert pages[1].at(len(second) - 2) == (dt.date(1907, 2, 4), DateSource.MEETING_OPENS)

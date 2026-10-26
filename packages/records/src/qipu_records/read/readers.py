@@ -3,9 +3,10 @@
 Three readers ship:
 
 * ``AnthropicReader``: Claude through the Anthropic API (the reader the published runs used);
-* ``OpenAICompatibleReader``: any server that speaks the OpenAI chat API with JSON-schema output, such as vLLM, Ollama or
-  OpenRouter, so an open-weights model can do the reading;
-* ``ReplayReader``: answers recorded from an earlier run, so the pipeline can be run and tested without a key or a network.
+* ``OpenAICompatibleReader``: any server that speaks the OpenAI chat API with JSON-schema output, such as vLLM, Ollama
+  or OpenRouter, so an open-weights model can do the reading;
+* ``ReplayReader``: answers recorded from an earlier run, so the pipeline can be run and tested without a key or a
+  network.
 
 API keys are read from the environment only. They are never written to disk or printed.
 """
@@ -108,7 +109,10 @@ class AnthropicReader:
 
     def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading:
         system: list[TextBlockParam] = [{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}]
-        output: OutputConfigParam = {"effort": self.effort, "format": {"type": "json_schema", "schema": schema.RESPONSE}}
+        output: OutputConfigParam = {
+            "effort": self.effort,
+            "format": {"type": "json_schema", "schema": schema.RESPONSE},
+        }
         message = self._connect().messages.create(
             model=self.model,
             max_tokens=self.max_tokens,

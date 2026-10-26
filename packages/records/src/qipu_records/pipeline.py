@@ -1,9 +1,9 @@
 """Run the checks over a collection and write the published records.
 
-Everything here is deterministic: the same pages, readings and gazetteer give the same records on the same day. (The privacy
-embargo counts back from today, so a record can come out of it as years pass.) An item the model listed is
-published only if its quote is found on the page (or on the previous page, when the item's heading starts there); otherwise it
-goes to rejected.jsonl. Published items are shaped into records by ``export.records``.
+Everything here is deterministic: the same pages, readings and gazetteer give the same records on the same day. (The
+privacy embargo counts back from today, so a record can come out of it as years pass.) An item the model listed is
+published only if its quote is found on the page (or on the previous page, when the item's heading starts there);
+otherwise it goes to rejected.jsonl. Published items are shaped into records by ``export.records``.
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ def _item_date(item: Item) -> dt.date | None:
 
 
 def _find_quote(entry: ModelItem, page: Page, previous: Page | None) -> tuple[quotes.QuoteMatch, bool]:
-    """Where the item's quote is: on this page, or on the previous one. The flag is True when it was found on this page."""
+    """Where the item's quote is, on this page or the previous one, and whether it was found on this page."""
     quote = entry.get("quote") or ""
     order = [(previous, False), (page, True)] if entry.get("heading_on_prev") else [(page, True), (previous, False)]
     for candidate, on_this_page in order:
@@ -103,7 +103,11 @@ def build_records(ctx: Context, collection: Collection) -> tuple[list[DecisionRe
             match, on_this_page = _find_quote(entry, pc.page, pc.previous)
             if not match.found:
                 rejected.append(
-                    {"id": f"{pc.page.page_id}/{seq}", "reason": "quote not found on the page", "quote": entry.get("quote")}
+                    {
+                        "id": f"{pc.page.page_id}/{seq}",
+                        "reason": "quote not found on the page",
+                        "quote": entry.get("quote"),
+                    }
                 )
                 continue
             record = decision_record(ctx, pc, seq, entry, match=match, on_this_page=on_this_page)

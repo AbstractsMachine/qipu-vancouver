@@ -2,13 +2,14 @@
 
 Two numberings meet in every link to a scanned page:
 
-* the OCR page: archive.org makes one OCR page per image in the item's page-image zip, in file order, hidden images included;
+* the OCR page: archive.org makes one OCR page per image in the item's page-image zip, in file order, hidden images
+  included;
 * the viewer page: the ``n`` in ``https://archive.org/details/<item>/page/n<n>``. The viewer lists only the images its
   manifest shows. A colour card, a blank cover or a calibration target is hidden, and every later page shifts.
 
-So the viewer page of OCR page ``k`` is the position, among the shown images, of the image OCR page ``k`` was made from. Both
-lists come from archive.org itself. When they do not fit together the item gets no map, and its decisions get no page link
-rather than a wrong one.
+So the viewer page of OCR page ``k`` is the position, among the shown images, of the image OCR page ``k`` was made from.
+Both lists come from archive.org itself. When they do not fit together the item gets no map, and its decisions get no
+page link rather than a wrong one.
 """
 
 from __future__ import annotations
@@ -102,7 +103,9 @@ def fetch_map(client: ArchiveClient, item: str) -> PageMap | None:
         zip_name = _fallback_zip(names)
     if zip_name is None:
         return None
-    listing = client.get_text(f"https://archive.org/download/{item}/{urllib.parse.quote(zip_name)}/", f"{item}.zip.html")
+    listing = client.get_text(
+        f"https://archive.org/download/{item}/{urllib.parse.quote(zip_name)}/", f"{item}.zip.html"
+    )
     return build_map(zip_images(listing), shown_images(manifest))
 
 
