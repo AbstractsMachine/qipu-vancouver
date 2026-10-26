@@ -1,4 +1,4 @@
-"""A store on any rclone remote ("r2:qipu-data", "s3:bucket/prefix"). The remote is configured by rclone's own environment
+"""A store on any rclone remote ("r2:bucket", "s3:bucket/prefix"). The remote is configured by rclone's own environment
 variables (RCLONE_CONFIG_<NAME>_TYPE, ..._ACCESS_KEY_ID, ...), so no credential passes through this code.
 
 Uploads use --checksum, so a re-run after an interrupted publish sends only what is missing.

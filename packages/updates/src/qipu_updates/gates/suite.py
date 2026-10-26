@@ -7,17 +7,6 @@ import datetime as dt
 from qipu_updates.gates import GateResult, PageTexts, dates, outcomes, privacy, quotes, release
 from qipu_updates.release.assemble import Draft
 
-NAMES = (
-    "quote_on_page",
-    "date_from_header",
-    "proposed_vs_decided",
-    "privacy_leak",
-    "over_redaction",
-    "no_shrink",
-    "files_intact",
-    "corrections_applied",
-)
-
 
 def run_all(
     draft: Draft,

@@ -137,6 +137,8 @@ class Run:
         if previous and not built and previous.corrections_sha256 == rules_digest:
             report.status, report.records = "no-change", report.records_before
             report.detail = f"nothing new or changed since {previous.version}"
+            if report.documents_left:
+                report.detail += f"; left for the next run: {', '.join(report.documents_left)}"
             return
         draft = self._assemble(previous, built, rules_digest, opts)
         results = run_all(

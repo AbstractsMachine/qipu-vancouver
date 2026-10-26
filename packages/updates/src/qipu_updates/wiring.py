@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from qipu_records.read.readers import AnthropicReader, OpenAICompatibleReader, Reader, ReplayReader
-from qipu_updates.config import Config, ConfigError, PublishConfig, ReaderConfig, SourceConfig
+from qipu_updates.config import ConfigError, PublishConfig, ReaderConfig, SourceConfig
 from qipu_updates.publish import Store
 from qipu_updates.publish.local import LocalStore
 from qipu_updates.publish.rclone import RcloneStore
@@ -48,7 +48,3 @@ def make_store(config: PublishConfig, override: Path | None = None) -> Store:
     if config.backend == "rclone":
         return RcloneStore(config.target)
     raise ConfigError(f"unknown publish backend {config.backend!r} (local or rclone)")
-
-
-def describe(config: Config) -> str:
-    return f"{config.name}: {config.city} from {config.source.kind}, read by {config.reader.kind} {config.reader.model}"

@@ -5,7 +5,7 @@ minutes are documents here: minutes record what was decided. The month shown is 
 filter does. A document's fingerprint is the sha256 of its minutes PDF, so a corrected PDF is processed again. Page texts
 come from `pdftotext -layout`, one string per PDF page.
 
-The calendar parser is the one the daily agenda job uses (qipu-data, qipu_data/agenda/feed.py).
+The calendar parser is the one behind qipu's San Francisco agenda pages.
 """
 
 from __future__ import annotations

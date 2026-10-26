@@ -27,9 +27,9 @@ class Issues(Protocol):
 
 
 class GhIssues:
-    def __init__(self, repo: str, runner: Runner = subprocess.run) -> None:
+    def __init__(self, repo: str, runner: Runner | None = None) -> None:
         self.repo = repo
-        self._run = runner
+        self._run = runner or subprocess.run
 
     def _gh(self, *args: str) -> str:
         done = self._run(["gh", *args, "--repo", self.repo], capture_output=True, text=True, check=True)
