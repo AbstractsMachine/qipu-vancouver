@@ -32,7 +32,7 @@ Internet Archive in the [council minutes collection](https://archive.org/details
 CC0 1.0: [19700609](https://archive.org/details/19700609) and [19740219](https://archive.org/details/19740219). The page text
 is the text the model was sent: archive.org's OCR, joined line by line.
 
-The pages are inside Vancouver's 92-year privacy embargo. One records a claim by a private person; that name was withheld in
+The pages are less than 100 years old, so the privacy rule applies to them. One records a claim by a private person; that name was withheld in
 the page text and the answers with `qipu_records.verify.privacy.mask` before they were added here (see
 [docs/privacy.md](../../docs/privacy.md)). Everything else is as read.
 

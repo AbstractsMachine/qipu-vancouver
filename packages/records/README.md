@@ -144,9 +144,11 @@ In short, and with the details and caveats in [docs/accuracy.md](../../docs/accu
 
 ## Privacy
 
-In sensitive matters (a claim for damages, an injury, an illness, welfare, an eviction, a crime) a private person's name is
-replaced with `[name withheld]` in everything published, for records younger than the city's embargo: 92 years in Vancouver,
-75 in San Francisco. Officials, firms and groups stay named; the decision, its place, amount and outcome stay visible.
+Records follow the Canadian rule (BC FIPPA): a record 100 years old or more is open, and in a newer one only the name of a
+private person in their own sensitive matter (health, assistance, a police or enforcement matter, debts and claims,
+discrimination, a child, employee discipline) is replaced with `[name withheld]`. San Francisco uses the same matters with a
+75-year cutoff. Officials, firms, payees, delegations and places stay named; the decision, its place, amount and outcome
+stay visible.
 [docs/privacy.md](../../docs/privacy.md) explains the rule and its limits.
 
 ## Limitations
