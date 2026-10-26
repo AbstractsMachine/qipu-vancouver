@@ -22,11 +22,13 @@ PAGES_1970, PAGES_1974 = 3, 6
 """Pages of each sample meeting with enough text to be read."""
 
 
-def run(example: Path, tmp: Path, day: dt.date, run_id: str, **options: bool) -> RunReport:
+def run(example: Path, tmp: Path, day: dt.date, run_id: str, windowed: bool = False, **options: bool) -> RunReport:
     config = cfg.load(example / "updates" / "updates.toml")
     work = tmp / "work"
     extractor = Extractor(get_city(config.city), make_reader(config.reader), config.reader.model, day, config.gazetteer)
-    loop = Run(config, LocalStore(tmp / "store"), Workspace(work), make_source(config.source, work / "cache"), extractor)
+    source = make_source(config.source, work / "cache")
+    source.complete = not windowed
+    loop = Run(config, LocalStore(tmp / "store"), Workspace(work), source, extractor)
     now = dt.datetime.combine(day, dt.time(14, 17), dt.UTC)
     return loop(Options(run_id, day, now, **{"force": True, **options}))
 
@@ -40,12 +42,12 @@ def published_records(tmp: Path, version: str) -> list[dict[str, object]]:
     return [json.loads(line) for line in lines]
 
 
-def rescan(example: Path, day: str, page: int, extra: str) -> None:
-    """Add a new version of 19700609 in which one page has more text."""
+def rescan(example: Path, day: str, page: int, extra: str, replace: bool = False) -> None:
+    """Add a new version of 19700609 in which one page has more text, or other text."""
     rows = [json.loads(line) for line in (example / "pages.jsonl").read_text(encoding="utf-8").splitlines()]
     for row in rows:
         if row["item"] == "19700609" and row["n"] == page:
-            row["text"] += extra
+            row["text"] = extra if replace else row["text"] + extra
     (example / "updates" / "pages-v2.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
     index_path = example / "updates" / "arrivals.json"
     index = json.loads(index_path.read_text(encoding="utf-8"))
@@ -128,6 +130,8 @@ def test_a_correction_withdraws_a_record_in_every_later_release(example: Path, t
     assert third.status == "published", third.detail
     assert third.gates["corrections_applied"]["passed"]
     assert target not in {r["id"] for r in published_records(tmp_path, "2026-10-27.1")}
+    withdrawn_now = (tmp_path / "store" / "releases" / "2026-10-27.1" / "withdrawn.jsonl").read_text(encoding="utf-8")
+    assert len(withdrawn_now.splitlines()) == 1  # dropped again from the rebuilt meeting, listed once
 
 
 def test_a_failed_gate_stops_the_publish(example: Path, tmp_path: Path) -> None:
@@ -197,3 +201,29 @@ def test_pause_lock_and_schedule_skip_a_run(example: Path, tmp_path: Path) -> No
 
     assert run(example, tmp_path, DAY2, "first").status == "published"
     assert run(example, tmp_path, DAY2, "too-soon", force=False).status == "not-due"
+
+
+def test_a_windowed_source_may_list_fewer_documents_than_the_release_holds(example: Path, tmp_path: Path) -> None:
+    run(example, tmp_path, DAY2, "day2")
+    (example / "updates" / "arrivals.json").write_text("[]", encoding="utf-8")
+    later = run(example, tmp_path, DAY3, "day3", windowed=True)
+    assert (later.status, later.plan["missing"], later.records) == ("no-change", 2, 33)
+
+
+def test_records_of_an_unfinished_rescan_are_still_checked_against_their_own_pages(example: Path, tmp_path: Path) -> None:
+    config = example / "updates" / "updates.toml"
+    config.write_text(config.read_text(encoding="utf-8").replace("max_pages_per_run = 50", f"max_pages_per_run = {PAGES_1974}"))
+    run(example, tmp_path, DAY1, "day1")
+    rescan(example, "2026-10-26", 11, "A page scanned again, now showing other text entirely. " * 8, replace=True)
+    second = run(example, tmp_path, DAY2, "day2")  # the new meeting takes the whole budget; the re-scan waits
+    assert (second.documents_built, second.documents_left) == (["19740219"], ["19700609"])
+    assert second.status == "published", second.detail
+    third = run(example, tmp_path, DAY2, "day2-later")
+    assert (third.documents_built, third.pages_read, third.status) == (["19700609"], 1, "published")
+    assert third.rejected > 0  # the recorded answers for page 11 no longer match its text
+
+
+def test_a_first_run_with_nothing_listed_publishes_nothing(example: Path, tmp_path: Path) -> None:
+    report = run(example, tmp_path, dt.date(2026, 10, 18), "early")
+    assert (report.status, report.detail) == ("no-change", "nothing to publish yet")
+    assert rel.versions(store(tmp_path)) == []

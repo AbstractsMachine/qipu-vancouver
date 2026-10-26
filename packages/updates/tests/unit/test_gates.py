@@ -4,7 +4,8 @@ import datetime as dt
 from pathlib import Path
 
 from qipu_records.verify.privacy import WITHHELD
-from qipu_updates.gates import dates, outcomes, privacy, quotes, release
+from qipu_updates.gates import dates, integrity, outcomes, privacy, quotes
+from qipu_updates.release.corrections import Applied
 from tests.conftest import Pages, record
 
 PAGE = (
@@ -94,12 +95,12 @@ def test_a_mask_where_the_rule_keeps_the_name_is_over_redaction() -> None:
 
 
 def test_release_gates_catch_a_halved_release_a_zero_filled_file_and_a_bad_correction(tmp_path: Path) -> None:
-    assert not release.shrink(4, 10).passed and release.shrink(5, 10).passed and release.shrink(0, None).passed
+    assert not integrity.shrink(4, 10).passed and integrity.shrink(5, 10).passed and integrity.shrink(0, None).passed
     (tmp_path / "ok.json").write_text("{}", encoding="utf-8")
     (tmp_path / "zero.jsonl").write_bytes(b"\0" * 64)
     (tmp_path / "torn.json").write_bytes(b'{"a": 1' + b"\0" * 32)
     (tmp_path / "empty.geojson").write_bytes(b"")
-    result = release.files(tmp_path)
+    result = integrity.files(tmp_path)
     assert sorted(f.record_id for f in result.findings) == ["empty.geojson", "torn.json", "zero.jsonl"]
-    gate = release.corrections(["c1: matches 3 records, more than max_rows 1: not applied"], 2)
+    gate = integrity.corrections([Applied("c0", 1), Applied("c1", 3, "matches 3 records, more than max_rows 1: not applied")])
     assert (gate.passed, gate.findings[0].record_id) == (False, "c1")

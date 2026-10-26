@@ -129,7 +129,7 @@ def parser() -> argparse.ArgumentParser:
 
     p = command("run", "one scheduled run: find what changed, extract it, check, release, publish")
     p.add_argument("--work", help="the working copy kept between runs (default .updates-work/<name>)")
-    p.add_argument("--as-of", help="run as if today were this date (YYYY-MM-DD)")
+    p.add_argument("--as-of", help="run as if today were this date (YYYY-MM-DD): for replays and tests, on a scratch store")
     p.add_argument("--run-id", default=os.environ.get("GITHUB_RUN_ID"))
     p.add_argument("--dry-run", action="store_true", help="do everything but write to the store")
     p.add_argument("--force", action="store_true", help="run even if the source is not due")

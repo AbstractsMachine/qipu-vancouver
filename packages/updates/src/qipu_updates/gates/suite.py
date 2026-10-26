@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from qipu_updates.gates import GateResult, PageTexts, dates, outcomes, privacy, quotes, release
+from qipu_updates.gates import GateResult, PageTexts, dates, integrity, outcomes, privacy, quotes
 from qipu_updates.release.assemble import Draft
 
 
@@ -25,7 +25,7 @@ def run_all(
         outcomes.check(records, limit("proposed_vs_decided", 0)),
         privacy.leaks(records, pages, as_of, embargo_years, limit("privacy_leak", 0)),
         privacy.over_redaction(records, as_of, embargo_years, limit("over_redaction", 0)),
-        release.shrink(len(records), records_before, limit("no_shrink", 0)),
-        release.files(draft.folder, limit("files_intact", 0)),
-        release.corrections(draft.problems, len(draft.manifest.corrections), limit("corrections_applied", 0)),
+        integrity.shrink(len(records), records_before, limit("no_shrink", 0)),
+        integrity.files(draft.folder, limit("files_intact", 0)),
+        integrity.corrections(draft.applied, limit("corrections_applied", 0)),
     ]

@@ -1,7 +1,7 @@
 """Where documents come from.
 
-A source answers two questions: what documents exist today (`discover`, cheap: one listing) and what one of them says
-(`content`, the page texts). A document's fingerprint changes whenever its text may have changed; the run compares
+A source answers two questions: what documents exist today (`discover`) and what one of them says (`content`, the page
+texts). A document's fingerprint changes whenever its text may have changed; the run compares
 fingerprints with the last release to decide what to process.
 """
 
@@ -37,6 +37,10 @@ class SourceError(RuntimeError):
 
 
 class Source(Protocol):
+    complete: bool
+    """True when `discover` lists everything the source holds; False when it shows a window, such as the last two months.
+    Only a complete listing is compared with the last release to catch a listing that came back short."""
+
     def discover(self, as_of: dt.date) -> list[Document]: ...
 
     def content(self, doc: Document) -> Content: ...

@@ -25,7 +25,7 @@ def test_drop_withdraws_the_matching_record_with_its_reason() -> None:
     out = corr.apply(records(), [rule(action="drop", where={"source.item": "m2"})], set(), "v1")
     assert [r["id"] for r in out.records] == ["m1:0/1", "m1:0/2"]
     assert out.withdrawn == [{"id": "m2:3/1", "rule_id": "r", "reason": "why", "release": "v1"}]
-    assert out.applied[0].matched == 1 and not out.problems
+    assert out.applied[0] == corr.Applied("r", 1)
 
 
 def test_replace_text_fixes_only_the_named_fields_of_the_records_it_selects() -> None:
@@ -38,13 +38,13 @@ def test_replace_text_fixes_only_the_named_fields_of_the_records_it_selects() ->
 def test_a_rule_matching_more_than_max_rows_changes_nothing_and_is_a_problem() -> None:
     out = corr.apply(records(), [rule(action="drop", where={"city": "vancouver"}, max_rows=2)], set(), "v1")
     assert len(out.records) == 3 and not out.withdrawn
-    assert out.problems == ["r: matches 3 records, more than max_rows 2: not applied"]
+    assert out.applied[0].problem == "matches 3 records, more than max_rows 2: not applied"
 
 
 def test_a_rule_matching_too_few_is_stale_unless_an_earlier_release_applied_it() -> None:
     gone = rule(action="drop", where={"id": "nope"}, min_rows=1)
-    assert corr.apply(records(), [gone], set(), "v1").problems == ["r: matches 0 records, fewer than min_rows 1: stale"]
-    assert corr.apply(records(), [gone], {"r"}, "v2").problems == []
+    assert corr.apply(records(), [gone], set(), "v1").applied[0].problem == "matches 0 records, fewer than min_rows 1: stale"
+    assert corr.apply(records(), [gone], {"r"}, "v2").applied[0].problem is None
 
 
 @pytest.mark.parametrize(

@@ -27,6 +27,10 @@ class Store(Protocol):
 
     def upload(self, folder: Path, prefix: str) -> None: ...
 
+    def folders(self, prefix: str) -> list[str]:
+        """Names of the folders directly under `prefix`."""
+        ...
+
     def list(self, prefix: str) -> list[str]:
         """Keys under `prefix`, relative to it."""
         ...

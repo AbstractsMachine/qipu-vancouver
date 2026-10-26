@@ -7,12 +7,10 @@ firms, places or the record's source.
 Leak: in every sensitive record under the embargo, the rule finds no private name still shown. The topic is read again from
 the published text rather than trusted from the extractor.
 
-Over-redaction: San Francisco had to undo several rounds of masking (only 9% to 34% of masks were real private people), so
-every mask is checked against the cases that went wrong there. A mask fails when it is in a record that is not sensitive or is
-older than the embargo; in the record's source, date, action or outcome, or on a mover, seconder or voter (officials); right
-after an official title, a delegation or petitioner word, or a contract award; or right before a word that makes the name a
-firm, an organisation, a place or a role. (A payee is not on the list: in a damage claim the payee is the claimant, whom the
-rule withholds.)
+Over-redaction: a mask fails when it is in a record that is not sensitive or is older than the embargo; in the record's
+source, date, action or outcome, or on a mover, seconder or voter (officials); right after an official title, a delegation
+or petitioner word, or a contract award; or right before a word that makes the name a firm, an organisation, a place or a
+role. A payee is not on the list: in a damage claim the payee is the claimant, whom the rule withholds.
 """
 
 from __future__ import annotations

@@ -37,6 +37,8 @@ def document(row: dict[str, Any]) -> Document:
 
 
 class ArchiveSource:
+    complete = True
+
     def __init__(self, collection: str, cache_dir: Path, http: Polite | None = None) -> None:
         self.collection = collection
         self.cache_dir = cache_dir

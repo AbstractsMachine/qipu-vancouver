@@ -2,7 +2,7 @@
 
 The schedule itself is the CI's (a cron in .github/workflows/updates.yml); this module holds what the cron cannot know.
 
-Pause has two levels, like the daily agenda job: "publish" keeps building and checking but publishes nothing, "all" skips
+Pause has two levels: "publish" keeps building and checking but publishes nothing, "all" skips
 runs. A rollback pauses publishing, so the next scheduled run does not publish the same content again before someone looks.
 
 The lock is a marker in the store with an expiry. GitHub's concurrency group is what keeps two scheduled runs apart; the lock
@@ -68,7 +68,7 @@ def acquire(store: Store, run_id: str, now: dt.datetime, ttl: dt.timedelta = dt.
     store.write(LOCK, json.dumps(lock).encode("utf-8"))
 
 
-def release(store: Store, run_id: str) -> None:
+def unlock(store: Store, run_id: str) -> None:
     data = store.read(LOCK)
     if data and json.loads(data)["run_id"] == run_id:
         store.delete(LOCK)

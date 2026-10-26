@@ -49,8 +49,8 @@ def manifest(store: Store, version: str) -> Manifest | None:
 
 
 def versions(store: Store) -> list[str]:
-    names = {key.split("/", 1)[0] for key in store.list(RELEASES) if key.endswith("/" + MANIFEST)}
-    return sorted(names, key=version_key)
+    """Release folders in the store, published or not, oldest first."""
+    return sorted(store.folders(RELEASES), key=version_key)
 
 
 def history(store: Store) -> list[dict[str, Any]]:
@@ -100,19 +100,22 @@ def gates_passed(release: Manifest) -> bool:
 
 
 def rollback(store: Store, now: dt.datetime, reason: str, to: str | None = None) -> Pointer:
-    """Point latest.json at `to`, or at the newest release before the current one whose gates passed."""
+    """Point latest.json at `to`, or at the newest earlier release that was published.
+
+    Only releases that were once published qualify: a folder whose upload was cut short is in the store but never was.
+    """
     here = current(store)
     if here is None:
         raise PublishError("nothing is published")
+    published = {e["version"] for e in history(store) if e["event"] == "publish"}
     if to is None:
-        older = [v for v in versions(store) if version_key(v) < version_key(here.version)]
-        candidates = [v for v in reversed(older) if (m := manifest(store, v)) and gates_passed(m)]
-        if not candidates:
+        older = sorted((v for v in published if version_key(v) < version_key(here.version)), key=version_key)
+        if not older:
             raise PublishError(f"no earlier release to roll back to from {here.version}")
-        to = candidates[0]
+        to = older[-1]
     target = manifest(store, to)
-    if target is None or not gates_passed(target):
-        raise PublishError(f"release {to} is missing or did not pass its gates")
+    if to not in published or target is None or not gates_passed(target):
+        raise PublishError(f"release {to} was never published or did not pass its gates")
     pointer = _move_pointer(store, to, now)
     record_event(store, {"event": "rollback", "version": to, "from": here.version, "at": now.isoformat(), "reason": reason})
     return pointer

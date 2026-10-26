@@ -10,6 +10,7 @@ dry-run, paused, not-due, busy or failed. A dry run writes nothing to the store.
 from __future__ import annotations
 
 import datetime as dt
+import logging
 import shutil
 from dataclasses import dataclass
 from typing import Any
@@ -18,7 +19,7 @@ from qipu_updates.config import Config, format_every
 from qipu_updates.gates.suite import run_all
 from qipu_updates.incremental.extract import Budget, Extractor
 from qipu_updates.incremental.plan import Built, Plan, listing_looks_short, make_plan
-from qipu_updates.incremental.workspace import Workspace
+from qipu_updates.incremental.workspace import Workspace, WorkspacePages
 from qipu_updates.monitor import metrics
 from qipu_updates.monitor.metrics import RunReport
 from qipu_updates.publish import Store
@@ -39,34 +40,12 @@ class Options:
     force: bool = False
     """Run even when the source is not due."""
     publish: bool = True
-    """False builds and checks but does not publish (the workflow's UPDATES_PUBLISH=off)."""
+    """False builds and checks but does not publish."""
 
+
+log = logging.getLogger(__name__)
 
 BuiltDocs = dict[str, tuple[Document, list[dict[str, Any]]]]
-
-
-class WorkspacePages:
-    """Page texts for the gates, read from the working copy."""
-
-    def __init__(self, workspace: Workspace) -> None:
-        self.workspace = workspace
-        self._docs: dict[str, tuple[list[str], str | None] | None] = {}
-
-    def document(self, doc_id: str) -> tuple[list[str], str | None] | None:
-        if doc_id not in self._docs:
-            found = None
-            if self.workspace.has(doc_id):
-                collection = self.workspace.collection(doc_id)
-                found = ([p.text for p in collection.pages()], collection.items()[doc_id].date)
-            self._docs[doc_id] = found
-        return self._docs[doc_id]
-
-    def text(self, page_id: str) -> str | None:
-        doc_id, _, n = page_id.rpartition(":")
-        document = self.document(doc_id)
-        if document is None or not n.isdigit() or int(n) >= len(document[0]):
-            return None
-        return document[0][int(n)]
 
 
 class Run:
@@ -84,15 +63,18 @@ class Run:
             if not opts.dry_run:
                 control.acquire(self.store, opts.run_id, opts.now)
         except control.BusyError as error:
-            return self._end(report, "busy", str(error), opts)
+            report.status, report.detail = "busy", str(error)
+            return report  # not saved: the run holding the lock is writing the same files
         try:
-            self._run(report, opts, publish_paused=bool(pause))
+            self._run(report, opts)
         except Exception as error:  # the report says what broke; the CLI exits non-zero so the alert fires
+            log.exception("run %s failed", opts.run_id)
             report.status, report.detail = "failed", f"{type(error).__name__}: {error}"
+        try:
+            return self._end(report, report.status, report.detail, opts)
         finally:
             if not opts.dry_run:
-                control.release(self.store, opts.run_id)
-        return self._end(report, report.status, report.detail, opts)
+                control.unlock(self.store, opts.run_id)
 
     def _end(self, report: RunReport, status: str, detail: str, opts: Options) -> RunReport:
         report.status, report.detail, report.finished = status, detail, dt.datetime.now(dt.UTC).isoformat()
@@ -103,40 +85,46 @@ class Run:
     def _plan(self, previous: Manifest | None, opts: Options) -> Plan:
         found = self.source.discover(opts.as_of)
         known = previous.documents if previous else {}
-        if listing_looks_short(len(found), len(known)):
+        if self.source.complete and listing_looks_short(len(found), len(known)):
             raise SourceError(f"the source lists {len(found)} documents, the last release had {len(known)}")
         return make_plan(found, {k: Built(v.fingerprint, v.build_key) for k, v in known.items()}, self.extractor.build_key)
 
-    def _build(self, docs: tuple[Document, ...], report: RunReport) -> BuiltDocs:
+    def _build(self, plan: Plan, previous: Manifest | None, report: RunReport) -> BuiltDocs:
         budget = Budget(self.config.reader.max_pages_per_run)
         context = self.extractor.context()
+        known = previous.documents if previous else {}
         built: BuiltDocs = {}
-        for doc in docs:
-            report.readings_reused += self.workspace.refresh(doc.doc_id, self.source.content(doc), self.extractor.reusable)
+        for doc in plan.work:
+            same_text = (
+                doc.doc_id in known and known[doc.doc_id].fingerprint == doc.fingerprint and self.workspace.has(doc.doc_id)
+            )
+            content = self.workspace.current_content(doc.doc_id) if same_text else self.source.content(doc)
+            report.readings_reused += self.workspace.stage(doc.doc_id, content, self.extractor.reusable)
             result = self.extractor.process(self.workspace, doc, budget, context)
             report.pages_read += result.pages_read
             if not result.complete:
                 report.documents_left.append(doc.doc_id)
                 continue
+            self.workspace.promote(doc.doc_id)
             stamp(result.records, doc, report.run_id, self.workspace.page_hashes(doc.doc_id))
             built[doc.doc_id] = (doc, result.records)
             report.documents_built.append(doc.doc_id)
             report.rejected += result.rejected
         return built
 
-    def _run(self, report: RunReport, opts: Options, publish_paused: bool) -> None:
+    def _run(self, report: RunReport, opts: Options) -> None:
         pointer = rel.current(self.store)
         previous = rel.manifest(self.store, pointer.version) if pointer else None
         plan = self._plan(previous, opts)
         report.plan = plan.counts()
-        built = self._build(plan.work, report)
+        built = self._build(plan, previous, report)
         if not opts.dry_run:
             control.mark_checked(self.store, opts.now)
         report.records_before = previous.counts.get("records", 0) if previous else 0
         rules_digest = corrections.digest(self.config.corrections)
-        if previous and not built and previous.corrections_sha256 == rules_digest:
+        if not built and (previous is None or previous.corrections_sha256 == rules_digest):
             report.status, report.records = "no-change", report.records_before
-            report.detail = f"nothing new or changed since {previous.version}"
+            report.detail = f"nothing new or changed since {previous.version}" if previous else "nothing to publish yet"
             if report.documents_left:
                 report.detail += f"; left for the next run: {', '.join(report.documents_left)}"
             return
@@ -157,7 +145,7 @@ class Run:
             report.status, report.detail = "refused", f"gates failed: {', '.join(failed)}; {draft.manifest.version} not published"
         elif opts.dry_run:
             report.status, report.detail = "dry-run", f"{draft.manifest.version} built and checked, not published"
-        elif publish_paused or not opts.publish:
+        elif control.paused(self.store) or not opts.publish:  # read again: a pause or rollback may have come in mid-run
             report.status, report.detail = "publish-paused", f"{draft.manifest.version} built and checked; publishing is paused"
         else:
             rel.publish(self.store, draft.folder, draft.manifest, opts.now, opts.run_id)

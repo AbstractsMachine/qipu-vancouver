@@ -2,8 +2,8 @@
 
 Minutes print the meeting date in a running head or in the opening line of each meeting ("A Regular meeting of the Council
 ... was held on Tuesday, February 19, 1974"). The date is read again here with qipu-records' date reader and compared with
-the published one. A mismatch means the record was dated some other way, for example by an older reader in a release built
-before a fix: the same check that caught the waived San Francisco volumes in the v0.9 release.
+the published one. A mismatch means the record was dated some other way, for example by an older date reader in a record
+carried over from an earlier release.
 """
 
 from __future__ import annotations

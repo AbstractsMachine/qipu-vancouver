@@ -1,7 +1,7 @@
 """Gates on the release as a whole: it did not shrink by half, no file is empty or zero-filled, every correction applied.
 
-The first two come from the daily agenda publish: a broken listing must not empty the site, and a disk that drops mid-write
-leaves files of zero bytes that look fine to everything but a byte check.
+A broken listing must not empty the published data, and a disk that drops mid-write leaves files of zero bytes that look
+fine to everything but a byte check.
 """
 
 from __future__ import annotations
@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from qipu_updates.gates import Finding, GateResult
+from qipu_updates.release.corrections import Applied
 
 TEXT_SUFFIXES = (".json", ".jsonl", ".geojson", ".html", ".csv")
 
@@ -34,7 +35,7 @@ def files(folder: Path, limit: int = 0) -> GateResult:
     return result
 
 
-def corrections(problems: list[str], applied: int, limit: int = 0) -> GateResult:
-    result = GateResult("corrections_applied", checked=applied, limit=limit)
-    result.findings = [Finding(p.split(":", 1)[0], p.split(":", 1)[1].strip()) for p in problems]
+def corrections(applied: list[Applied], limit: int = 0) -> GateResult:
+    result = GateResult("corrections_applied", checked=len(applied), limit=limit)
+    result.findings = [Finding(a.rule_id, a.problem) for a in applied if a.problem]
     return result

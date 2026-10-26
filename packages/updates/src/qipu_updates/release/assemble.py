@@ -2,7 +2,7 @@
 
 Every record built in this run gets a provenance block: the run, the document's address and fingerprint, and the sha256 of
 the page text it was read from. With the record's own `reading` (model, prompt version) and `source` (item, page, viewer
-link), each published fact can be traced to one page of one scan, one prompt and one run.
+link), that is enough to trace each record to the page, prompt and run it came from.
 """
 
 from __future__ import annotations
@@ -30,8 +30,8 @@ class Draft:
     folder: Path
     manifest: Manifest
     records: list[dict[str, Any]]
-    problems: list[str]
-    """Corrections that could not be applied cleanly; the release gate fails on any."""
+    applied: list[corrections.Applied]
+    """What each correction matched; the corrections gate fails on any with a problem."""
 
     def write_manifest(self) -> None:
         self.manifest.files = hash_files(self.folder)
@@ -92,11 +92,12 @@ def assemble(
     write_jsonl(folder / "decisions.jsonl", published)
     write_json(folder / "decisions.geojson", feature_collection(cast(list[DecisionRecord], published)))
     withdrawn = _jsonl(read_previous("withdrawn.jsonl")) if previous and "withdrawn.jsonl" in previous.files else []
-    withdrawn += fixed.withdrawn
+    listed = {(w["id"], w["rule_id"]) for w in withdrawn}
+    withdrawn += [w for w in fixed.withdrawn if (w["id"], w["rule_id"]) not in listed]  # a rebuilt document is dropped again
     if withdrawn:
         write_jsonl(folder / "withdrawn.jsonl", withdrawn)
 
     manifest.documents = dict(sorted(documents.items()))
     manifest.counts = {"documents": len(documents), "records": len(published), "withdrawn": len(withdrawn)}
     manifest.corrections = [{"rule_id": a.rule_id, "matched": a.matched, "problem": a.problem} for a in fixed.applied]
-    return Draft(folder, manifest, published, fixed.problems)
+    return Draft(folder, manifest, published, fixed.applied)

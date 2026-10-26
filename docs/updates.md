@@ -24,20 +24,23 @@ flowchart LR
 **Discover.** The source lists what it holds today. For Vancouver that is the archive.org collection
 `cityofvancouvercouncilminutes`, read through the scrape API; an item's fingerprint is its last update time, so a re-scan or
 new OCR shows up as a change. If the listing has fewer than half the documents of the last release, the run stops: a broken
-listing must never look like a mass deletion.
+listing must never look like a mass deletion. A source that only shows a window (Legistar shows two months) is exempt, and
+documents that have left its window stay in the release.
 
 **Plan.** Each listed document is new, changed or unchanged against the manifest of the published release. A document is also
 changed when its build key differs: the qipu-records version, the prompt, the model, the gazetteer or the privacy cutoff year.
 So upgrading the extractor rebuilds everything, and so does New Year, when one more year of records leaves the embargo.
 
-**Extract.** Each new or changed document gets a folder in the working copy (a qipu-records collection). Its pages are
-fetched, and readings from the previous version are kept for every page whose text did not change and that was read with the
-same prompt and model. Only the remaining pages go to the model, within a page budget per run (`max_pages_per_run`); a
-document not finished when the budget runs out is left for the next run, which continues where this one stopped. Then
-qipu-records builds the document's records, and each one is stamped with its provenance.
+**Extract.** Each new or changed document is staged in the working copy (a qipu-records collection folder per document).
+Its pages are fetched, or, when only the build key changed, taken from the copy already there. Readings are kept for every
+page whose text did not change and that was read with the same prompt and model; only the other pages go to the model,
+within a page budget per run (`max_pages_per_run`). A document not finished when the budget runs out stays staged for the
+next run, which continues where this one stopped, while the release keeps its previous records and the pages they were
+read from. A finished document replaces its previous copy, qipu-records builds its records, and each one is stamped with
+its provenance.
 
 **Assemble.** The new release folder takes the rebuilt documents, copies the others from the published release, and applies
-the corrections file (see below). Unchanged documents are carried over byte for byte.
+the corrections file (see below). Records of unchanged documents are carried over as they were published.
 
 **Gates.** Every gate reads the release as it will be published and works from the page text, not from flags the extractor
 set:
@@ -118,7 +121,8 @@ A source answers two questions:
 
 ```python
 class Source(Protocol):
-    def discover(self, as_of: dt.date) -> list[Document]: ...   # what exists today, cheaply
+    complete: bool                                              # False when the listing is a window
+    def discover(self, as_of: dt.date) -> list[Document]: ...   # what exists today
     def content(self, doc: Document) -> Content: ...            # one document's page texts
 ```
 
@@ -150,7 +154,7 @@ qipu-updates rollback --config C --reason "wrong dates in the 1974 minutes"
 qipu-updates rollback --config C --to 2026-10-19.1 --reason "..."
 ```
 
-With no `--to`, it goes to the newest earlier release whose gates passed. A rollback moves `latest.json` and deletes nothing,
+With no `--to`, it goes to the newest earlier release that was published. A rollback moves `latest.json` and deletes nothing,
 so it can be undone the same way. It also pauses publishing, so the next scheduled run does not publish the same content
 again; fix the cause (a correction, a config change, a new extractor version), then `resume`.
 
@@ -175,8 +179,12 @@ on that issue if it is still open. Close it once the run is green again.
 
 ## Limits
 
-- The lock is a marker in the store with an expiry. GitHub's concurrency group keeps scheduled runs apart; the lock also
-  stops a manual run from another machine, but two runs starting in the same second could both take it.
+- The lock is a marker in the store with an expiry, read and then written. GitHub's concurrency group keeps scheduled runs
+  apart; the lock also stops a manual run from another machine, but two runs starting within a few seconds of each other
+  could both take it.
+- `max_pages_per_run` counts every page that may have been sent, including pages whose answer was unusable. Such a page is
+  sent again on the next run, so a page that never gets a usable answer keeps its document unfinished; it shows in every
+  run's report under "left for the next run".
 - Every release is a full folder. For Vancouver's 1,116 meetings that is tens of megabytes a release; old releases are
   kept until someone deletes them.
 - Gates that need the page text skip records carried over from a document whose pages are not in the working copy (they

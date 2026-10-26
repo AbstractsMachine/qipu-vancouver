@@ -73,10 +73,6 @@ class Outcome:
     withdrawn: list[dict[str, Any]]
     applied: list[Applied]
 
-    @property
-    def problems(self) -> list[str]:
-        return [f"{a.rule_id}: {a.problem}" for a in self.applied if a.problem]
-
 
 def load(path: Path | None) -> list[Rule]:
     if path is None or not path.exists():

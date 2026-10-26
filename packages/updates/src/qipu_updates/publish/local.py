@@ -40,6 +40,12 @@ class LocalStore:
         shutil.rmtree(target, ignore_errors=True)
         staging.rename(target)
 
+    def folders(self, prefix: str) -> list[str]:
+        base = self._path(prefix)
+        if not base.is_dir():
+            return []
+        return sorted(p.name for p in base.iterdir() if p.is_dir() and not p.name.endswith(".uploading"))
+
     def list(self, prefix: str) -> list[str]:
         base = self._path(prefix)
         if not base.is_dir():

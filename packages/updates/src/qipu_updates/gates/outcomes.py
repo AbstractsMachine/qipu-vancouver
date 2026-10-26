@@ -1,8 +1,8 @@
 """Proposed vs decided: a step (a first reading, a referral, a hearing) is never published as a decision.
 
 The published stage and outcome must be what qipu-records' rule gives for the recorded action, and a rezoning is "rezoned"
-only when a by-law or resolution was finally passed. Before this rule, 16 of 17 sampled rezoning errors in San Francisco
-were proposals stored as done. A correction or a carried-over record from an older extractor can break it; this catches both.
+only when a by-law or resolution was finally passed. A correction, or a record carried over from an older extractor, can
+break either rule.
 """
 
 from __future__ import annotations

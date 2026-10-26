@@ -2,8 +2,10 @@
 
 The calendar page lists each meeting with links to its agenda and, once approved, its minutes (a PDF). Only meetings with
 minutes are documents here: minutes record what was decided. The month shown is chosen with a cookie, as the site's own
-filter does. A document's fingerprint is the sha256 of its minutes PDF, so a corrected PDF is processed again. Page texts
-come from `pdftotext -layout`, one string per PDF page.
+filter does. A document's fingerprint is the sha256 of its minutes PDF, so a corrected PDF is processed again; this means
+`discover` downloads every posted minutes PDF in the window (a few dozen a month, one request at a time). The calendar
+shows two months, so the listing is a window (`complete = False`). Page texts come from `pdftotext -layout`, one string per
+PDF page.
 
 The calendar parser is the one behind qipu's San Francisco agenda pages.
 """
@@ -80,6 +82,8 @@ def pdftotext(data: bytes) -> list[str]:
 
 
 class LegistarSource:
+    complete = False
+
     def __init__(
         self,
         base: str = SF_BASE,

@@ -30,9 +30,9 @@ def test_the_lock_keeps_out_another_run_until_it_expires(tmp_path: Path) -> None
     with pytest.raises(control.BusyError, match="run a holds the lock"):
         control.acquire(store, "b", NOW + dt.timedelta(hours=1))
     control.acquire(store, "b", NOW + dt.timedelta(hours=4))  # expired
-    control.release(store, "a")  # not a's any more: stays
+    control.unlock(store, "a")  # not a's any more: stays
     assert store.read(control.LOCK) is not None
-    control.release(store, "b")
+    control.unlock(store, "b")
     assert store.read(control.LOCK) is None
 
 

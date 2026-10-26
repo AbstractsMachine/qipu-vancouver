@@ -39,7 +39,6 @@ class DocResult:
     doc: Document
     complete: bool
     pages_read: int = 0
-    readings_reused: int = 0
     records: list[dict[str, Any]] = field(default_factory=list)
     rejected: int = 0
 
@@ -86,11 +85,16 @@ class Extractor:
         return Context(self.city, self.embargo, places)
 
     def process(self, workspace: Workspace, doc: Document, budget: Budget, context: Context) -> DocResult:
-        collection = workspace.collection(doc.doc_id)
-        read = read_pages(collection, self.reader, self.city, budget.pages) if budget.pages else 0
-        budget.spend(read)
-        if workspace.unread(doc.doc_id):
-            return DocResult(doc, complete=False, pages_read=read)
+        """Read and build the document's staged copy. Promote it with `Workspace.promote` once complete."""
+        collection = workspace.collection(doc.doc_id, staged=True)
+        waiting = workspace.unread(doc.doc_id, staged=True)
+        stored = read_pages(collection, self.reader, self.city, budget.pages) if budget.pages and waiting else 0
+        # read_pages returns the answers it stored; it may have sent up to min(budget, waiting) pages.
+        budget.spend(min(budget.pages, waiting))
+        if workspace.unread(doc.doc_id, staged=True):
+            return DocResult(doc, complete=False, pages_read=stored)
         records, rejected, _ = build_records(context, collection)
-        # From here a record is JSON: release.assemble adds its provenance.
-        return DocResult(doc, complete=True, pages_read=read, records=cast(list[dict[str, Any]], records), rejected=len(rejected))
+        # From here a record is plain JSON, which gets a provenance block before it is released.
+        return DocResult(
+            doc, complete=True, pages_read=stored, records=cast(list[dict[str, Any]], records), rejected=len(rejected)
+        )

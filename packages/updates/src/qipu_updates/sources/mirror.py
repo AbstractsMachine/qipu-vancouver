@@ -32,6 +32,8 @@ def _load(path: Path) -> Any:
 
 
 class MirrorSource:
+    complete = True
+
     def __init__(self, collection: Path, index: Path) -> None:
         self.collection = collection
         self.index = index

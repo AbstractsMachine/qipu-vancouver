@@ -9,18 +9,18 @@ import pytest
 
 from qipu_updates.publish import releases as rel
 from qipu_updates.publish.local import LocalStore
-from qipu_updates.publish.rclone import RcloneStore
+from qipu_updates.publish.rclone import RcloneStore, StoreError
 from qipu_updates.release.manifest import MANIFEST, Manifest, hash_files
 
 NOW = dt.datetime(2026, 10, 26, 14, 17, tzinfo=dt.UTC)
 
 
-def release_folder(tmp: Path, version: str, passed: bool = True) -> tuple[Path, Manifest]:
+def release_folder(tmp: Path, version: str) -> tuple[Path, Manifest]:
     folder = tmp / "drafts" / version
     (folder / "records").mkdir(parents=True)
     (folder / "records" / "m1.jsonl").write_text('{"id": "m1:0/1"}\n', encoding="utf-8")
     manifest = Manifest(version, None, NOW.isoformat(), "run", "vancouver", "mirror", "c", "k", "none")
-    manifest.gates = {"quote_on_page": {"passed": passed}}
+    manifest.gates = {"quote_on_page": {"passed": True}}
     manifest.files = hash_files(folder)
     (folder / MANIFEST).write_text(manifest.to_json(), encoding="utf-8")
     return folder, manifest
@@ -58,14 +58,15 @@ def test_publish_refuses_to_move_the_pointer_when_files_are_missing(tmp_path: Pa
     assert rel.current(store) is None
 
 
-def test_rollback_goes_to_the_newest_earlier_release_that_passed_its_gates(tmp_path: Path) -> None:
+def test_rollback_goes_to_the_newest_earlier_release_that_was_published(tmp_path: Path) -> None:
     store = LocalStore(tmp_path / "s")
     with pytest.raises(rel.PublishError, match="nothing is published"):
         rel.rollback(store, NOW, "r")
-    for version, passed in (("2026-10-19.1", True), ("2026-10-25.1", False), ("2026-10-26.1", True)):
-        folder, _ = release_folder(tmp_path, version, passed)
-        store.upload(folder, f"releases/{version}")
-    rel._move_pointer(store, "2026-10-26.1", NOW)
+    for version in ("2026-10-19.1", "2026-10-26.1"):
+        rel.publish(store, *release_folder(tmp_path, version), NOW, "run")
+    orphan, _ = release_folder(tmp_path, "2026-10-25.1")
+    store.upload(orphan, "releases/2026-10-25.1")  # uploaded, but the run stopped before publishing it
+
     pointer = rel.rollback(store, NOW, "wrong dates")
     assert (pointer.version, pointer.previous) == ("2026-10-19.1", "2026-10-26.1")
     assert rel.history(store)[-1] == {
@@ -77,7 +78,7 @@ def test_rollback_goes_to_the_newest_earlier_release_that_passed_its_gates(tmp_p
     }
     with pytest.raises(rel.PublishError, match="no earlier release"):
         rel.rollback(store, NOW, "again")
-    with pytest.raises(rel.PublishError, match="did not pass its gates"):
+    with pytest.raises(rel.PublishError, match="never published"):
         rel.rollback(store, NOW, "r", to="2026-10-25.1")
     assert rel.rollback(store, NOW, "forward again", to="2026-10-26.1").version == "2026-10-26.1"
 
@@ -97,7 +98,8 @@ class FakeRclone:
     def __call__(self, args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
         self.calls.append(args)
         out = {"cat": b"data", "lsf": b"a.json\nb/c.json\n"}.get(args[1], b"")
-        return subprocess.CompletedProcess(args, 1 if "missing" in args[-1] else 0, out, b"")
+        code = 3 if "missing" in args[-1] else 1 if "broken" in args[-1] else 0
+        return subprocess.CompletedProcess(args, code, out, b"network down")
 
 
 def test_the_rclone_store_speaks_rclone(tmp_path: Path) -> None:
@@ -110,5 +112,8 @@ def test_the_rclone_store_speaks_rclone(tmp_path: Path) -> None:
     store.upload(tmp_path, "releases/v1")
     assert store.list("releases") == ["a.json", "b/c.json"]
     assert store.list("missing") == []
-    assert [c[1] for c in fake.calls] == ["cat", "cat", "rcat", "deletefile", "copy", "lsf", "lsf"]
+    store.delete("missing.json")
+    with pytest.raises(StoreError, match="network down"):
+        store.read("broken.json")
+    assert [c[1] for c in fake.calls][:7] == ["cat", "cat", "rcat", "deletefile", "copy", "lsf", "lsf"]
     assert fake.calls[4][2:4] == [str(tmp_path), "r2:bucket/van/releases/v1"] and "--checksum" in fake.calls[4]
