@@ -2,6 +2,8 @@
 
 import json
 import logging
+import urllib.error
+from email.message import Message
 from pathlib import Path
 
 import pytest
@@ -23,6 +25,36 @@ def test_fetch_writes_items_pages_and_page_maps(tmp_path: Path, saved_archive: S
     requests = len(saved_archive.requested)
     assert fetch_items(collection, saved_archive, ["19700609"]) == 0
     assert len(saved_archive.requested) == requests
+
+
+class _ArchiveWithGaps(SavedArchive):
+    """The saved archive, plus an item with no OCR ("noocr") and one whose server is down ("down")."""
+
+    def _download(self, url: str) -> bytes:
+        if "/metadata/noocr" in url or "/metadata/down" in url:
+            return b"{}"
+        if "/download/noocr/" in url:
+            raise urllib.error.HTTPError(url, 404, "Not Found", Message(), None)
+        if "/download/down/" in url:
+            raise urllib.error.HTTPError(url, 503, "Unavailable", Message(), None)
+        return super()._download(url)
+
+
+def test_an_item_without_ocr_is_skipped_and_the_rest_fetched(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    collection = Collection(tmp_path / "van")
+    with caplog.at_level(logging.WARNING):
+        assert fetch_items(collection, _ArchiveWithGaps(tmp_path / "cache"), ["noocr", "19700609"]) == 5
+    assert list(collection.items()) == ["19700609"]
+    assert "noocr: skipped, archive.org has no OCR text" in caplog.text
+
+
+def test_items_fetched_before_a_failure_are_kept(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("time.sleep", lambda seconds: None)
+    collection = Collection(tmp_path / "van")
+    with pytest.raises(urllib.error.HTTPError):
+        fetch_items(collection, _ArchiveWithGaps(tmp_path / "cache"), ["19700609", "down"])
+    assert list(collection.items()) == ["19700609"]
+    assert len(collection.pages()) == 5
 
 
 def test_read_skips_pages_already_read_and_stops_at_the_cap(sample_copy: Path) -> None:

@@ -7,12 +7,13 @@ import json
 import logging
 import shutil
 import sys
+import urllib.error
 from pathlib import Path
 
 from qipu_records.cities import CITIES, get_city
 from qipu_records.collection import Collection
 from qipu_records.export.records import Context
-from qipu_records.fetch.archive import ArchiveClient
+from qipu_records.fetch.archive import ArchiveClient, check_identifier
 from qipu_records.fetch.run import fetch_items
 from qipu_records.map import gazetteer
 from qipu_records.pipeline import build
@@ -79,6 +80,13 @@ def cmd_demo(args: argparse.Namespace) -> int:
     return 0
 
 
+def _identifier(text: str) -> str:
+    try:
+        return check_identifier(text)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from None
+
+
 def parser() -> argparse.ArgumentParser:
     top = argparse.ArgumentParser(prog="qipu-records", description=__doc__)
     top.add_argument("-v", "--verbose", action="store_true")
@@ -91,7 +99,7 @@ def parser() -> argparse.ArgumentParser:
         return p
 
     p = command("fetch", "download items' OCR pages and page maps from archive.org")
-    p.add_argument("identifiers", nargs="+", help="archive.org identifiers, e.g. 19740219")
+    p.add_argument("identifiers", nargs="+", type=_identifier, help="archive.org identifiers, e.g. 19740219")
     p.add_argument("--cache", default=".cache/archive", help="where archive.org downloads are kept")
     p.set_defaults(run=cmd_fetch)
 
@@ -124,6 +132,12 @@ def main(argv: list[str] | None = None) -> int:
     except ReaderConfigError as error:
         print(f"qipu-records: {error}", file=sys.stderr)
         return 2
+    except FileNotFoundError as error:
+        print(f"qipu-records: no such file: {error.filename}", file=sys.stderr)
+        return 1
+    except urllib.error.URLError as error:
+        print(f"qipu-records: network error, nothing lost; run the command again to continue ({error})", file=sys.stderr)
+        return 1
     return code
 
 

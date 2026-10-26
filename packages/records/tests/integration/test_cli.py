@@ -2,6 +2,7 @@
 
 import json
 import shutil
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -58,3 +59,26 @@ def test_read_without_a_key_explains_and_fails(
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     assert cli.main(["read", "--out", str(sample_copy)]) == 2
     assert "set ANTHROPIC_API_KEY in the environment" in capsys.readouterr().err
+
+
+def test_a_bad_identifier_is_refused_by_the_command_line(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as stopped:
+        cli.main(["fetch", "--out", "unused", "../../etc"])
+    assert stopped.value.code == 2
+    assert "not an archive.org identifier" in capsys.readouterr().err
+
+
+def test_a_network_failure_is_one_line_not_a_traceback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def offline(*args: object, **kwargs: object) -> int:
+        raise urllib.error.URLError("nodename nor servname provided")
+
+    monkeypatch.setattr(cli, "fetch_items", offline)
+    assert cli.main(["fetch", "--out", str(tmp_path), "19740219"]) == 1
+    assert "network error, nothing lost" in capsys.readouterr().err
+
+
+def test_build_before_fetch_names_the_missing_file(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(["build", "--out", str(tmp_path)]) == 1
+    assert "no such file" in capsys.readouterr().err

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -19,6 +20,15 @@ from typing import Any
 USER_AGENT = "qipu-records/0.1 (+https://github.com/AbstractsMachine/qipu-open; cached, about one request a second)"
 PAUSE_SECONDS = 1.0
 RETRIES = 4
+IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}")
+"""What archive.org accepts as an item identifier. Anything else is refused before it reaches a URL or a file name."""
+
+
+def check_identifier(identifier: str) -> str:
+    """The identifier, if archive.org could have issued it; ValueError otherwise."""
+    if not IDENTIFIER.fullmatch(identifier):
+        raise ValueError(f"not an archive.org identifier: {identifier!r}")
+    return identifier
 
 
 @dataclass(frozen=True)
@@ -82,7 +92,7 @@ class ArchiveClient:
             except urllib.error.HTTPError as error:
                 if error.code in (403, 404) or attempt == RETRIES - 1:
                     raise
-            except urllib.error.URLError:
+            except (urllib.error.URLError, TimeoutError, ConnectionError):
                 if attempt == RETRIES - 1:
                     raise
             time.sleep(4 * (attempt + 1))
@@ -91,6 +101,7 @@ class ArchiveClient:
 
 def fetch_metadata(client: ArchiveClient, identifier: str) -> dict[str, Any]:
     """The item's full metadata record: catalogue fields, file list, and the server that holds it."""
+    check_identifier(identifier)
     record: dict[str, Any] = json.loads(client.get_text(f"https://archive.org/metadata/{identifier}", f"{identifier}.meta.json"))
     return record
 

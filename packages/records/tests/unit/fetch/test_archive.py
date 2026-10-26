@@ -9,7 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from qipu_records.fetch.archive import ArchiveClient, Item, fetch_item, fetch_page_texts, split_pages
+from qipu_records.fetch.archive import (
+    ArchiveClient,
+    Item,
+    check_identifier,
+    fetch_item,
+    fetch_page_texts,
+    split_pages,
+)
 from tests.conftest import SavedArchive
 
 
@@ -75,3 +82,29 @@ def test_download_retries_server_errors_but_not_missing_files(monkeypatch: pytes
     with pytest.raises(urllib.error.HTTPError):
         client.get_bytes("https://archive.org/missing", "missing")
     assert len(calls) == 3
+
+
+@pytest.mark.parametrize("identifier", ["19740219", "journalofproceed62sanfrich", "SFH371-5003", "minutes_1998.v2"])
+def test_real_identifiers_are_accepted(identifier: str) -> None:
+    assert check_identifier(identifier) == identifier
+
+
+@pytest.mark.parametrize("identifier", ["", "../etc", "a/b", "-rf", "x" * 101, "19740219?x=1"])
+def test_anything_else_is_refused_before_it_reaches_a_url_or_a_file(identifier: str) -> None:
+    with pytest.raises(ValueError, match=r"not an archive\.org identifier"):
+        check_identifier(identifier)
+
+
+def test_a_timeout_is_retried(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    calls: list[str] = []
+
+    def urlopen(request: urllib.request.Request, timeout: float) -> _Response:
+        calls.append(request.full_url)
+        if len(calls) == 1:
+            raise TimeoutError("The read operation timed out")
+        return _Response(b"ok")
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(time, "sleep", lambda seconds: None)
+    assert ArchiveClient(tmp_path, pause=0).get_text("https://archive.org/x", "x") == "ok"
+    assert len(calls) == 2
