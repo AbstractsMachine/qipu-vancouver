@@ -1,6 +1,7 @@
 """Run the checks over a collection and write the published records.
 
-Everything here is deterministic: the same pages and readings always give the same records. An item the model listed is
+Everything here is deterministic: the same pages, readings and gazetteer give the same records on the same day. (The privacy
+embargo counts back from today, so a record can come out of it as years pass.) An item the model listed is
 published only if its quote is found on the page (or on the previous page, when the item's heading starts there); otherwise it
 goes to rejected.jsonl. Published items are shaped into records by ``export.records``.
 """
