@@ -33,7 +33,9 @@ and applicants stay named, because they acted in public.
 
 - The sensitive-matter test matches words. It errs towards withholding, but a matter described in words it does not know will
   not be caught. Report any you find.
-- Withholding applies to what this tool publishes. The page text it reads, and the scan itself, stay public on archive.org.
+- Withholding applies to what this tool publishes: `decisions.jsonl`, `decisions.geojson`, `rejected.jsonl` and
+  `summary.json`. The working files next to them, `pages.jsonl` and `readings.jsonl`, hold the page text and the model's
+  answers as they came, names included; they are not for publishing. The scans themselves stay public on archive.org.
 - The rule does not decide what is lawful to publish where you are. If you publish records built with this tool, the decision
   and the duty of care are yours.
 

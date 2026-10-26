@@ -1,10 +1,10 @@
 # Shared by every Python package in the repository. A package may extend it with its own ruff.toml.
-line-length = 130
+line-length = 120
 target-version = "py311"
 src = ["packages/*/src", "packages/*"]
 
 [lint]
-select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "PL"]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "PL", "S", "PT", "PTH", "RET", "C4", "PIE", "TID"]
 ignore = [
   "PLR0913",  # pipeline steps take their context explicitly
   "PLR2004",  # small literal thresholds read better inline, with a comment where they matter
@@ -13,7 +13,7 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
-"packages/*/tests/**" = ["PLR0915"]
+"packages/*/tests/**" = ["S101", "S310", "S603", "S607", "PLR0915"]  # asserts and subprocess are what tests are for
 
 [format]
 docstring-code-format = true

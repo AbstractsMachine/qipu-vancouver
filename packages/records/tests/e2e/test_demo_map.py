@@ -1,7 +1,8 @@
-"""`make demo`, then the map page in a headless browser: the expected decisions are listed and placed, and their links work.
+"""`make demo`, then the map page in a headless browser: the expected decisions are listed and placed, and their links
+work.
 
-Needs a Chromium for Playwright (`playwright install chromium`) and the network: MapLibre and the basemap load from the web,
-and two of the archive.org page links are requested to check they resolve.
+Needs a Chromium for Playwright (`playwright install chromium`) and the network: MapLibre and the basemap load from the
+web, and two of the archive.org page links are requested to check they resolve.
 """
 
 from __future__ import annotations
@@ -28,7 +29,13 @@ sync_api = pytest.importorskip("playwright.sync_api")
 
 pytestmark = pytest.mark.e2e
 
-EXPECTED_PLACES = ["1139 Pendrell Street", "Alberni and Bidwell Streets", "2777 Oak Street", "#680 East 5th Avenue", "Strathcona"]
+EXPECTED_PLACES = [
+    "1139 Pendrell Street",
+    "Alberni and Bidwell Streets",
+    "2777 Oak Street",
+    "#680 East 5th Avenue",
+    "Strathcona",
+]
 
 
 @pytest.fixture(scope="module")

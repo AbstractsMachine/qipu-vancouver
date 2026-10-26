@@ -11,10 +11,18 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = []
+keywords = ["internet archive", "council minutes", "public records", "ocr", "open data", "llm"]
 classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Sociology :: History",
     "Topic :: Text Processing :: Linguistic",
+    "Typing :: Typed",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +60,6 @@ source = ["qipu_records"]
 branch = true
 
 [tool.coverage.report]
-fail_under = 85
+fail_under = 90
 show_missing = true
 skip_covered = true

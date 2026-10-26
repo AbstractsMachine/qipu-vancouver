@@ -27,7 +27,11 @@ def test_split_pages_at_the_page_index() -> None:
 def test_item_from_catalogue_metadata() -> None:
     item = Item.from_metadata(
         "19740219",
-        {"title": "Council Meeting Minutes : Feb. 19, 1974", "date": "1974-02-19", "creator": ["City of Vancouver, B.C."]},
+        {
+            "title": "Council Meeting Minutes : Feb. 19, 1974",
+            "date": "1974-02-19",
+            "creator": ["City of Vancouver, B.C."],
+        },
     )
     assert item.creator == "City of Vancouver, B.C."
     assert item.licence is None

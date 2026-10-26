@@ -1,8 +1,8 @@
 """What changes from one city's records to another's.
 
 The pipeline is the same for every city. A city brings its own prompt (the body's name, its kinds of legislation, local
-examples), its currency, the archive.org collection its minutes are in, and its privacy embargo: how many years must pass before
-the names of private people in sensitive matters are shown.
+examples), its currency, the archive.org collection its minutes are in, and its privacy embargo: how many years must
+pass before the names of private people in sensitive matters are shown.
 """
 
 from __future__ import annotations

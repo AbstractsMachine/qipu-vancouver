@@ -1,16 +1,17 @@
 """The meeting date of each decision, read from the minutes themselves.
 
-A decision is dated by the meeting it was taken at, never by the year on the volume's cover: a volume can run across a new
-year, and one page can close one meeting and open the next. Dates come from three places, in this order:
+A decision is dated by the meeting it was taken at, never by the year on the volume's cover: a volume can run across a
+new year, and one page can close one meeting and open the next. Dates come from three places, in this order:
 
-* a meeting that opens on the page ("A Regular meeting of the Council ... was held on Tuesday, February 19, 1974",
-  "In Board of Supervisors, Monday, February 4th, 1907") dates everything printed after the opening;
-* the running head at the top of the page ("Regular Council, February 19, 1974", "MONDAY, JANUARY 21, 1924") dates the page;
+* a meeting that opens on the page ("A Regular meeting of the Council ... was held on Tuesday, February 19, 1974", "In
+  Board of Supervisors, Monday, February 4th, 1907") dates everything printed after the opening;
+* the running head at the top of the page ("Regular Council, February 19, 1974", "MONDAY, JANUARY 21, 1924") dates the
+  page;
 * a page without either carries the meeting in progress from the page before.
 
-A printed weekday must agree with the date. When OCR has garbled a digit ("Monday, July 21, 1989" for the 24th) the line dates
-nothing, which is better than a wrong date. Dates of other events mentioned in the text ("adjourned to meet on Monday,
-February 18") sit in the body of the page and are not mistaken for headers.
+A printed weekday must agree with the date. When OCR has garbled a digit ("Monday, July 21, 1989" for the 24th) the line
+dates nothing, which is better than a wrong date. Dates of other events mentioned in the text ("adjourned to meet on
+Monday, February 18") sit in the body of the page and are not mistaken for headers.
 
 In a random sample of published facts, wrong dates were the most common flaw before this rule; see docs/accuracy.md.
 """

@@ -1,12 +1,13 @@
 """What happened to an item, in words a reader can trust.
 
-The model reports the last action taken on an item on the page ("passed_first_reading", "referred", ...). Two rules turn that
-into the published outcome. Both come from errors found when published facts were checked against the pages:
+The model reports the last action taken on an item on the page ("passed_first_reading", "referred", ...). Two rules turn
+that into the published outcome. Both come from errors found when published facts were checked against the pages:
 
-* Only a final act is an outcome of "passed". A first reading, a referral or a hearing is a step, and is published as one.
+* Only a final act is an outcome of "passed". A first reading, a referral or a hearing is a step, and is published as
+  one.
 * A zoning change is "rezoned" only when a by-law or resolution was finally passed or adopted. A proposal, a referral, a
-  continued appeal or a refusal is "rezoning proposed". A street renaming or a bare date in the zoning fields is no zoning change.
-  Before this rule, 16 of 17 sampled rezoning errors were proposals stored as done.
+  continued appeal or a refusal is "rezoning proposed". A street renaming or a bare date in the zoning fields is no
+  zoning change. Before this rule, 16 of 17 sampled rezoning errors were proposals stored as done.
 """
 
 from __future__ import annotations

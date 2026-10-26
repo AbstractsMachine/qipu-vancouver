@@ -17,9 +17,9 @@ from qipu_records.verify.privacy import WITHHELD, Embargo
 from qipu_records.verify.quotes import QuoteMatch, QuoteStatus
 
 FIELDS = {
-    "id", "city", "body", "date", "date_source", "kind", "number", "file", "action", "stage", "outcome", "amended", "zoning",
-    "summary", "quote", "quote_check", "vote", "mover", "seconder", "money", "parties", "places", "topics", "names_withheld",
-    "source", "reading",
+    "id", "city", "body", "date", "date_source", "kind", "number", "file", "action", "stage", "outcome", "amended",
+    "zoning", "summary", "quote", "quote_check", "vote", "mover", "seconder", "money", "parties", "places", "topics",
+    "names_withheld", "source", "reading",
 }  # fmt: skip
 
 ITEM = Item("19700609", "Council Meeting Minutes : June 9, 1970", "1970-06-09", None, None, "City of Vancouver, B.C.")
@@ -29,7 +29,8 @@ PAGE = Page("19700609:12", "19700609", 12, "Regular Council, June 9, 1970\n...")
 def _entry(**fields: Unpack[ModelItem]) -> ModelItem:
     entry: ModelItem = {
         "quote": "Booth - City Hall", "kind": "permit", "action": "failed", "number": "", "file": "", "amended": False,
-        "ayes": None, "noes": None, "absent": None, "ayes_names": [], "noes_names": [], "absent_names": [], "mover": "Bird",
+        "ayes": None, "noes": None, "absent": None, "ayes_names": [], "noes_names": [], "absent_names": [],
+        "mover": "Bird",
         "seconder": "", "parties": [{"name": "Playhouse Theatre Company", "role": "applicant"}],
         "money": [{"amount": 400, "purpose": "rental", "payee": ""}],
         "places": [{"text": "1139 Pendrell Street", "precision": "address"}],
@@ -57,7 +58,8 @@ def test_record_has_the_documented_fields(context: Context) -> None:
     assert record["id"] == "19700609:12/3"
     assert (record["date"], record["date_source"]) == ("1970-06-09", "running head")
     assert (record["stage"], record["outcome"]) == ("failed", "refused")
-    assert record["number"] is None and record["vote"] is None
+    assert record["number"] is None
+    assert record["vote"] is None
     assert record["money"] == [{"amount": 400, "currency": "CAD", "purpose": "rental", "payee": None}]
     assert record["source"]["page_url"] == "https://archive.org/details/19700609/page/n12"
     assert record["reading"] == {"model": "m", "prompt_version": "v"}
@@ -67,7 +69,8 @@ def test_vote_is_kept_when_a_roll_call_is_printed(context: Context) -> None:
     record = _record(context, _entry(ayes=8, noes=1, ayes_names=["Bird"], noes_names=["Adams"]))
     vote = record["vote"]
     assert vote is not None
-    assert vote["ayes"] == 8 and vote["noes_names"] == ["Adams"]
+    assert vote["ayes"] == 8
+    assert vote["noes_names"] == ["Adams"]
 
 
 def test_sensitive_item_inside_the_embargo_has_names_withheld(context: Context) -> None:

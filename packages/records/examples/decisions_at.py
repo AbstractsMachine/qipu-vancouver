@@ -1,7 +1,7 @@
 """Find decisions by place or outcome in a decisions.jsonl, with the standard library only.
 
-    python examples/decisions_at.py build/demo/decisions.jsonl --place Pendrell
-    python examples/decisions_at.py build/demo/decisions.jsonl --outcome refused
+python examples/decisions_at.py build/demo/decisions.jsonl --place Pendrell
+python examples/decisions_at.py build/demo/decisions.jsonl --outcome refused
 """
 
 import argparse

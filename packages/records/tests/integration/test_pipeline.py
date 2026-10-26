@@ -75,7 +75,8 @@ def test_map_data_matches_the_records(built: Path) -> None:
     ids = {r["id"] for r in _records(built)}
     for feature in layer["features"]:
         lon, lat = feature["geometry"]["coordinates"]
-        assert 49.19 < lat < 49.32 and -123.23 < lon < -123.02
+        assert 49.19 < lat < 49.32
+        assert -123.23 < lon < -123.02
         assert feature["properties"]["id"] in ids
 
 
@@ -89,12 +90,16 @@ def test_summary_counts_each_check(built: Path) -> None:
 
 def test_an_invented_item_is_rejected_not_published(sample_copy: Path) -> None:
     rows = [json.loads(line) for line in (SAMPLE / "readings.jsonl").read_text(encoding="utf-8").splitlines()]
-    invented = dict(rows[0]["items"][0], quote="Council approved a monorail along Granville Street", summary="Invented.")
+    invented = dict(
+        rows[0]["items"][0], quote="Council approved a monorail along Granville Street", summary="Invented."
+    )
     rows[0]["items"].append(invented)
     (sample_copy / "readings.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
     summary = build(_context(), Collection(sample_copy))
     assert (summary.decisions, summary.rejected) == (33, 1)
-    [rejected] = [json.loads(line) for line in (sample_copy / "rejected.jsonl").read_text(encoding="utf-8").splitlines()]
+    [rejected] = [
+        json.loads(line) for line in (sample_copy / "rejected.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
     assert rejected["reason"] == "quote not found on the page"
     assert all("monorail" not in r["quote"] for r in _records(sample_copy))
 
@@ -109,3 +114,19 @@ def test_a_heading_on_the_previous_page_is_found_there(sample_copy: Path) -> Non
     record = next(r for r in _records(sample_copy) if r["id"] == "19740219:2/1")
     assert record["quote_check"] == "exact"
     assert record["date_source"] == "running head"
+
+
+def test_a_rejected_item_keeps_the_privacy_rule(sample_copy: Path) -> None:
+    rows = [json.loads(line) for line in (SAMPLE / "readings.jsonl").read_text(encoding="utf-8").splitlines()]
+    invented = dict(
+        rows[0]["items"][0],
+        kind="claim",
+        quote="Claim of Mrs. Ada Quill for injuries",
+        parties=[{"name": "Mrs. Ada Quill", "role": "claimant"}],
+    )
+    rows[0]["items"].append(invented)
+    (sample_copy / "readings.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    build(_context(), Collection(sample_copy))
+    rejected = (sample_copy / "rejected.jsonl").read_text(encoding="utf-8")
+    assert "Quill" not in rejected
+    assert "Claim of [name withheld] for injuries" in rejected

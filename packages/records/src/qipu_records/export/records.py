@@ -1,7 +1,7 @@
 """Shape one decision the model listed into the record that is published.
 
-The checks that decide whether a record is published at all run before this, in ``pipeline``. Here the item is dated, its
-outcome named, its private names withheld when the privacy rule applies, its places matched and its page linked.
+The checks that decide whether a record is published at all run before this, in ``pipeline``. Here the item is dated,
+its outcome named, its private names withheld when the privacy rule applies, its places matched and its page linked.
 """
 
 from __future__ import annotations

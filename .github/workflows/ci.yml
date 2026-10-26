@@ -9,9 +9,11 @@ on:
 permissions:
   contents: read
 
+# A newer push to a pull request replaces its older run. On main every commit gets its own run: the path filter compares
+# each push with the one before it, so a cancelled run would leave its changes untested.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   # Which packages a change touches. A change to shared files (CI, root config, examples) runs every package.
@@ -75,6 +77,8 @@ jobs:
         run: make check
       - name: the demo runs with no key and no network
         run: make demo
+      - name: the wheel builds and carries its prompts
+        run: make build
 
   records-e2e:
     needs: changes

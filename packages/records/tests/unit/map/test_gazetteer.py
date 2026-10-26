@@ -7,7 +7,14 @@ from pathlib import Path
 import pytest
 
 from qipu_records.map import gazetteer
-from qipu_records.map.gazetteer import Gazetteer, Precision, intersection_key, split_intersection, street_key, write_gazetteer
+from qipu_records.map.gazetteer import (
+    Gazetteer,
+    Precision,
+    intersection_key,
+    split_intersection,
+    street_key,
+    write_gazetteer,
+)
 from qipu_records.read.schema import ModelPlace
 
 
@@ -48,7 +55,9 @@ def places(tmp_path: Path) -> Gazetteer:
 
 
 def test_locate_address_with_a_hash_sign(places: Gazetteer) -> None:
-    found = places.locate({"text": "#680 East 5th Avenue", "street": "East 5th Avenue", "number": "680", "precision": "address"})
+    found = places.locate(
+        {"text": "#680 East 5th Avenue", "street": "East 5th Avenue", "number": "680", "precision": "address"}
+    )
     assert found is not None
     assert (found.lat, found.precision) == (49.2658, Precision.ADDRESS)
 
@@ -71,7 +80,10 @@ def test_locate_intersection_and_area(places: Gazetteer) -> None:
 def test_a_street_alone_is_not_placed(places: Gazetteer) -> None:
     assert places.locate({"text": "Renfrew Street", "street": "Renfrew Street", "precision": "street"}) is None
     assert (
-        places.locate({"text": "4885 Boundary Road", "street": "Boundary Road", "number": "4885", "precision": "address"}) is None
+        places.locate(
+            {"text": "4885 Boundary Road", "street": "Boundary Road", "number": "4885", "precision": "address"}
+        )
+        is None
     )
 
 

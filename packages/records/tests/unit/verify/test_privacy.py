@@ -17,7 +17,16 @@ from qipu_records.verify.privacy import (
 
 
 def _item(**fields: Unpack[ModelItem]) -> ModelItem:
-    return {"kind": "motion", "quote": "", "summary": "", "parties": [], "money": [], "places": [], "mover": "", **fields}
+    return {
+        "kind": "motion",
+        "quote": "",
+        "summary": "",
+        "parties": [],
+        "money": [],
+        "places": [],
+        "mover": "",
+        **fields,
+    }
 
 
 def test_embargo_counts_back_from_today() -> None:

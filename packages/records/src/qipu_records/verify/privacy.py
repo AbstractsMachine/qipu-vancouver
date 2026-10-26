@@ -1,15 +1,15 @@
 """Withhold the names of private people in sensitive matters, and nothing else.
 
-Council minutes are public records, and most names in them belong to officials, firms and groups acting in public: they stay.
-The rule protects private people where the record could hurt them: a claim for damages, an injury, an illness, welfare, an
-eviction, a crime. In those items, for records younger than the city's embargo (75 years in San Francisco, 92 in Vancouver),
-a private person's name is replaced by "[name withheld]" in everything published: the quote, the summary and the parties.
-The decision itself, its place, amount and outcome stay visible.
+Council minutes are public records, and most names in them belong to officials, firms and groups acting in public: they
+stay. The rule protects private people where the record could hurt them: a claim for damages, an injury, an illness,
+welfare, an eviction, a crime. In those items, for records younger than the city's embargo (75 years in San Francisco,
+92 in Vancouver), a private person's name is replaced by "[name withheld]" in everything published: the quote, the
+summary and the parties. The decision itself, its place, amount and outcome stay visible.
 
-Who counts as an official is read from the record: the mover and seconder, the people in its roll call, and anyone the page
-names next to a role ("Ald. Linnell", "Mayor Phillips", "Supervisor Kopp"). Organisations are recognised by the words in their
-names. When in doubt the name is withheld: a withheld official costs a little readability, a leaked private name cannot be
-taken back.
+Who counts as an official is read from the record: the mover and seconder, the people in its roll call, and anyone the
+page names next to a role ("Ald. Linnell", "Mayor Phillips", "Supervisor Kopp"). Organisations are recognised by the
+words in their names. When in doubt the name is withheld: a withheld official costs a little readability, a leaked
+private name cannot be taken back.
 """
 
 from __future__ import annotations
@@ -42,7 +42,9 @@ ROLE_WORDS = (
 )
 _NAME = r"[A-Z][a-zA-Z'’-]+"
 _ROLE_THEN_NAMES = re.compile(rf"\b(?:{ROLE_WORDS})\s+((?:{_NAME}(?:,\s*|\s+and\s+|\s+)){{0,12}}{_NAME})")
-_HONORIFIC_NAME = re.compile(rf"\b(?:Mr|Mrs|Ms|Miss|Messrs|Dr)\.?\s+((?:[A-Z]\.\s*){{0,3}}{_NAME}(?:\s+(?:[A-Z]\.\s*)?{_NAME})?)")
+_HONORIFIC_NAME = re.compile(
+    rf"\b(?:Mr|Mrs|Ms|Miss|Messrs|Dr)\.?\s+((?:[A-Z]\.\s*){{0,3}}{_NAME}(?:\s+(?:[A-Z]\.\s*)?{_NAME})?)"
+)
 _AFTER_ROLE = re.compile(rf"\b(?:{ROLE_WORDS})\s*$")
 _HONORIFIC = re.compile(r"^(?:Mr|Mrs|Ms|Miss|Messrs|Dr)\.?\s+")
 _ORGANISATION = re.compile(
@@ -132,14 +134,16 @@ def item_is_sensitive(item: ModelItem) -> bool:
 def private_names(item: ModelItem, officials: set[str]) -> set[str]:
     """Names of private people in an item, as printed, for `mask` to withhold.
 
-    Candidates are the item's parties, the payees of its amounts, and every name after an honorific in its text. A name is
-    kept when it belongs to an organisation or to an official, except that a claimant is never taken for an official just
-    because an alderman on the page shares the surname.
+    Candidates are the item's parties, the payees of its amounts, and every name after an honorific in its text. A name
+    is kept when it belongs to an organisation or to an official, except that a claimant is never taken for an official
+    just because an alderman on the page shares the surname.
     """
     parties = item.get("parties") or []
     candidates = [party.get("name") or "" for party in parties]
     candidates += [money.get("payee") or "" for money in item.get("money") or []]
-    texts = [item.get("quote"), item.get("summary"), item.get("why")] + [p.get("text") for p in item.get("places") or []]
+    texts = [item.get("quote"), item.get("summary"), item.get("why")] + [
+        p.get("text") for p in item.get("places") or []
+    ]
     for text in texts:
         candidates.extend(match.group(0) for match in _HONORIFIC_NAME.finditer(text or ""))
     claimants = {
@@ -161,7 +165,8 @@ def private_names(item: ModelItem, officials: set[str]) -> set[str]:
 
 
 def name_variants(name: str) -> list[str]:
-    """The ways a name may be printed, longest first: "Miss Jessie I. Hendry", "Jessie I. Hendry", "Jessie Hendry", "Hendry"."""
+    """The ways a name may be printed, longest first: "Miss Jessie I. Hendry", "Jessie I. Hendry", "Jessie Hendry",
+    "Hendry"."""
     bare = _HONORIFIC.sub("", name).strip()
     if _JOINED.search(bare):
         return [name.strip()]
@@ -178,8 +183,8 @@ def name_variants(name: str) -> list[str]:
 def mask(text: str, names: Iterable[str]) -> str:
     """Replace every printed form of the names with WITHHELD, together with any title in front of it.
 
-    A name printed right after a public role ("Ald. Gibson") is an official who shares a surname with the private person,
-    and stays.
+    A name printed right after a public role ("Ald. Gibson") is an official who shares a surname with the private
+    person, and stays.
     """
     if not text:
         return text
@@ -189,13 +194,16 @@ def mask(text: str, names: Iterable[str]) -> str:
 
     variants = sorted({v for name in names for v in name_variants(name)}, key=len, reverse=True)
     for variant in variants:
-        pattern = r"(?:\b(?:Mr|Mrs|Ms|Miss|Dr)\.?\s+)?" + r"\s+".join(re.escape(w) for w in variant.split()) + r"(?![\w])"
+        pattern = (
+            r"(?:\b(?:Mr|Mrs|Ms|Miss|Dr)\.?\s+)?" + r"\s+".join(re.escape(w) for w in variant.split()) + r"(?![\w])"
+        )
         text = re.sub(r"(?<![\w])" + pattern, withhold, text)
     return text
 
 
 def mask_item(item: ModelItem, officials: set[str]) -> tuple[ModelItem, set[str]]:
-    """The item with private people's names withheld, and the names withheld. The caller decides whether the rule applies."""
+    """The item with private people's names withheld, and the names withheld. The caller decides whether the rule
+    applies."""
     names = private_names(item, officials | officials_of_item(item))
     if not names:
         return item, set()

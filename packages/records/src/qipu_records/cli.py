@@ -136,7 +136,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"qipu-records: no such file: {error.filename}", file=sys.stderr)
         return 1
     except urllib.error.URLError as error:
-        print(f"qipu-records: network error, nothing lost; run the command again to continue ({error})", file=sys.stderr)
+        print(
+            f"qipu-records: network error, nothing lost; run the command again to continue ({error})", file=sys.stderr
+        )
         return 1
     return code
 

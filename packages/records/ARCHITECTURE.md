@@ -111,12 +111,13 @@ at after a run.
 - **Rules after the model, not in the prompt.** The prompt is pinned to the published runs. Rules that came from checking the
   output (dates, outcomes, rezoning) live in code, where they are tested and apply to every reader.
 - **Standard library only.** The core has no dependencies so it is easy to audit and to run anywhere archive.org can be reached.
-- **The map viewer is deliberately small.** qipu's own map is part of a larger web application that also draws a rendered
-  city. For this repository a single static page that reads the GeoJSON is easier to run, read and reuse.
+- **The map preview is deliberately small.** The full map, with the painted city, is `packages/viewer`. The preview is a
+  single static page that reads the GeoJSON, so the output of this package can be seen without anything else.
 
 ## Tests
 
 `make check` runs ruff, mypy in strict mode, and the unit and integration tests with branch coverage of the package; it fails
-under 85%. `make e2e` runs `make demo` and drives the map page in headless Chromium: the expected decisions must be listed and
-drawn, a click must open the right card, the year slider must filter, and the archive.org links must resolve. CI runs both,
-plus gitleaks over the history.
+under 90%. `make e2e` runs `make demo` and drives the map preview in headless Chromium: the expected decisions must be listed
+and drawn, a click must open the right card, the year slider must filter, a data file must not be able to plant a script
+link, and the archive.org links must resolve. CI runs both on every change to the package, `check` on Python 3.11 to 3.13
+on Linux and 3.12 on macOS, plus gitleaks over the history.

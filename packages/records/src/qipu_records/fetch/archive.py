@@ -1,8 +1,8 @@
 """Read items from the Internet Archive: metadata and the OCR text of each page.
 
-Every download is cached on disk and made at most once, about one request a second, with a User-Agent that says who is asking.
-archive.org publishes the OCR of a scanned item as two files: the plain text of the whole item and an index of where each page
-starts in it. Splitting the text at those offsets gives one text per OCR page, in scan order.
+Every download is cached on disk and made at most once, about one request a second, with a User-Agent that says who is
+asking. archive.org publishes the OCR of a scanned item as two files: the plain text of the whole item and an index of
+where each page starts in it. Splitting the text at those offsets gives one text per OCR page, in scan order.
 """
 
 from __future__ import annotations
@@ -55,7 +55,12 @@ class Item:
             return str(value) if value is not None else None
 
         return cls(
-            identifier, first("title") or identifier, first("date"), first("licenseurl"), first("rights"), first("creator")
+            identifier,
+            first("title") or identifier,
+            first("date"),
+            first("licenseurl"),
+            first("rights"),
+            first("creator"),
         )
 
 
@@ -82,10 +87,12 @@ class ArchiveClient:
         return self.get_bytes(url, cache_name).decode("utf-8", errors="replace")
 
     def _download(self, url: str) -> bytes:
-        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        if not url.startswith("https://"):
+            raise ValueError(f"only https URLs are fetched, not {url!r}")
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})  # noqa: S310 - https checked above
         for attempt in range(RETRIES):
             try:
-                with urllib.request.urlopen(request, timeout=300) as response:
+                with urllib.request.urlopen(request, timeout=300) as response:  # noqa: S310 - https checked above
                     body: bytes = response.read()
                 time.sleep(self.pause)
                 return body
@@ -102,7 +109,9 @@ class ArchiveClient:
 def fetch_metadata(client: ArchiveClient, identifier: str) -> dict[str, Any]:
     """The item's full metadata record: catalogue fields, file list, and the server that holds it."""
     check_identifier(identifier)
-    record: dict[str, Any] = json.loads(client.get_text(f"https://archive.org/metadata/{identifier}", f"{identifier}.meta.json"))
+    record: dict[str, Any] = json.loads(
+        client.get_text(f"https://archive.org/metadata/{identifier}", f"{identifier}.meta.json")
+    )
     return record
 
 
@@ -111,7 +120,8 @@ def fetch_item(client: ArchiveClient, identifier: str) -> Item:
 
 
 def book_prefix(record: dict[str, Any]) -> str:
-    """The name the item's scan files start with. Often the identifier, but not always ("1970-06-09_jp2.zip" in "19700609")."""
+    """The name the item's scan files start with. Often the identifier, but not always ("1970-06-09_jp2.zip" in
+    "19700609")."""
     for suffix in ("_hocr_searchtext.txt.gz", "_jp2.zip"):
         for entry in record.get("files", []):
             if entry["name"].endswith(suffix):

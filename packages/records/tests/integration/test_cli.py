@@ -27,7 +27,8 @@ def test_fetch_read_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsy
     assert cli.main(["read", "--out", str(out), "--replay", str(replay), "--max-pages", "5"]) == 0
     assert cli.main(["build", "--out", str(out)]) == 0
     output = capsys.readouterr().out
-    assert "pages added to" in output and ": 5" in output
+    assert "pages added to" in output
+    assert ": 5" in output
     assert "pages read: 1" in output
     assert '"pages_read": 1' in output
 
@@ -36,7 +37,9 @@ def test_readers_are_chosen_from_the_options() -> None:
     parser = cli.parser()
     anthropic = cli._reader(parser.parse_args(["read", "--out", "x"]))
     assert type(anthropic).__name__ == "AnthropicReader"
-    open_model = cli._reader(parser.parse_args(["read", "--out", "x", "--model", "m", "--base-url", "http://localhost:8000/v1"]))
+    open_model = cli._reader(
+        parser.parse_args(["read", "--out", "x", "--model", "m", "--base-url", "http://localhost:8000/v1"])
+    )
     assert type(open_model).__name__ == "OpenAICompatibleReader"
 
 
