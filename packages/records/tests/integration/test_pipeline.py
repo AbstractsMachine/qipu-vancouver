@@ -114,3 +114,19 @@ def test_a_heading_on_the_previous_page_is_found_there(sample_copy: Path) -> Non
     record = next(r for r in _records(sample_copy) if r["id"] == "19740219:2/1")
     assert record["quote_check"] == "exact"
     assert record["date_source"] == "running head"
+
+
+def test_a_rejected_item_keeps_the_privacy_rule(sample_copy: Path) -> None:
+    rows = [json.loads(line) for line in (SAMPLE / "readings.jsonl").read_text(encoding="utf-8").splitlines()]
+    invented = dict(
+        rows[0]["items"][0],
+        kind="claim",
+        quote="Claim of Mrs. Ada Quill for injuries",
+        parties=[{"name": "Mrs. Ada Quill", "role": "claimant"}],
+    )
+    rows[0]["items"].append(invented)
+    (sample_copy / "readings.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    build(_context(), Collection(sample_copy))
+    rejected = (sample_copy / "rejected.jsonl").read_text(encoding="utf-8")
+    assert "Quill" not in rejected
+    assert "Claim of [name withheld] for injuries" in rejected

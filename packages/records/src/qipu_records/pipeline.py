@@ -102,19 +102,21 @@ def build_records(ctx: Context, collection: Collection) -> tuple[list[DecisionRe
         for seq, entry in enumerate(pc.reading.items, start=1):
             match, on_this_page = _find_quote(entry, pc.page, pc.previous)
             if not match.found:
-                rejected.append(
-                    {
-                        "id": f"{pc.page.page_id}/{seq}",
-                        "reason": "quote not found on the page",
-                        "quote": entry.get("quote"),
-                    }
-                )
+                rejected.append(_rejected(ctx, pc, seq, entry))
                 continue
             record = decision_record(ctx, pc, seq, entry, match=match, on_this_page=on_this_page)
             records.append(record)
             _count(summary.counts, record)
     summary.decisions, summary.rejected = len(records), len(rejected)
     return records, rejected, summary
+
+
+def _rejected(ctx: Context, pc: PageContext, seq: int, entry: ModelItem) -> Rejected:
+    """The rejected item as written to rejected.jsonl, under the same privacy rule as a published record."""
+    date, _ = pc.dates.at(None)
+    if ctx.embargo.applies(date.year if date else None) and privacy.item_is_sensitive(entry):
+        entry, _ = privacy.mask_item(entry, pc.officials)
+    return {"id": f"{pc.page.page_id}/{seq}", "reason": "quote not found on the page", "quote": entry.get("quote")}
 
 
 def _count(counts: Counter[str], record: DecisionRecord) -> None:
