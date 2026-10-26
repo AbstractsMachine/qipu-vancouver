@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type AreaPass, compositeTile } from "./composite";
+import { narrowPass, switchRange } from "./range";
 import { NEVER, decodeSwitchPixel, midCode, pixelWeights, progress, smoothstep, yearCode } from "./switch";
 
 const c3c = { encoding: "c3c", offset: 1800, scale: 100, leadStep: 0.4 } as const;
@@ -134,5 +135,49 @@ describe("compositeTile", () => {
     const halfBlue = img([0, 0, 255, 128]);
     const out = run(pass({ t: 0 }), pass({ from: halfBlue, t: 0 }));
     expect(out.slice(0, 4)).toEqual([127, 0, 128, 255]);
+  });
+});
+
+describe("switchRange and narrowPass", () => {
+  const sw = { encoding: "c3d", scale: 100, leadStep: 1 } as const;
+  /* pixel 0 changes at 300 with a 100 lead; pixel 1 at 500 with fade code 2 (0.3); pixel 2 never */
+  const data = new Uint8ClampedArray([1, 44, 0x10, 255, 1, 244, 2, 255, 255, 255, 0, 255]);
+
+  it("spans the earliest lead to the latest fade", () => {
+    expect(switchRange(data, 0, sw)).toEqual({ first: 200, last: 500 + 0.3 });
+  });
+
+  it("counts midpoint pixels at the midpoint", () => {
+    expect(switchRange(new Uint8ClampedArray([0, 0, 0, 255]), 777, { ...sw, encoding: "c3c" })).toEqual({
+      first: 777,
+      last: 777,
+    });
+  });
+
+  it("is empty when nothing changes", () => {
+    const r = switchRange(new Uint8ClampedArray([255, 255, 0, 255]), 0, sw);
+    expect(r.first).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("keeps one picture outside the range and every source inside it", () => {
+    const src = (url: string) => ({ url, kind: "picture" as const, window: [0, 0, 1] as const });
+    const pass = {
+      areaId: "a",
+      from: src("from"),
+      to: src("to"),
+      clear: src("clear"),
+      switchMap: { ...src("switch"), kind: "data" as const },
+      sw,
+      t: 0,
+      mid: 0,
+    };
+    const range = { first: 200, last: 500 };
+    expect(narrowPass({ ...pass, t: 100 }, range)).toMatchObject({
+      from: src("from"),
+      to: src("from"),
+      switchMap: null,
+    });
+    expect(narrowPass({ ...pass, t: 500 }, range)).toMatchObject({ from: src("to"), to: src("to"), clear: null });
+    expect(narrowPass({ ...pass, t: 300 }, range)).toEqual({ ...pass, t: 300 });
   });
 });

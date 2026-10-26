@@ -1,8 +1,10 @@
 import * as L from "leaflet";
 import type { EraManifest } from "../eras/model";
 import { type PassPlan, type SourceRef, planTile, sourcesOf } from "../eras/plan";
+import { type SwitchRange, narrowPass, switchRange } from "../eras/range";
 import type { GridOptions } from "../tiles/levels";
 import type { Compositor, DrawPass, DrawSource } from "./compositor";
+import { readPixels } from "./pixels";
 import { closeSeams } from "./seams";
 import type { TileImages } from "./tile-images";
 
@@ -38,6 +40,8 @@ export class EraLayer extends L.GridLayer {
   private year: number;
   private compositor: Compositor;
   private readonly live = new Map<string, LiveTile>();
+  /** each switch tile's span of change, by URL; null where it could not be read */
+  private readonly ranges = new Map<string, SwitchRange | null>();
   private frame = 0;
   private readonly era: EraLayerOptions;
 
@@ -112,12 +116,17 @@ export class EraLayer extends L.GridLayer {
   private async draw(tile: LiveTile): Promise<void> {
     const seq = ++tile.seq;
     const year = this.year;
-    const plans = planTile(this.era.manifest, this.era.base, tile.level, tile.x, tile.y, year);
-    if (plans.length === 0) {
+    const planned = planTile(this.era.manifest, this.era.base, tile.level, tile.x, tile.y, year);
+    if (planned.length === 0) {
       tile.canvas.getContext("2d")?.clearRect(0, 0, tile.canvas.width, tile.canvas.height);
       tile.canvas.dataset.year = String(year);
       return;
     }
+    /* a pass whose tile is not changing at this year needs one picture, not three or four */
+    const plans = planned.some((p) => p.switchMap && !this.ranges.has(p.switchMap.url))
+      ? await Promise.all(planned.map((p) => this.narrow(p)))
+      : planned.map((p) => this.narrowKnown(p));
+    if (seq !== tile.seq) return;
     /* the images this draw holds, so none can drop out of the cache between loading and drawing */
     const images = new Map<string, ImageBitmap | null>();
     const sources = sourcesOf(plans);
@@ -141,6 +150,25 @@ export class EraLayer extends L.GridLayer {
       plans.map((p) => resolve(p, images)),
     );
     tile.canvas.dataset.year = String(year);
+  }
+
+  private async narrow(pass: PassPlan): Promise<PassPlan> {
+    const sw = pass.switchMap;
+    if (sw && !this.ranges.has(sw.url)) {
+      const bitmap = await this.era.images.load(sw.url, "data");
+      /* no switch tile: the whole tile changes at the segment's midpoint */
+      const pixels = bitmap ? readPixels(bitmap) : null;
+      const range = bitmap ? pixels && switchRange(pixels, pass.mid, pass.sw) : { first: pass.mid, last: pass.mid };
+      /* a few bytes a tile; a long session that has seen many thousands starts again */
+      if (this.ranges.size >= 8192) this.ranges.clear();
+      this.ranges.set(sw.url, range);
+    }
+    return this.narrowKnown(pass);
+  }
+
+  private narrowKnown(pass: PassPlan): PassPlan {
+    const range = pass.switchMap ? this.ranges.get(pass.switchMap.url) : null;
+    return range ? narrowPass(pass, range) : pass;
   }
 }
 
