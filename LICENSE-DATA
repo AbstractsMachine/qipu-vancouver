@@ -1,0 +1,17 @@
+Data licence
+
+The decision records this software produces, and the records, readings and page maps in examples/, are dedicated to the public
+domain under the Creative Commons CC0 1.0 Universal Public Domain Dedication:
+https://creativecommons.org/publicdomain/zero/1.0/
+
+To the extent possible under law, the authors have waived all copyright and related or neighbouring rights to them.
+
+Two parts of examples/vancouver/ come from others under their own terms:
+
+- examples/vancouver/pages.jsonl: OCR text of City of Vancouver council minutes, scanned by the City of Vancouver Archives and
+  published on the Internet Archive under CC0 1.0. Names of private people in sensitive matters have been withheld.
+- examples/vancouver/gazetteer.csv: derived from City of Vancouver open data (property addresses, street intersections and local
+  area boundaries), under the Open Government Licence – Vancouver: https://opendata.vancouver.ca/pages/licence/
+  Contains information licensed under the Open Government Licence – Vancouver.
+
+The software itself is licensed under the Apache License 2.0; see LICENSE.

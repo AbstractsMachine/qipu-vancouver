@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Council decisions map</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <aside>
+      <header>
+        <h1>Council decisions</h1>
+        <p id="caption">Loading…</p>
+        <label for="year">Up to <output id="year-out"></output></label>
+        <input id="year" type="range">
+      </header>
+      <ol id="list"></ol>
+    </aside>
+    <div id="map" role="region" aria-label="Map of decisions"></div>
+  </main>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+ "data": {
+  "brOptions": {
+   "data": [
+    [
+     {
+      "uri": "https://ia800907.us.archive.org/BookReader/BookReaderImages.php?zip=/24/items/19700609/1970-06-09_jp2.zip&file=1970-06-09_jp2/1970-06-09_0000.jp2&id=19700609",
+      "leafNum": 0
+     }
+    ],
+    [
+     {
+      "uri": "https://ia800907.us.archive.org/BookReader/BookReaderImages.php?zip=/24/items/19700609/1970-06-09_jp2.zip&file=1970-06-09_jp2/1970-06-09_0001.jp2&id=19700609",
+      "leafNum": 1
+     },
+     {
+      "uri": "https://ia800907.us.archive.org/BookReader/BookReaderImages.php?zip=/24/items/19700609/1970-06-09_jp2.zip&file=1970-06-09_jp2/1970-06-09_0002.jp2&id=19700609",
+      "leafNum": 2
+     }
+    ],
+    [
+     {
+      "uri": "https://ia800907.us.archive.org/BookReader/BookReaderImages.php?zip=/24/items/19700609/1970-06-09_jp2.zip&file=1970-06-09_jp2/1970-06-09_0003.jp2&id=19700609",
+      "leafNum": 3
+     },
+     {
+      "uri": "https://ia800907.us.archive.org/BookReader/BookReaderImages.php?zip=/24/items/19700609/1970-06-09_jp2.zip&file=1970-06-09_jp2/1970-06-09_0004.jp2&id=19700609",
+      "leafNum": 4
+     }
+    ]
+   ]
+  }
+ }
+}

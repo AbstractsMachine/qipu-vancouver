@@ -1,0 +1,8 @@
+# Development and CI tools, pinned. The package itself has no runtime dependencies.
+coverage==7.17.0
+mypy==2.4.0
+playwright==1.59.0
+pytest==9.1.1
+pytest-cov==7.1.0
+ruff==0.17.2
+setuptools==80.9.0
