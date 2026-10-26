@@ -39,3 +39,12 @@ def test_unknown_city() -> None:
     with pytest.raises(ValueError, match="unknown city"):
         get_city("paris")
     assert set(CITIES) == {"vancouver", "san_francisco"}
+
+
+def test_the_python_types_have_the_fields_the_schema_asks_for() -> None:
+    item = schema.ITEM["properties"]
+    assert set(schema.ModelItem.__annotations__) == set(item)
+    assert set(schema.ModelParty.__annotations__) == set(item["parties"]["items"]["properties"])
+    assert set(schema.ModelMoney.__annotations__) == set(item["money"]["items"]["properties"])
+    assert set(schema.ModelPlace.__annotations__) == set(item["places"]["items"]["properties"])
+    assert set(schema.ModelDate.__annotations__) == set(item["dates"]["items"]["properties"])

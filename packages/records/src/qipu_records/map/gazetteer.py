@@ -18,7 +18,8 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+
+from qipu_records.read.schema import ModelPlace
 
 ORDINALS = {
     "first": "1st", "second": "2nd", "third": "3rd", "fourth": "4th", "fifth": "5th", "sixth": "6th", "seventh": "7th",
@@ -102,7 +103,7 @@ class Gazetteer:
         point = self._rows.get((kind.value, name))
         return Location(point[0], point[1], kind, name) if point else None
 
-    def locate(self, place: dict[str, Any]) -> Location | None:
+    def locate(self, place: ModelPlace) -> Location | None:
         """The point for one place as the model reported it, or None when nothing matches exactly."""
         text = place.get("text") or ""
         precision = place.get("precision")

@@ -11,14 +11,21 @@ import datetime as dt
 from collections import Counter, defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TypedDict
 
 from qipu_records.collection import Collection, Page, write_json, write_jsonl
 from qipu_records.export.geojson import feature_collection
-from qipu_records.export.records import Context, PageContext, decision_record
+from qipu_records.export.records import Context, DecisionRecord, PageContext, decision_record
 from qipu_records.fetch.archive import Item
+from qipu_records.read.schema import ModelItem
 from qipu_records.verify import privacy, quotes
 from qipu_records.verify.dates import date_pages
+
+
+class Rejected(TypedDict):
+    id: str
+    reason: str
+    quote: str | None
 
 
 @dataclass
@@ -29,7 +36,7 @@ class Summary:
     rejected: int = 0
     counts: Counter[str] = field(default_factory=Counter)
 
-    def as_dict(self) -> dict[str, Any]:
+    def as_dict(self) -> dict[str, int]:
         return {
             "pages": self.pages,
             "pages_read": self.pages_read,
@@ -46,7 +53,7 @@ def _item_date(item: Item) -> dt.date | None:
         return None
 
 
-def _find_quote(entry: dict[str, Any], page: Page, previous: Page | None) -> tuple[quotes.QuoteMatch, bool]:
+def _find_quote(entry: ModelItem, page: Page, previous: Page | None) -> tuple[quotes.QuoteMatch, bool]:
     """Where the item's quote is: on this page, or on the previous one. The flag is True when it was found on this page."""
     quote = entry.get("quote") or ""
     order = [(previous, False), (page, True)] if entry.get("heading_on_prev") else [(page, True), (previous, False)]
@@ -81,11 +88,11 @@ def _page_contexts(collection: Collection) -> Iterator[PageContext | Page]:
             yield PageContext(item, page, previous, dates[index], maps.get(identifier), reading, officials)
 
 
-def build_records(ctx: Context, collection: Collection) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Summary]:
+def build_records(ctx: Context, collection: Collection) -> tuple[list[DecisionRecord], list[Rejected], Summary]:
     """All decision records of a collection, the items rejected, and the counts."""
     summary = Summary()
-    records: list[dict[str, Any]] = []
-    rejected: list[dict[str, Any]] = []
+    records: list[DecisionRecord] = []
+    rejected: list[Rejected] = []
     for pc in _page_contexts(collection):
         summary.pages += 1
         if isinstance(pc, Page):
@@ -105,7 +112,7 @@ def build_records(ctx: Context, collection: Collection) -> tuple[list[dict[str, 
     return records, rejected, summary
 
 
-def _count(counts: Counter[str], record: dict[str, Any]) -> None:
+def _count(counts: Counter[str], record: DecisionRecord) -> None:
     counts[f"quote_{record['quote_check']}"] += 1
     counts["linked_to_page"] += record["source"]["page_url"] is not None
     counts["dated"] += record["date"] is not None

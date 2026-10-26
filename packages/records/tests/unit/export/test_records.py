@@ -1,16 +1,17 @@
 import datetime as dt
 from pathlib import Path
-from typing import Any
+from typing import Unpack
 
 import pytest
 
 from qipu_records.cities import VANCOUVER
 from qipu_records.collection import Page
 from qipu_records.export.geojson import feature_collection
-from qipu_records.export.records import Context, PageContext, decision_record
+from qipu_records.export.records import Context, DecisionRecord, PageContext, decision_record
 from qipu_records.fetch.archive import Item
 from qipu_records.map.gazetteer import Gazetteer, Precision, write_gazetteer
 from qipu_records.read.readers import Reading
+from qipu_records.read.schema import ModelItem
 from qipu_records.verify.dates import DateSource, PageDates
 from qipu_records.verify.privacy import WITHHELD, Embargo
 from qipu_records.verify.quotes import QuoteMatch, QuoteStatus
@@ -25,8 +26,8 @@ ITEM = Item("19700609", "Council Meeting Minutes : June 9, 1970", "1970-06-09", 
 PAGE = Page("19700609:12", "19700609", 12, "Regular Council, June 9, 1970\n...")
 
 
-def _entry(**fields: Any) -> dict[str, Any]:
-    entry: dict[str, Any] = {
+def _entry(**fields: Unpack[ModelItem]) -> ModelItem:
+    entry: ModelItem = {
         "quote": "Booth - City Hall", "kind": "permit", "action": "failed", "number": "", "file": "", "amended": False,
         "ayes": None, "noes": None, "absent": None, "ayes_names": [], "noes_names": [], "absent_names": [], "mover": "Bird",
         "seconder": "", "parties": [{"name": "Playhouse Theatre Company", "role": "applicant"}],
@@ -34,7 +35,7 @@ def _entry(**fields: Any) -> dict[str, Any]:
         "places": [{"text": "1139 Pendrell Street", "precision": "address"}],
         "zoning_from": "", "zoning_to": "", "topics": [], "summary": "Council refused the booth.",
     }  # fmt: skip
-    return entry | fields
+    return {**entry, **fields}
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def context(tmp_path: Path) -> Context:
     return Context(VANCOUVER, Embargo(92, today=dt.date(2026, 10, 26)), Gazetteer.load(path))
 
 
-def _record(context: Context, entry: dict[str, Any]) -> dict[str, Any]:
+def _record(context: Context, entry: ModelItem) -> DecisionRecord:
     dates = PageDates(dt.date(1970, 6, 9), DateSource.RUNNING_HEAD)
     page = PageContext(ITEM, PAGE, None, dates, list(range(20)), Reading(PAGE.page_id, [entry], "m", "v"), {"bird"})
     return decision_record(context, page, 3, entry, match=QuoteMatch(QuoteStatus.EXACT, 40, 1.0), on_this_page=True)
@@ -64,7 +65,9 @@ def test_record_has_the_documented_fields(context: Context) -> None:
 
 def test_vote_is_kept_when_a_roll_call_is_printed(context: Context) -> None:
     record = _record(context, _entry(ayes=8, noes=1, ayes_names=["Bird"], noes_names=["Adams"]))
-    assert record["vote"]["ayes"] == 8 and record["vote"]["noes_names"] == ["Adams"]
+    vote = record["vote"]
+    assert vote is not None
+    assert vote["ayes"] == 8 and vote["noes_names"] == ["Adams"]
 
 
 def test_sensitive_item_inside_the_embargo_has_names_withheld(context: Context) -> None:

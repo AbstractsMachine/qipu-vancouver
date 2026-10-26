@@ -7,7 +7,7 @@ outcome named, its private names withheld when the privacy rule applies, its pla
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import NotRequired, TypedDict
 
 from qipu_records.cities import City
 from qipu_records.collection import Page
@@ -15,9 +15,85 @@ from qipu_records.fetch.archive import Item
 from qipu_records.link.pagemap import PageMap, page_url
 from qipu_records.map.gazetteer import Gazetteer
 from qipu_records.read.readers import Reading
+from qipu_records.read.schema import ModelItem
 from qipu_records.verify import outcomes, privacy
 from qipu_records.verify.dates import PageDates
 from qipu_records.verify.quotes import QuoteMatch
+
+
+class Vote(TypedDict):
+    ayes: int | None
+    noes: int | None
+    absent: int | None
+    ayes_names: list[str]
+    noes_names: list[str]
+    absent_names: list[str]
+
+
+class Money(TypedDict):
+    amount: float | None
+    currency: str
+    purpose: str | None
+    payee: str | None
+
+
+class Party(TypedDict):
+    name: str | None
+    role: str | None
+
+
+class Place(TypedDict):
+    text: str
+    precision: str | None
+    lat: NotRequired[float]
+    lon: NotRequired[float]
+    placed_as: NotRequired[str]
+
+
+class Source(TypedDict):
+    item: str
+    title: str
+    ocr_page: int
+    page_url: str | None
+    item_url: str
+    licence: str | None
+    archive: str
+
+
+class ReadBy(TypedDict):
+    model: str
+    prompt_version: str
+
+
+class DecisionRecord(TypedDict):
+    """One published decision. docs/data-model.md describes each field."""
+
+    id: str
+    city: str
+    body: str
+    date: str | None
+    date_source: str
+    kind: str
+    number: str | None
+    file: str | None
+    action: str
+    stage: str | None
+    outcome: str
+    amended: bool
+    zoning: str | None
+    summary: str
+    quote: str
+    quote_check: str
+    vote: Vote | None
+    mover: str | None
+    seconder: str | None
+    money: list[Money]
+    parties: list[Party]
+    places: list[Place]
+    topics: list[str]
+    names_withheld: bool
+    source: Source
+    reading: ReadBy
 
 
 @dataclass(frozen=True)
@@ -42,11 +118,11 @@ class PageContext:
     officials: set[str]
 
 
-def _blank_to_none(value: Any) -> Any:
-    return None if value == "" else value
+def _blank_to_none(value: str | None) -> str | None:
+    return value or None
 
 
-def _vote(entry: dict[str, Any]) -> dict[str, Any] | None:
+def _vote(entry: ModelItem) -> Vote | None:
     if entry.get("ayes") is None and not entry.get("ayes_names"):
         return None
     return {
@@ -59,18 +135,19 @@ def _vote(entry: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
-def _places(entry: dict[str, Any], gazetteer: Gazetteer | None) -> list[dict[str, Any]]:
-    out = []
+def _places(entry: ModelItem, gazetteer: Gazetteer | None) -> list[Place]:
+    out: list[Place] = []
     for place in entry.get("places") or []:
-        row: dict[str, Any] = {"text": place.get("text") or "", "precision": place.get("precision")}
+        row: Place = {"text": place.get("text") or "", "precision": place.get("precision")}
         location = gazetteer.locate(place) if gazetteer else None
         if location:
-            row.update(lat=round(location.lat, 6), lon=round(location.lon, 6), placed_as=location.precision.value)
+            row["lat"], row["lon"] = round(location.lat, 6), round(location.lon, 6)
+            row["placed_as"] = location.precision.value
         out.append(row)
     return out
 
 
-def _money(entry: dict[str, Any], currency: str) -> list[dict[str, Any]]:
+def _money(entry: ModelItem, currency: str) -> list[Money]:
     return [
         {
             "amount": m.get("amount"),
@@ -82,7 +159,7 @@ def _money(entry: dict[str, Any], currency: str) -> list[dict[str, Any]]:
     ]
 
 
-def _source(ctx: Context, pc: PageContext) -> dict[str, Any]:
+def _source(ctx: Context, pc: PageContext) -> Source:
     return {
         "item": pc.item.identifier,
         "title": pc.item.title,
@@ -95,8 +172,8 @@ def _source(ctx: Context, pc: PageContext) -> dict[str, Any]:
 
 
 def decision_record(
-    ctx: Context, pc: PageContext, seq: int, entry: dict[str, Any], *, match: QuoteMatch, on_this_page: bool
-) -> dict[str, Any]:
+    ctx: Context, pc: PageContext, seq: int, entry: ModelItem, *, match: QuoteMatch, on_this_page: bool
+) -> DecisionRecord:
     """One published decision record."""
     date, date_source = pc.dates.at(match.offset if on_this_page else None)
     withheld: set[str] = set()

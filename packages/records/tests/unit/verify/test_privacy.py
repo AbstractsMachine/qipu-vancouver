@@ -1,6 +1,7 @@
 import datetime as dt
-from typing import Any
+from typing import Unpack
 
+from qipu_records.read.schema import ModelItem
 from qipu_records.verify.privacy import (
     WITHHELD,
     Embargo,
@@ -15,9 +16,8 @@ from qipu_records.verify.privacy import (
 )
 
 
-def _item(**fields: Any) -> dict[str, Any]:
-    base: dict[str, Any] = {"kind": "motion", "quote": "", "summary": "", "parties": [], "money": [], "places": [], "mover": ""}
-    return base | fields
+def _item(**fields: Unpack[ModelItem]) -> ModelItem:
+    return {"kind": "motion", "quote": "", "summary": "", "parties": [], "money": [], "places": [], "mover": "", **fields}
 
 
 def test_embargo_counts_back_from_today() -> None:

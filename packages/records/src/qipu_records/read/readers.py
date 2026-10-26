@@ -12,14 +12,21 @@ API keys are read from the environment only. They are never written to disk or p
 
 from __future__ import annotations
 
-import importlib
 import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol, TypeGuard
 
 from qipu_records.read import schema
+from qipu_records.read.schema import ModelItem
+
+if TYPE_CHECKING:
+    from anthropic import Anthropic
+    from anthropic.types import OutputConfigParam, TextBlockParam
+    from openai import OpenAI
+
+Effort = Literal["low", "medium", "high", "xhigh", "max"]
 
 
 @dataclass(frozen=True)
@@ -27,7 +34,7 @@ class Reading:
     """One page as the model read it."""
 
     page_id: str
-    items: list[dict[str, Any]]
+    items: list[ModelItem]
     model: str
     prompt_version: str
     input_tokens: int = 0
@@ -48,14 +55,27 @@ class Reader(Protocol):
     def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading: ...
 
 
-def _parse(page_id: str, text: str) -> list[dict[str, Any]]:
-    try:
-        items = json.loads(text)["items"]
-    except (ValueError, KeyError, TypeError) as error:
-        raise ReaderError(f"{page_id}: the answer is not the expected JSON ({error})") from error
+def _is_item(value: object) -> TypeGuard[ModelItem]:
+    """An object whose quote, if present, is text: the least an item needs before the checks can look at it."""
+    return isinstance(value, dict) and isinstance(value.get("quote", ""), str)
+
+
+def parse_items(page_id: str, answer: object) -> list[ModelItem]:
+    """The items of a decoded answer, or ReaderError when it is not ``{"items": [{...}, ...]}``."""
+    items = answer.get("items") if isinstance(answer, dict) else None
     if not isinstance(items, list):
-        raise ReaderError(f"{page_id}: 'items' is not a list")
-    return items
+        raise ReaderError(f"{page_id}: the answer has no list of items")
+    if not all(_is_item(item) for item in items):
+        raise ReaderError(f"{page_id}: an item in the answer is not an object with a text quote")
+    return [item for item in items if _is_item(item)]
+
+
+def _parse(page_id: str, text: str) -> list[ModelItem]:
+    try:
+        answer = json.loads(text)
+    except ValueError as error:
+        raise ReaderError(f"{page_id}: the answer is not the expected JSON ({error})") from error
+    return parse_items(page_id, answer)
 
 
 def _require_env(name: str) -> str:
@@ -65,30 +85,35 @@ def _require_env(name: str) -> str:
     return value
 
 
-def _import(sdk: str) -> Any:
-    try:
-        return importlib.import_module(sdk)
-    except ImportError:
-        raise ReaderConfigError(f"this reader needs the {sdk} package: pip install 'qipu-records[{sdk}]'") from None
+def _missing(sdk: str) -> ReaderConfigError:
+    return ReaderConfigError(f"this reader needs the {sdk} package: pip install 'qipu-records[{sdk}]'")
 
 
 @dataclass
 class AnthropicReader:
     model: str = "claude-haiku-5-5"
-    effort: str = "medium"
+    effort: Effort = "medium"
     max_tokens: int = 16000
-    _client: Any = field(default=None, init=False, repr=False)
+    _client: Anthropic | None = field(default=None, init=False, repr=False)
 
-    def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading:
+    def _connect(self) -> Anthropic:
         if self._client is None:
             key = _require_env("ANTHROPIC_API_KEY")
-            anthropic = _import("anthropic")
-            self._client = anthropic.Anthropic(api_key=key, max_retries=4)
-        message = self._client.messages.create(
+            try:
+                from anthropic import Anthropic  # noqa: PLC0415 - an optional extra, loaded only when this reader is used
+            except ImportError:
+                raise _missing("anthropic") from None
+            self._client = Anthropic(api_key=key, max_retries=4)
+        return self._client
+
+    def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading:
+        system: list[TextBlockParam] = [{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}]
+        output: OutputConfigParam = {"effort": self.effort, "format": {"type": "json_schema", "schema": schema.RESPONSE}}
+        message = self._connect().messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
-            system=[{"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}],
-            output_config={"effort": self.effort, "format": {"type": "json_schema", "schema": schema.RESPONSE}},
+            system=system,
+            output_config=output,
             messages=[{"role": "user", "content": user_message}],
         )
         text = next((block.text for block in message.content if block.type == "text"), "")
@@ -110,14 +135,20 @@ class OpenAICompatibleReader:
     base_url: str
     api_key_env: str = "OPENAI_API_KEY"
     max_tokens: int = 16000
-    _client: Any = field(default=None, init=False, repr=False)
+    _client: OpenAI | None = field(default=None, init=False, repr=False)
+
+    def _connect(self) -> OpenAI:
+        if self._client is None:
+            try:
+                from openai import OpenAI  # noqa: PLC0415 - an optional extra, loaded only when this reader is used
+            except ImportError:
+                raise _missing("openai") from None
+            key = os.environ.get(self.api_key_env) or "not-needed"
+            self._client = OpenAI(base_url=self.base_url, api_key=key, max_retries=4)
+        return self._client
 
     def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading:
-        if self._client is None:
-            openai = _import("openai")
-            key = os.environ.get(self.api_key_env) or "not-needed"
-            self._client = openai.OpenAI(base_url=self.base_url, api_key=key, max_retries=4)
-        response = self._client.chat.completions.create(
+        response = self._connect().chat.completions.create(
             model=self.model,
             max_tokens=self.max_tokens,
             messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_message}],
@@ -137,6 +168,12 @@ class OpenAICompatibleReader:
         )
 
 
+def reading_from_row(row: dict[str, Any]) -> Reading:
+    """A Reading from one line of a readings.jsonl file."""
+    page_id = str(row["page_id"])
+    return Reading(page_id, parse_items(page_id, row), str(row["model"]), str(row["prompt_version"]))
+
+
 class ReplayReader:
     """Answers recorded in a JSON Lines file, one ``{"page_id", "model", "prompt_version", "items"}`` per line."""
 
@@ -145,8 +182,9 @@ class ReplayReader:
         self._readings: dict[str, Reading] = {}
         with path.open(encoding="utf-8") as lines:
             for line in lines:
-                row = json.loads(line)
-                self._readings[row["page_id"]] = Reading(row["page_id"], row["items"], row["model"], row["prompt_version"])
+                if line.strip():
+                    reading = reading_from_row(json.loads(line))
+                    self._readings[reading.page_id] = reading
 
     def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading:
         try:

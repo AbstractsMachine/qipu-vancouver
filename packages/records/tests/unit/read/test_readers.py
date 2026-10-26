@@ -54,7 +54,7 @@ def test_anthropic_reader_sends_the_schema_and_caches_the_prompt(monkeypatch: py
         )
 
     reader = AnthropicReader()
-    reader._client = SimpleNamespace(messages=SimpleNamespace(create=create))
+    monkeypatch.setattr(reader, "_client", SimpleNamespace(messages=SimpleNamespace(create=create)))
     reading = reader.read("19740219:4", "SYSTEM", "USER")
     assert reading.items == [{"quote": "Acquisition for Park Site"}]
     assert (reading.input_tokens, reading.output_tokens) == (1900, 3500)
@@ -73,7 +73,7 @@ def test_openai_compatible_reader_asks_for_strict_json(monkeypatch: pytest.Monke
         return SimpleNamespace(choices=[SimpleNamespace(message=message)], usage=usage)
 
     reader = OpenAICompatibleReader(model="open-model", base_url="http://localhost:8000/v1")
-    reader._client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+    monkeypatch.setattr(reader, "_client", SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create))))
     reading = reader.read("19740219:4", "SYSTEM", "USER")
     assert reading.model == "open-model"
     assert reading.items[0]["quote"] == "Acquisition for Park Site"
@@ -85,3 +85,12 @@ def test_a_missing_client_library_is_explained(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setitem(sys.modules, "openai", None)
     with pytest.raises(ReaderConfigError, match=r"pip install 'qipu-records\[openai\]'"):
         OpenAICompatibleReader(model="m", base_url="http://localhost:8000/v1").read("p", "s", "u")
+
+
+@pytest.mark.parametrize(
+    "answer",
+    ['{"items": ["a string"]}', '{"items": [{"quote": 7}]}', '{"items": {}}', '["items"]', '{"decisions": []}'],
+)
+def test_items_that_are_not_objects_with_a_text_quote_are_refused(answer: str) -> None:
+    with pytest.raises(ReaderError):
+        _parse("p", answer)

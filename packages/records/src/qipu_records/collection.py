@@ -12,14 +12,14 @@ plain JSON, so it can be read without this package.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 from qipu_records.fetch.archive import Item
 from qipu_records.link.pagemap import PageMap
-from qipu_records.read.readers import Reading
+from qipu_records.read.readers import Reading, reading_from_row
 
 
 @dataclass(frozen=True)
@@ -42,7 +42,7 @@ def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
                 yield json.loads(line)
 
 
-def write_jsonl(path: Path, rows: Iterable[dict[str, Any]]) -> int:
+def write_jsonl(path: Path, rows: Iterable[Mapping[str, object]]) -> int:
     count = 0
     tmp = path.with_suffix(path.suffix + ".tmp")
     with tmp.open("w", encoding="utf-8") as out:
@@ -53,7 +53,7 @@ def write_jsonl(path: Path, rows: Iterable[dict[str, Any]]) -> int:
     return count
 
 
-def write_json(path: Path, data: Any) -> None:
+def write_json(path: Path, data: object) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     tmp.replace(path)
@@ -93,9 +93,8 @@ class Collection:
         path = self.path("readings.jsonl")
         if not path.exists():
             return {}
-        return {
-            row["page_id"]: Reading(row["page_id"], row["items"], row["model"], row["prompt_version"]) for row in read_jsonl(path)
-        }
+        readings = (reading_from_row(row) for row in read_jsonl(path))
+        return {reading.page_id: reading for reading in readings}
 
     def append_reading(self, reading: Reading) -> None:
         row = {

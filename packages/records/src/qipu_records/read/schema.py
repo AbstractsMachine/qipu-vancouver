@@ -8,7 +8,7 @@ structured output mode. Fields the page does not print come back as "" or [] and
 from __future__ import annotations
 
 import hashlib
-from typing import Any
+from typing import Any, TypedDict
 
 SCHEMA_VERSION = "v2.1"
 PAGE_TEXT_LIMIT = 9000
@@ -95,6 +95,72 @@ ITEM = _object(
     summary=_STRING,
 )
 RESPONSE = _object(items=_array(ITEM))
+
+
+# The same shapes as Python types. The schema above is what the model API enforces; these let the type checker follow the
+# fields through the checks. Answers replayed from a file or read by a model without strict structured output can lack
+# fields, so every field is optional here and the code reads them with .get(). A test keeps the two in step.
+
+
+class ModelParty(TypedDict, total=False):
+    name: str
+    role: str
+
+
+class ModelMoney(TypedDict, total=False):
+    amount: float
+    purpose: str
+    payee: str
+
+
+class ModelPlace(TypedDict, total=False):
+    text: str
+    street: str
+    number: str
+    from_street: str
+    to_street: str
+    block: str
+    lot: str
+    area: str
+    precision: str
+
+
+class ModelDate(TypedDict, total=False):
+    date: str
+    role: str
+
+
+class ModelItem(TypedDict, total=False):
+    """One decision as the model listed it."""
+
+    quote: str
+    heading_on_prev: bool
+    kind: str
+    number: str
+    file: str
+    action: str
+    amended: bool
+    continued_to: str
+    ayes: int | None
+    noes: int | None
+    absent: int | None
+    ayes_names: list[str]
+    noes_names: list[str]
+    absent_names: list[str]
+    mover: str
+    seconder: str
+    department: str
+    parties: list[ModelParty]
+    money: list[ModelMoney]
+    places: list[ModelPlace]
+    zoning_from: str
+    zoning_to: str
+    related: list[str]
+    dates: list[ModelDate]
+    topics: list[str]
+    interest: int
+    why: str
+    summary: str
 
 
 def prompt_version(system_prompt: str) -> str:

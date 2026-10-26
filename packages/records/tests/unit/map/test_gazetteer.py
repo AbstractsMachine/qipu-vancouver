@@ -8,6 +8,7 @@ import pytest
 
 from qipu_records.map import gazetteer
 from qipu_records.map.gazetteer import Gazetteer, Precision, intersection_key, split_intersection, street_key, write_gazetteer
+from qipu_records.read.schema import ModelPlace
 
 
 @pytest.mark.parametrize(
@@ -53,7 +54,12 @@ def test_locate_address_with_a_hash_sign(places: Gazetteer) -> None:
 
 
 def test_locate_address_whose_direction_was_dropped(places: Gazetteer) -> None:
-    place = {"text": "23 South Renfrew Street", "street": "South Renfrew Street", "number": "23", "precision": "address"}
+    place: ModelPlace = {
+        "text": "23 South Renfrew Street",
+        "street": "South Renfrew Street",
+        "number": "23",
+        "precision": "address",
+    }
     assert places.locate(place) is not None
 
 

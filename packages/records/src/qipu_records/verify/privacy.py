@@ -18,7 +18,8 @@ import datetime as dt
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any
+
+from qipu_records.read.schema import ModelItem
 
 WITHHELD = "[name withheld]"
 
@@ -113,21 +114,22 @@ def officials_on_page(page_text: str) -> set[str]:
     return found
 
 
-def officials_of_item(item: dict[str, Any]) -> set[str]:
+def officials_of_item(item: ModelItem) -> set[str]:
     """Surnames of the people who moved, seconded or voted on the item."""
     names = [item.get("mover") or "", item.get("seconder") or ""]
-    for key in ("ayes_names", "noes_names", "absent_names"):
-        names.extend(item.get(key) or [])
+    names += item.get("ayes_names") or []
+    names += item.get("noes_names") or []
+    names += item.get("absent_names") or []
     return {surname(n) for n in names if n}
 
 
-def item_is_sensitive(item: dict[str, Any]) -> bool:
+def item_is_sensitive(item: ModelItem) -> bool:
     text = " ".join([item.get("quote") or "", item.get("summary") or ""])
     roles = {party.get("role") for party in item.get("parties") or []}
     return item.get("kind") in SENSITIVE_KINDS or bool(roles & SENSITIVE_ROLES) or is_sensitive(text)
 
 
-def private_names(item: dict[str, Any], officials: set[str]) -> set[str]:
+def private_names(item: ModelItem, officials: set[str]) -> set[str]:
     """Names of private people in an item, as printed, for `mask` to withhold.
 
     Candidates are the item's parties, the payees of its amounts, and every name after an honorific in its text. A name is
@@ -192,14 +194,15 @@ def mask(text: str, names: Iterable[str]) -> str:
     return text
 
 
-def mask_item(item: dict[str, Any], officials: set[str]) -> tuple[dict[str, Any], set[str]]:
+def mask_item(item: ModelItem, officials: set[str]) -> tuple[ModelItem, set[str]]:
     """The item with private people's names withheld, and the names withheld. The caller decides whether the rule applies."""
     names = private_names(item, officials | officials_of_item(item))
     if not names:
         return item, set()
-    masked = dict(item)
-    for key in ("quote", "summary", "why"):
-        masked[key] = mask(item.get(key) or "", names)
+    masked = item.copy()
+    masked["quote"] = mask(item.get("quote") or "", names)
+    masked["summary"] = mask(item.get("summary") or "", names)
+    masked["why"] = mask(item.get("why") or "", names)
     masked["parties"] = [
         {**party, "name": WITHHELD if party.get("name") in names else mask(party.get("name") or "", names)}
         for party in item.get("parties") or []
