@@ -7,7 +7,14 @@ from typing import Any
 import pytest
 
 from qipu_records.read import schema
-from qipu_records.read.readers import AnthropicReader, OpenAICompatibleReader, ReaderError, ReplayReader, _parse
+from qipu_records.read.readers import (
+    AnthropicReader,
+    OpenAICompatibleReader,
+    ReaderConfigError,
+    ReaderError,
+    ReplayReader,
+    _parse,
+)
 
 
 def test_replay_returns_the_recorded_answer(tmp_path: Path) -> None:
@@ -29,7 +36,7 @@ def test_answers_that_are_not_the_schema_are_refused() -> None:
 
 def test_missing_key_is_reported_before_any_call(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    with pytest.raises(ReaderError, match="ANTHROPIC_API_KEY"):
+    with pytest.raises(ReaderConfigError, match="ANTHROPIC_API_KEY"):
         AnthropicReader().read("p", "system", "user")
 
 
@@ -76,5 +83,5 @@ def test_openai_compatible_reader_asks_for_strict_json(monkeypatch: pytest.Monke
 
 def test_a_missing_client_library_is_explained(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "openai", None)
-    with pytest.raises(ReaderError, match=r"pip install 'qipu-records\[openai\]'"):
+    with pytest.raises(ReaderConfigError, match=r"pip install 'qipu-records\[openai\]'"):
         OpenAICompatibleReader(model="m", base_url="http://localhost:8000/v1").read("p", "s", "u")

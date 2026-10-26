@@ -23,7 +23,7 @@ def test_fetch_read_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsy
     assert cli.main(["fetch", "--out", str(out), "--cache", str(tmp_path / "cache"), "19700609"]) == 0
     replay = tmp_path / "answers.jsonl"
     replay.write_text(json.dumps({"page_id": "19700609:2", "model": "m", "prompt_version": "v", "items": []}) + "\n")
-    assert cli.main(["read", "--out", str(out), "--replay", str(replay), "--max-pages", "1"]) == 0
+    assert cli.main(["read", "--out", str(out), "--replay", str(replay), "--max-pages", "5"]) == 0
     assert cli.main(["build", "--out", str(out)]) == 0
     output = capsys.readouterr().out
     assert "pages added to" in output and ": 5" in output
@@ -50,3 +50,11 @@ def test_build_with_a_gazetteer(tmp_path: Path) -> None:
         shutil.copy(SAMPLE / name, tmp_path / name)
     assert cli.main(["-v", "build", "--out", str(tmp_path), "--gazetteer", str(SAMPLE / "gazetteer.csv")]) == 0
     assert json.loads((tmp_path / "summary.json").read_text())["placed"] == 9
+
+
+def test_read_without_a_key_explains_and_fails(
+    sample_copy: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    assert cli.main(["read", "--out", str(sample_copy)]) == 2
+    assert "set ANTHROPIC_API_KEY in the environment" in capsys.readouterr().err

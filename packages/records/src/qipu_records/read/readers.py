@@ -35,7 +35,11 @@ class Reading:
 
 
 class ReaderError(RuntimeError):
-    pass
+    """The model's answer for one page cannot be used. The page is left unread, to be tried again."""
+
+
+class ReaderConfigError(RuntimeError):
+    """The reader cannot work at all: no API key, or its client library is not installed."""
 
 
 class Reader(Protocol):
@@ -57,7 +61,7 @@ def _parse(page_id: str, text: str) -> list[dict[str, Any]]:
 def _require_env(name: str) -> str:
     value = os.environ.get(name)
     if not value:
-        raise ReaderError(f"set {name} in the environment (it is read from there only, never stored)")
+        raise ReaderConfigError(f"set {name} in the environment (it is read from there only, never stored)")
     return value
 
 
@@ -65,7 +69,7 @@ def _import(sdk: str) -> Any:
     try:
         return importlib.import_module(sdk)
     except ImportError:
-        raise ReaderError(f"this reader needs the {sdk} package: pip install 'qipu-records[{sdk}]'") from None
+        raise ReaderConfigError(f"this reader needs the {sdk} package: pip install 'qipu-records[{sdk}]'") from None
 
 
 @dataclass

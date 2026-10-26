@@ -9,7 +9,7 @@ import pytest
 from qipu_records.cities import VANCOUVER
 from qipu_records.collection import Collection
 from qipu_records.fetch.run import fetch_items
-from qipu_records.read.readers import ReaderError, Reading, ReplayReader
+from qipu_records.read.readers import AnthropicReader, ReaderConfigError, ReaderError, Reading, ReplayReader
 from qipu_records.read.run import read_pages
 from tests.conftest import SAMPLE, SavedArchive
 
@@ -66,3 +66,32 @@ def test_short_pages_are_not_sent(sample_copy: Path) -> None:
     reader = _Flaky()
     read_pages(Collection(sample_copy), reader, VANCOUVER, max_pages=100)
     assert len(reader.messages) == 8
+
+
+class _Broken:
+    """A model whose every answer is unusable."""
+
+    model = "broken"
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading:
+        self.calls += 1
+        raise ReaderError(f"{page_id}: the answer is not the expected JSON")
+
+
+def test_unusable_answers_still_count_towards_the_cap(sample_copy: Path, caplog: pytest.LogCaptureFixture) -> None:
+    reader = _Broken()
+    with caplog.at_level(logging.WARNING):
+        assert read_pages(Collection(sample_copy), reader, VANCOUVER, max_pages=3) == 0
+    assert reader.calls == 3
+    assert "3 of 3 pages gave no usable answer" in caplog.text
+
+
+def test_a_reader_without_a_key_stops_before_the_first_page(sample_copy: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    collection = Collection(sample_copy)
+    with pytest.raises(ReaderConfigError, match="ANTHROPIC_API_KEY"):
+        read_pages(collection, AnthropicReader(), VANCOUVER, max_pages=100)
+    assert collection.readings() == {}

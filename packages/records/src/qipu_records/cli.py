@@ -16,7 +16,7 @@ from qipu_records.fetch.archive import ArchiveClient
 from qipu_records.fetch.run import fetch_items
 from qipu_records.map import gazetteer
 from qipu_records.pipeline import build
-from qipu_records.read.readers import AnthropicReader, OpenAICompatibleReader, Reader, ReplayReader
+from qipu_records.read.readers import AnthropicReader, OpenAICompatibleReader, Reader, ReaderConfigError, ReplayReader
 from qipu_records.read.run import read_pages
 from qipu_records.verify.privacy import Embargo
 
@@ -119,7 +119,11 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING, format="%(message)s")
-    code: int = args.run(args)
+    try:
+        code: int = args.run(args)
+    except ReaderConfigError as error:
+        print(f"qipu-records: {error}", file=sys.stderr)
+        return 2
     return code
 
 
