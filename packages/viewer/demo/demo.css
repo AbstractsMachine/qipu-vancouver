@@ -1,0 +1,47 @@
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  background: var(--qv-paper);
+}
+
+.demo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.demo-cities {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--qv-rule);
+  background: var(--qv-paper-raised);
+}
+
+.demo-cities button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  color: var(--qv-ink-soft);
+  font: inherit;
+  cursor: pointer;
+}
+
+.demo-cities button[aria-pressed="true"] {
+  border-color: var(--qv-rule);
+  background: var(--qv-paper);
+  color: var(--qv-ink);
+  font-weight: 600;
+}
+
+.demo-map {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
