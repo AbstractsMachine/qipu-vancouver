@@ -95,7 +95,7 @@ export function Viewer({ city, initial = {}, syncUrl = false, compositor = "auto
   const shareUrl = useShareUrl(state);
 
   return (
-    <div className={selection ? "qv-viewer qv-viewer--panel-open" : "qv-viewer"} data-city={city.id}>
+    <div className={selection ? "qv-viewer qv-viewer--panel-open" : "qv-viewer"} data-city={city.id} data-compositor={map?.compositorKind()}>
       <div ref={container} className="qv-map" />
       <div className="qv-messages">
         {notice ? <p className="qv-notice">{notice}</p> : null}
