@@ -2,7 +2,7 @@ PYTHON ?= python3
 VENV := .venv
 BIN := $(VENV)/bin
 
-.PHONY: install lock lint typecheck test e2e check demo serve clean
+.PHONY: install lock lint typecheck test e2e check demo serve build clean
 
 $(BIN)/python:
 	$(PYTHON) -m venv $(VENV)
@@ -18,8 +18,8 @@ lock: $(BIN)/python
 	  --output-file requirements-dev.txt requirements-dev.in
 
 lint:
-	$(BIN)/ruff check src tests
-	$(BIN)/ruff format --check src tests
+	$(BIN)/ruff check src tests examples
+	$(BIN)/ruff format --check src tests examples
 
 typecheck:
 	$(BIN)/mypy
@@ -40,5 +40,11 @@ serve:
 	@echo "open http://localhost:8000/map-preview/"
 	$(PYTHON) -m http.server 8000 --bind 127.0.0.1
 
+# A wheel in dist/, checked to carry the prompts the reader loads at run time.
+build:
+	rm -rf dist
+	$(BIN)/python -m pip wheel --quiet --disable-pip-version-check --no-deps --no-build-isolation --wheel-dir dist .
+	$(BIN)/python -m zipfile -l dist/*.whl | grep -q "read/prompts/vancouver.txt"
+
 clean:
-	rm -rf build .mypy_cache .ruff_cache .pytest_cache
+	rm -rf build dist .mypy_cache .ruff_cache .pytest_cache

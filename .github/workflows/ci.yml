@@ -75,6 +75,8 @@ jobs:
         run: make check
       - name: the demo runs with no key and no network
         run: make demo
+      - name: the wheel builds and carries its prompts
+        run: make build
 
   records-e2e:
     needs: changes
