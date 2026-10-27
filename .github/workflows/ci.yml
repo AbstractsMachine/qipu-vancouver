@@ -103,7 +103,52 @@ jobs:
       - name: make demo, then the map preview in headless Chromium
         run: make e2e
 
-  # ---- packages/map-pipeline: jobs are added with the package ----
+  # ---- packages/map-pipeline ----
+
+  map-pipeline-check:
+    needs: changes
+    if: needs.changes.outputs.map-pipeline == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    defaults:
+      run:
+        working-directory: packages/map-pipeline
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: packages/map-pipeline/requirements-dev.txt
+      - run: make install PYTHON=python
+      - name: lint, types, unit and integration tests with coverage
+        run: make check
+      - name: the wheel builds and carries the city file and the prompts
+        run: make build
+
+  map-pipeline-e2e:
+    needs: changes
+    if: needs.changes.outputs.map-pipeline == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: packages/map-pipeline
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packages/map-pipeline/requirements-dev.txt
+      - run: make install PYTHON=python
+      - name: every stage on the West End sample, with the CPU stand-ins for Blender and the image model
+        run: make e2e
+
 
   # ---- packages/viewer: jobs are added with the package ----
 
@@ -124,7 +169,7 @@ jobs:
   # The one check to require on main. Jobs skipped because their package did not change count as passed.
   ci-ok:
     if: always()
-    needs: [changes, records-check, records-e2e, secrets]
+    needs: [changes, records-check, records-e2e, secrets, map-pipeline-check, map-pipeline-e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

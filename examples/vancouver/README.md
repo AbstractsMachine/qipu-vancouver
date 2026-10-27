@@ -8,7 +8,9 @@ make -C packages/records demo    # records: writes packages/records/build/demo/d
 make -C packages/records serve   # then open http://localhost:8000/map-preview/ to see them on a map
 ```
 
-The map pipeline and viewer steps for the same sample are added here with those packages.
+The map pipeline's sample is in [`west-end/`](west-end): the open data for the West End blocks from 1139 Pendrell
+Street, the park site in the 1974 minutes above, to English Bay. `make -C packages/map-pipeline sample` runs every stage
+on it and writes a tile release the viewer can open.
 
 ## The files
 
