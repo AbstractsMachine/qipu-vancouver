@@ -168,6 +168,26 @@ describe("Viewer", () => {
   });
 
   describe("playing", () => {
+    /*
+     * Play steps on a real 125 ms interval. Left real, a slow run (coverage, a busy CI machine) can tick between a click
+     * and the next assertion, or take longer than waitFor's second to reach the present. Only the interval is faked, so
+     * fetches, waitFor and userEvent keep their own timers, and each test moves the clock itself.
+     * waitFor polls with setInterval, so these tests do not use it.
+     */
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const tick = () => {
+      act(() => {
+        vi.advanceTimersByTime(125);
+      });
+    };
+
     it("advances year by year and stops at the present", async () => {
       const user = userEvent.setup();
       renderViewer({ initial: { year: 2024 } });
@@ -175,9 +195,13 @@ describe("Viewer", () => {
       await user.click(playButton());
       expect(playButton()).toHaveAttribute("aria-pressed", "true");
 
-      await waitFor(() => {
-        expect(playButton()).toHaveAttribute("aria-pressed", "false");
-      });
+      tick();
+      expect(screen.getByRole("slider", { name: "Year" })).toHaveValue("2025");
+      expect(playButton()).toHaveAttribute("aria-pressed", "true");
+      tick();
+      expect(playButton()).toHaveAttribute("aria-pressed", "false");
+      expect(screen.getByRole("slider", { name: "Year" })).toHaveValue("2026");
+      tick();
       expect(screen.getByRole("slider", { name: "Year" })).toHaveValue("2026");
       expect(theMap().setYear.mock.calls.map(([y]) => y)).toEqual([2024, 2025, 2026]);
     });
