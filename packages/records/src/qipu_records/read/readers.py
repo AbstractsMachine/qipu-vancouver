@@ -182,17 +182,29 @@ def reading_from_row(row: dict[str, Any]) -> Reading:
     return Reading(page_id, parse_items(page_id, row), str(row["model"]), str(row["prompt_version"]))
 
 
+def load_readings(path: Path) -> dict[str, Reading]:
+    """Every reading in a readings.jsonl file, by page id. A line that is not a reading is a ReaderConfigError that
+    names the file and the line, since a run cannot replay a file it cannot read."""
+    readings: dict[str, Reading] = {}
+    with path.open(encoding="utf-8") as lines:
+        for number, line in enumerate(lines, 1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+                reading = reading_from_row(row)
+            except (ValueError, KeyError, TypeError, ReaderError) as error:
+                raise ReaderConfigError(f"{path}:{number}: not a recorded reading ({error})") from error
+            readings[reading.page_id] = reading
+    return readings
+
+
 class ReplayReader:
     """Answers recorded in a JSON Lines file, one ``{"page_id", "model", "prompt_version", "items"}`` per line."""
 
     def __init__(self, path: Path) -> None:
         self.model = "replay"
-        self._readings: dict[str, Reading] = {}
-        with path.open(encoding="utf-8") as lines:
-            for line in lines:
-                if line.strip():
-                    reading = reading_from_row(json.loads(line))
-                    self._readings[reading.page_id] = reading
+        self._readings = load_readings(path)
 
     def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading:
         try:
