@@ -59,6 +59,8 @@ app. [packages/viewer/ARCHITECTURE.md](../packages/viewer/ARCHITECTURE.md) walks
 - Each package owns its language, dependencies, tests and Makefile. Shared lint and format settings live at the root
   (`ruff.toml`, `.prettierrc.json`, `eslint.config.mjs`, `.editorconfig`).
 - The sample in [examples/vancouver](../examples/vancouver) is the common test bed: every package's demo runs on it.
-- Network access sits behind one small module per package (`fetch/http.py`, `sources/http.py`, `ingest/http.py`), each
-  with a timeout and retries, so tests replace it and run offline; every Python test suite fails a test that tries to
-  reach another host.
+- Network access sits behind one small module per package (`fetch/http.py`, `sources/http.py`, `ingest/http.py`), so
+  tests replace it and run offline; every Python test suite fails a test that tries to reach another host. They share
+  one retry rule: a dropped connection, a timeout, a 5xx, a 408 or a 429 is retried with a growing pause, and any other
+  4xx is raised at once. packages/updates calls qipu-records' `fetch/http.py`; map-pipeline, which does not depend on
+  records, has its own copy of the rule.

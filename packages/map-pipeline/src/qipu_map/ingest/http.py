@@ -1,9 +1,15 @@
-"""The network edge: one small interface so the fetchers can be tested without it."""
+"""The network edge: one small interface so the fetchers can be tested without it.
+
+The retry rule matches qipu-records' `fetch/http.py` (this package does not depend on it): a dropped connection, a
+timeout, a 5xx, a 408 or a 429 is retried; any other 4xx is an answer and is raised at once. `HTTPError` is a subclass
+of `OSError`, so it is told apart first.
+"""
 
 from __future__ import annotations
 
 import logging
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Mapping, Sequence
@@ -12,6 +18,13 @@ from typing import Protocol
 log = logging.getLogger(__name__)
 
 USER_AGENT = "qipu-map/0.1 (+https://github.com/AbstractsMachine/qipu-vancouver)"
+RETRIED_CLIENT_ERRORS = frozenset({408, 429})
+
+
+def retryable(exc: OSError) -> bool:
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code >= 500 or exc.code in RETRIED_CLIENT_ERRORS
+    return True
 
 
 class Http(Protocol):
@@ -48,7 +61,7 @@ class UrllibHttp:
                     data: bytes = resp.read()
                     return data
             except OSError as exc:
-                if attempt == self.tries - 1:
+                if not retryable(exc) or attempt == self.tries - 1:
                     raise
                 log.warning("retrying %s after %s", req.full_url[:120], exc)
                 time.sleep(self.pause_s * (attempt + 1))

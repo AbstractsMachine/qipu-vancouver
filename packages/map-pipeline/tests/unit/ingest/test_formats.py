@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import json
+import urllib.error
+from email.message import Message
 from pathlib import Path
 from typing import Any
 
@@ -123,6 +125,34 @@ def test_urllib_http_gives_up(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("urllib.request.urlopen", urlopen)
     with pytest.raises(OSError, match="down"):
         http_mod.UrllibHttp(tries=2, pause_s=0.0).get("https://x")
+
+
+def _status_once(monkeypatch: pytest.MonkeyPatch, code: int) -> list[str]:
+    calls: list[str] = []
+
+    def urlopen(req: Any, timeout: float) -> _Resp:
+        calls.append(req.full_url)
+        if len(calls) == 1:
+            raise urllib.error.HTTPError(req.full_url, code, "x", Message(), None)
+        return _Resp(b"ok")
+
+    monkeypatch.setattr("urllib.request.urlopen", urlopen)
+    return calls
+
+
+@pytest.mark.parametrize("code", [500, 503, 408, 429])
+def test_urllib_http_retries_a_transient_status(monkeypatch: pytest.MonkeyPatch, code: int) -> None:
+    calls = _status_once(monkeypatch, code)
+    assert http_mod.UrllibHttp(tries=3, pause_s=0.0).get("https://x/y") == b"ok"
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("code", [400, 403, 404, 410])
+def test_urllib_http_does_not_retry_a_client_error(monkeypatch: pytest.MonkeyPatch, code: int) -> None:
+    calls = _status_once(monkeypatch, code)
+    with pytest.raises(urllib.error.HTTPError):
+        http_mod.UrllibHttp(tries=3, pause_s=0.0).get("https://x/y")
+    assert len(calls) == 1
 
 
 def test_read_grid_resamples_a_utm_tile_onto_local_metres(tmp_path: Path) -> None:
