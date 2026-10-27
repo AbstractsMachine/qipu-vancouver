@@ -33,7 +33,6 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "fixtures": "node scripts/make-fixtures.mjs",
     "sample": "node scripts/build-sample.mjs"
   },
   "dependencies": {
