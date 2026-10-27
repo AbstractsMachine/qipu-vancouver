@@ -33,7 +33,8 @@ from qipu_records.verify.privacy import (
 )
 from qipu_updates.gates import Finding, GateResult, PageTexts, page_id_of
 
-MASKABLE = ("quote", "summary")
+# The text fields qipu_records.verify.privacy.mask_item masks, besides parties, places and money payees.
+MASKABLE = ("quote", "summary", "why")
 NEVER_MASKED = (
     "id",
     "body",
