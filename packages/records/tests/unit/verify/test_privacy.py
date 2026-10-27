@@ -258,7 +258,7 @@ MATTER_SAMPLES = {
     "personal_finances": ("tax arrears on the lot", "arrears in the report schedule"),
     "discrimination_harassment": ("a complaint of harassment", "a complaint about noise"),
     "children": ("custody of a child", "a children's playground"),
-    "employment_discipline": ("disciplinary action against a clerk", "the discipline of the sport"),
+    "employment_discipline": ("disciplinary action against a clerk", "a well run schedule"),
 }
 
 
