@@ -1,0 +1,239 @@
+{
+  "now": {
+    "zmax": 9,
+    "key": "render",
+    "v": "r20261007-10151616"
+  },
+  "years": {
+    "1950": {
+      "zmax": 9,
+      "key": "_preview_eras/1950",
+      "v": "pv10231455",
+      "public": true,
+      "areas": ["chinatown_strathcona"]
+    },
+    "1972": {
+      "zmax": 9,
+      "key": "_preview_eras/1972",
+      "v": "pv10231455",
+      "public": true,
+      "areas": ["chinatown_strathcona"]
+    },
+    "1982": {
+      "zmax": 9,
+      "key": "_preview_eras/1982",
+      "v": "pv10231455",
+      "public": true,
+      "areas": ["chinatown_strathcona"]
+    },
+    "1930": {
+      "zmax": 6,
+      "key": "_preview_eras/city/1930",
+      "v": "pv10231455",
+      "public": true,
+      "areas": ["city"]
+    }
+  },
+  "min": 1930,
+  "public": true,
+  "quarters": {
+    "city": {
+      "name": "Vancouver (whole city)",
+      "l9": [0, 0, 163840, 98304],
+      "years": [
+        {
+          "year": 1930,
+          "real": true
+        },
+        {
+          "year": 1950,
+          "real": true
+        },
+        {
+          "year": 1972,
+          "real": true
+        },
+        {
+          "year": 1982,
+          "real": true
+        },
+        {
+          "year": 2026,
+          "real": true
+        }
+      ],
+      "keys": {
+        "1930": {
+          "key": "_preview_eras/city/1930",
+          "zmax": 6,
+          "v": "pv10250146"
+        },
+        "1950": {
+          "key": "_preview_eras/city/1950",
+          "zmax": 6,
+          "v": "pv10250146"
+        },
+        "1972": {
+          "key": "_preview_eras/city/1972",
+          "zmax": 6,
+          "v": "pv10250146"
+        },
+        "1982": {
+          "key": "_preview_eras/city/1982",
+          "zmax": 6,
+          "v": "pv10250146"
+        }
+      },
+      "switch": {
+        "1930-1950": {
+          "key": "_preview_eras/city/switch/1930-1950",
+          "zmax": 6,
+          "v": "pv10251309"
+        },
+        "1950-1972": {
+          "key": "_preview_eras/city/switch/1950-1972",
+          "zmax": 6,
+          "v": "pv10251309"
+        },
+        "1972-1982": {
+          "key": "_preview_eras/city/switch/1972-1982",
+          "zmax": 6,
+          "v": "pv10251309"
+        },
+        "1982-2026": {
+          "key": "_preview_eras/city/switch/1982-2026",
+          "zmax": 6,
+          "v": "pv10251309"
+        }
+      }
+    },
+    "downtown_falsecreek": {
+      "name": "Downtown / Coal Harbour / False Creek",
+      "l9": [71680, 30720, 102400, 49152],
+      "years": [
+        {
+          "year": 1930,
+          "real": true
+        },
+        {
+          "year": 1950,
+          "real": true
+        },
+        {
+          "year": 1972,
+          "real": true
+        },
+        {
+          "year": 1982,
+          "real": true
+        },
+        {
+          "year": 2026,
+          "real": true
+        }
+      ],
+      "keys": {
+        "1930": {
+          "key": "_preview_eras/area/downtown_falsecreek/1930",
+          "zmax": 8,
+          "v": "pv10251250"
+        },
+        "1950": {
+          "key": "_preview_eras/area/downtown_falsecreek/1950",
+          "zmax": 8,
+          "v": "pv10251250"
+        },
+        "1972": {
+          "key": "_preview_eras/area/downtown_falsecreek/1972",
+          "zmax": 8,
+          "v": "pv10251250"
+        },
+        "1982": {
+          "key": "_preview_eras/area/downtown_falsecreek/1982",
+          "zmax": 8,
+          "v": "pv10251250"
+        }
+      },
+      "switch": {
+        "1930-1950": {
+          "key": "_preview_eras/area/downtown_falsecreek/switch/1930-1950",
+          "zmax": 8,
+          "v": "pv10251309"
+        },
+        "1950-1972": {
+          "key": "_preview_eras/area/downtown_falsecreek/switch/1950-1972",
+          "zmax": 8,
+          "v": "pv10251309"
+        },
+        "1972-1982": {
+          "key": "_preview_eras/area/downtown_falsecreek/switch/1972-1982",
+          "zmax": 8,
+          "v": "pv10251309"
+        },
+        "1982-2026": {
+          "key": "_preview_eras/area/downtown_falsecreek/switch/1982-2026",
+          "zmax": 8,
+          "v": "pv10251309"
+        }
+      }
+    },
+    "chinatown_strathcona": {
+      "name": "Chinatown / Strathcona / Gastown",
+      "l9": [95500, 34816, 107520, 38200],
+      "years": [
+        {
+          "year": 1950,
+          "real": true
+        },
+        {
+          "year": 1972,
+          "real": true
+        },
+        {
+          "year": 1982,
+          "real": true
+        },
+        {
+          "year": 2026,
+          "real": true
+        }
+      ],
+      "keys": {
+        "1950": {
+          "key": "_preview_eras/area/chinatown_strathcona/1950",
+          "zmax": 9,
+          "v": "pv10232255"
+        },
+        "1972": {
+          "key": "_preview_eras/area/chinatown_strathcona/1972",
+          "zmax": 9,
+          "v": "pv10232255"
+        },
+        "1982": {
+          "key": "_preview_eras/area/chinatown_strathcona/1982",
+          "zmax": 9,
+          "v": "pv10232255"
+        }
+      },
+      "switch": {
+        "1950-1972": {
+          "key": "_preview_eras/area/chinatown_strathcona/switch/1950-1972",
+          "zmax": 9,
+          "v": "pv10251309"
+        },
+        "1972-1982": {
+          "key": "_preview_eras/area/chinatown_strathcona/switch/1972-1982",
+          "zmax": 9,
+          "v": "pv10251309"
+        },
+        "1982-2026": {
+          "key": "_preview_eras/area/chinatown_strathcona/switch/1982-2026",
+          "zmax": 9,
+          "v": "pv10251309"
+        }
+      }
+    }
+  },
+  "release": null,
+  "preview": "PREVIEW pv10232246: Vancouver era work (ERA1 area + ERA6 whole city)"
+}

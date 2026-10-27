@@ -180,39 +180,39 @@ describe("useUrlSync", () => {
 
   it("writes the view into the query after a short pause, keeping other parameters and the hash", () => {
     const historyLength = window.history.length;
-    sync({ city: "sf", year: 1938, block: "0572" });
+    sync({ city: "vancouver", year: 1938, block: "3565" });
     advance(299);
     expect(window.location.search).toBe("?lang=fr");
     advance(1);
     expect(window.location.pathname).toBe("/map");
-    expect(window.location.search).toBe("?lang=fr&city=sf&year=1938&block=0572");
+    expect(window.location.search).toBe("?lang=fr&city=vancouver&year=1938&block=3565");
     expect(window.location.hash).toBe("#credits");
     expect(window.history.length).toBe(historyLength);
   });
 
   it("writes once for a burst of changes", () => {
     const replace = vi.spyOn(window.history, "replaceState");
-    const { rerender } = sync({ city: "sf", year: 1938 });
+    const { rerender } = sync({ city: "vancouver", year: 1938 });
     for (const year of [1939, 1940, 1941]) {
       advance(100);
-      rerender({ s: { city: "sf", year }, on: true });
+      rerender({ s: { city: "vancouver", year }, on: true });
     }
     advance(300);
     expect(replace).toHaveBeenCalledOnce();
-    expect(window.location.search).toBe("?lang=fr&city=sf&year=1941");
+    expect(window.location.search).toBe("?lang=fr&city=vancouver&year=1941");
   });
 
   it("leaves the history alone when the address already says the same", () => {
-    window.history.replaceState(null, "", "/map?lang=fr&city=sf");
+    window.history.replaceState(null, "", "/map?lang=fr&city=vancouver");
     const replace = vi.spyOn(window.history, "replaceState");
-    sync({ city: "sf" });
+    sync({ city: "vancouver" });
     advance(1000);
     expect(replace).not.toHaveBeenCalled();
   });
 
   it("does nothing when turned off", () => {
     const replace = vi.spyOn(window.history, "replaceState");
-    sync({ city: "sf", year: 1938 }, false);
+    sync({ city: "vancouver", year: 1938 }, false);
     advance(1000);
     expect(replace).not.toHaveBeenCalled();
     expect(window.location.search).toBe("?lang=fr");

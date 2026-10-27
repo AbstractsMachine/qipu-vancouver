@@ -6,8 +6,11 @@
  * behave as on the site; decisions are kept only for the named
  * neighbourhoods, and every other block's count is set to zero.
  *
- *   node scripts/build-sample.mjs --from <data folder> --to demo/public/sample/sf \
- *     --hoods "Mission,Haight Ashbury,Chinatown" --note "..."
+ *   node scripts/build-sample.mjs --from <data folder> --to demo/public/sample/vancouver \
+ *     --hoods "Strathcona,Mount Pleasant" --currency CAD --note "..."
+ *
+ * The money file is written with currency-neutral field names (`agreed`, `paid`) and the `currency` it is in;
+ * qipu.org's files call them `agreed_usd` and `paid_usd` whatever the city's currency.
  */
 import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
@@ -19,10 +22,13 @@ const { values } = parseArgs({
     to: { type: "string" },
     hoods: { type: "string" },
     note: { type: "string", default: "" },
+    currency: { type: "string" },
   },
 });
-if (!values.from || !values.to || !values.hoods) {
-  console.error("usage: build-sample.mjs --from <data folder> --to <sample folder> --hoods <a,b,c> [--note <text>]");
+if (!values.from || !values.to || !values.hoods || !/^[A-Z]{3}$/.test(values.currency ?? "")) {
+  console.error(
+    "usage: build-sample.mjs --from <data folder> --to <sample folder> --hoods <a,b,c> --currency <ISO code> [--note <text>]",
+  );
   process.exit(2);
 }
 const from = values.from;
@@ -80,10 +86,20 @@ for (let s = 0; s < index.meta.shards; s++) {
 
 try {
   const money = readJson("blocks/block-money.json");
-  money.b = Object.fromEntries(Object.entries(money.b).filter(([id]) => keep.has(id)));
+  money.currency = values.currency;
+  money.b = Object.fromEntries(
+    Object.entries(money.b)
+      .filter(([id]) => keep.has(id))
+      .map(([id, places]) => [id, places.map(neutralMoney)]),
+  );
   writeJson("blocks/block-money.json", money);
 } catch {
   /* a city may publish no money file */
+}
+
+function neutralMoney(place) {
+  const { agreed_usd: agreed, paid_usd: paid, payees_paid_usd: payeesPaid, ...rest } = place;
+  return { ...rest, agreed, paid, payees_paid: payeesPaid };
 }
 
 console.log(`${to}: ${keep.size} blocks, ${decisions} decisions from ${[...wanted].join(", ")}`);

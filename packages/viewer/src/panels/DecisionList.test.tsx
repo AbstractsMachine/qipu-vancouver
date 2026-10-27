@@ -1,15 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SAN_FRANCISCO } from "../config";
+import { VANCOUVER } from "../config";
 import { type Decision, parseDecision } from "../data/records";
 import { DecisionList } from "./DecisionList";
 
 function row(year: number, text = `Decision of ${year}`): Decision {
-  return parseDecision({ y: year, k: "R", u: `journal${year}/1`, t: text }, "test");
+  return parseDecision({ y: year, k: "C", u: `https://archive.org/details/CVAN_${year}`, c: "x", t: text }, "test");
 }
 
-const { kinds, currency } = SAN_FRANCISCO.record;
+const { kinds, currency } = VANCOUVER.record;
 
 function renderList(decisions: readonly Decision[], year: number) {
   return render(<DecisionList decisions={decisions} year={year} kinds={kinds} currency={currency} />);

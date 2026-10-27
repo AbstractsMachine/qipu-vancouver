@@ -117,20 +117,31 @@ export interface Place {
   readonly slug: string;
   readonly name: string;
   readonly kind: string | null;
-  /** contracts or capital lines adding budget, the whole place's, not the block's share */
+  /** contracts or capital lines adding budget, the whole place's, not the block's share; in the file's currency */
   readonly agreed: number | null;
   readonly paid: number | null;
   readonly contracts: number;
 }
 
-/** `blocks/block-money.json`: places by block id, and the page pattern for a place. */
+/**
+ * `blocks/block-money.json`: places by block id, the page pattern for a place, and the ISO 4217 code the amounts are
+ * in. Amounts are `agreed` and `paid`. qipu.org's files still name them `agreed_usd` and `paid_usd` in every city
+ * (Vancouver's hold Canadian dollars), so those names are read as the same amounts, in `currency` when the file states
+ * one and otherwise in the city's.
+ */
 export interface MoneyFile {
   readonly placePath: string | null;
+  /** the currency the file states, or null when it states none */
+  readonly currency: string | null;
   readonly byBlock: ReadonlyMap<string, readonly Place[]>;
 }
 
 export function parseMoneyFile(json: Json): MoneyFile {
   const o = record(json, "block-money");
+  const currency = optional(o.currency, (v) => str(v, "block-money.currency")) ?? null;
+  if (currency !== null && !/^[A-Z]{3}$/.test(currency)) {
+    throw new FormatError("block-money.currency", "an ISO 4217 code such as CAD");
+  }
   const byBlock = new Map<string, Place[]>();
   for (const [id, places] of Object.entries(record(o.b ?? {}, "block-money.b"))) {
     byBlock.set(
@@ -138,20 +149,21 @@ export function parseMoneyFile(json: Json): MoneyFile {
       list(places, `block-money.b.${id}`).map((pl, i) => {
         const p = `block-money.b.${id}[${i}]`;
         const x = record(pl, p);
-        const money = (v: Json, f: string) => {
-          const n = optional(v, (w) => num(w, `${p}.${f}`));
+        const money = (f: "agreed" | "paid") => {
+          const field = x[f] !== undefined ? f : `${f}_usd`;
+          const n = optional(x[field], (w) => num(w, `${p}.${field}`));
           return n === undefined || n <= 0 ? null : n;
         };
         return {
           slug: str(x.slug, `${p}.slug`),
           name: str(x.name, `${p}.name`),
           kind: optional(x.kind, (v) => str(v, `${p}.kind`)) ?? null,
-          agreed: money(x.agreed_usd, "agreed_usd"),
-          paid: money(x.paid_usd, "paid_usd"),
+          agreed: money("agreed"),
+          paid: money("paid"),
           contracts: optional(x.n_contracts, (v) => int(v, `${p}.n_contracts`)) ?? 0,
         };
       }),
     );
   }
-  return { placePath: optional(o.href, (v) => str(v, "block-money.href")) ?? null, byBlock };
+  return { placePath: optional(o.href, (v) => str(v, "block-money.href")) ?? null, currency, byBlock };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SAN_FRANCISCO, withDataBase } from "../config";
+import { VANCOUVER, withDataBase } from "../config";
 import { encodeChunk, fakeFetch, twoBlocks } from "../test/builders";
 import { blockIndexOf, decodeBlocks, ringCentre } from "./blocks";
 import { assertSameBlocks, loadCityData, neighbourhoodNames } from "./city";
@@ -132,30 +132,42 @@ describe("records", () => {
   it("reads places and their money, dropping zero figures", () => {
     const money = parseMoneyFile({
       href: "/places/place/{slug}",
+      currency: "CAD",
       b: {
         A: [
           {
-            slug: "lib",
-            name: "Library",
+            slug: "mount-pleasant-branch-library",
+            name: "Mount Pleasant Branch Library",
             kind: "library",
-            agreed_usd: 4000000,
-            paid_usd: null,
+            agreed: 4000000,
+            paid: null,
             n_contracts: 1,
           },
         ],
-        B: [{ slug: "park", name: "Park", agreed_usd: 0 }],
+        B: [{ slug: "park", name: "Park", agreed: 0 }],
       },
     });
     expect(money.placePath).toBe("/places/place/{slug}");
+    expect(money.currency).toBe("CAD");
     expect(money.byBlock.get("A")?.[0]).toEqual({
-      slug: "lib",
-      name: "Library",
+      slug: "mount-pleasant-branch-library",
+      name: "Mount Pleasant Branch Library",
       kind: "library",
       agreed: 4000000,
       paid: null,
       contracts: 1,
     });
     expect(money.byBlock.get("B")?.[0]?.agreed).toBeNull();
+  });
+
+  it("reads qipu.org's _usd field names as amounts in the city's currency", () => {
+    const money = parseMoneyFile({ b: { A: [{ slug: "s", name: "School", agreed_usd: 250000, paid_usd: 1000 }] } });
+    expect(money.currency).toBeNull();
+    expect(money.byBlock.get("A")?.[0]).toMatchObject({ agreed: 250000, paid: 1000 });
+  });
+
+  it("refuses a currency that is not an ISO 4217 code", () => {
+    expect(() => parseMoneyFile({ currency: "dollars", b: {} })).toThrow("block-money.currency");
   });
 });
 
@@ -200,10 +212,10 @@ describe("sourceOf", () => {
 });
 
 describe("loadCityData", () => {
-  const base = "https://data.example/sf";
-  const city = withDataBase(SAN_FRANCISCO, `${base}/`);
+  const base = "https://data.example/vancouver";
+  const city = withDataBase(VANCOUVER, `${base}/`);
   const routes = {
-    [`${base}/manifest.json`]: { chunks: [{ kind: "terrain" }, { kind: "blocks", hoodNames: ["Mission"] }] },
+    [`${base}/manifest.json`]: { chunks: [{ kind: "terrain" }, { kind: "blocks", hoodNames: ["Strathcona"] }] },
     [`${base}/base/blocks.qc`]: twoBlocks(),
     [`${base}/base/blocks-id.json`]: { id: ["A", "B"] },
     [`${base}/blocks/block-index.json`]: {
@@ -213,19 +225,29 @@ describe("loadCityData", () => {
       y0: [1950, 0],
       y1: [1950, 0],
     },
-    [`${base}/blocks/block-00.json`]: { A: { d: [{ y: 1950, d: "", k: "R", u: "v/1", t: "paving" }] } },
-    [`${base}/blocks/block-money.json`]: { href: "/p/{slug}", b: { A: [{ slug: "s", name: "School" }] } },
+    [`${base}/blocks/block-00.json`]: { A: { d: [{ y: 1950, d: "", k: "C", u: "v/1", t: "paving" }] } },
+    [`${base}/blocks/block-money.json`]: {
+      href: "/p/{slug}",
+      currency: "CAD",
+      b: { A: [{ slug: "s", name: "School" }] },
+    },
   };
 
   it("loads blocks, the index and a block's record", async () => {
     const data = await loadCityData(city, fakeFetch(routes));
-    expect(data.blocks.neighbourhoods).toEqual(["Mission"]);
+    expect(data.blocks.neighbourhoods).toEqual(["Strathcona"]);
     expect((await data.record(0)).decisions[0]?.printed).toBe("paving");
     expect(await data.record(1)).toEqual({ blockId: "B", decisions: [], streets: [] });
     await expect(data.record(5)).rejects.toThrow(RangeError);
     expect((await data.places("A"))[0]?.name).toBe("School");
     expect(await data.places("B")).toEqual([]);
     expect(await data.placePath()).toBe("/p/{slug}");
+  });
+
+  it("refuses a money file in another currency than the city's", async () => {
+    const usd = { ...routes, [`${base}/blocks/block-money.json`]: { currency: "USD", b: {} } };
+    const data = await loadCityData(city, fakeFetch(usd));
+    await expect(data.places("A")).rejects.toThrow("block-money.currency: expected CAD, the city's currency (got USD)");
   });
 
   it("works without a money file", async () => {
