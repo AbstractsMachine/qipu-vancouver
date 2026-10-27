@@ -9,6 +9,8 @@ from pathlib import Path
 
 
 class LocalStore:
+    """A store in a folder; a key that would leave the folder raises ValueError."""
+
     def __init__(self, root: Path) -> None:
         self.root = root
         root.mkdir(parents=True, exist_ok=True)

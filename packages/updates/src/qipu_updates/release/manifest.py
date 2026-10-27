@@ -25,6 +25,8 @@ MANIFEST = "manifest.json"
 
 @dataclass(frozen=True)
 class DocEntry:
+    """What a release knows about one document: its fingerprint, build key, file and record count."""
+
     fingerprint: str
     build_key: str
     date: str | None
@@ -37,6 +39,8 @@ class DocEntry:
 
 @dataclass
 class Manifest:
+    """The manifest of a release: where it came from, its documents, file hashes, corrections and gate results."""
+
     version: str
     parent: str | None
     created: str
@@ -66,6 +70,7 @@ class Manifest:
 
 
 def next_version(existing: list[str], day: dt.date) -> str:
+    """The next version for the day: "2026-10-26.1", then .2 and so on, after those in `existing`."""
     prefix = day.isoformat() + "."
     used = [int(v[len(prefix) :]) for v in existing if v.startswith(prefix) and v[len(prefix) :].isdigit()]
     return f"{prefix}{max(used, default=0) + 1}"

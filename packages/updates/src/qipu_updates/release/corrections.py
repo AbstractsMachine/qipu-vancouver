@@ -64,6 +64,8 @@ class Rule:
 
 @dataclass(frozen=True)
 class Applied:
+    """What one correction rule did: how many records it matched, and the problem if it went wrong."""
+
     rule_id: str
     matched: int
     problem: str | None = None

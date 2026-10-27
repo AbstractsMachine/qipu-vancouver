@@ -37,6 +37,8 @@ def document(row: dict[str, Any]) -> Document:
 
 
 class ArchiveSource:
+    """A whole archive.org collection, one document per item. The listing is complete."""
+
     complete = True
 
     def __init__(self, collection: str, cache_dir: Path, http: Polite | None = None) -> None:

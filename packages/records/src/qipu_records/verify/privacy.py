@@ -283,6 +283,7 @@ def matter(item: ModelItem) -> str | None:
 
 
 def item_is_sensitive(item: ModelItem) -> bool:
+    """True when the item is about a sensitive matter, so private people's names in it fall under the embargo."""
     return matter(item) is not None
 
 

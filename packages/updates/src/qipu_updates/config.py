@@ -20,7 +20,7 @@ PATH_KEYS = {"path", "index", "readings"}
 
 
 class ConfigError(ValueError):
-    pass
+    """The config file is malformed or incomplete."""
 
 
 def parse_every(text: str) -> dt.timedelta:
@@ -35,12 +35,15 @@ def parse_every(text: str) -> dt.timedelta:
 
 
 def format_every(every: dt.timedelta) -> str:
+    """A check interval as it is written in a config: "6h", or "1d" for whole days."""
     hours = int(every.total_seconds() // 3600)
     return f"{hours // 24}d" if hours % 24 == 0 else f"{hours}h"
 
 
 @dataclass(frozen=True)
 class SourceConfig:
+    """The [source] section: what kind of source, how often to check it, and its own options."""
+
     kind: str
     """archive (an archive.org collection), mirror (a local copy of one) or legistar (a Legistar calendar)."""
     every: dt.timedelta
@@ -49,6 +52,8 @@ class SourceConfig:
 
 @dataclass(frozen=True)
 class ReaderConfig:
+    """The [reader] section: which kind of reader and model, and how many pages one run may read."""
+
     kind: str
     """replay (recorded answers), anthropic or openai (any OpenAI-compatible endpoint)."""
     model: str
@@ -58,6 +63,8 @@ class ReaderConfig:
 
 @dataclass(frozen=True)
 class PublishConfig:
+    """The [publish] section: the kind of store releases go to, and where it is."""
+
     backend: str
     """local (a folder) or rclone (any rclone remote: S3, R2, GCS ...)."""
     target: str
@@ -65,6 +72,8 @@ class PublishConfig:
 
 @dataclass(frozen=True)
 class Config:
+    """A city's checked config file. `load` makes one."""
+
     name: str
     city: str
     source: SourceConfig

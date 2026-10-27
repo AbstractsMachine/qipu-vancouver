@@ -16,6 +16,8 @@ EXAMPLES = 20
 
 @dataclass(frozen=True)
 class Finding:
+    """One record a gate objects to, and why."""
+
     record_id: str
     why: str
     text: str = ""
@@ -23,6 +25,8 @@ class Finding:
 
 @dataclass
 class GateResult:
+    """What one gate checked and found. It passes while its findings stay within its limit."""
+
     name: str
     checked: int = 0
     skipped: int = 0
@@ -46,6 +50,8 @@ class GateResult:
 
 
 class PageTexts(Protocol):
+    """Where the gates get the page text a record was read from."""
+
     def text(self, page_id: str) -> str | None: ...
 
     def document(self, doc_id: str) -> tuple[list[str], str | None] | None:
@@ -54,9 +60,11 @@ class PageTexts(Protocol):
 
 
 def page_id_of(record: dict[str, Any]) -> str:
+    """The id of the page a record was read from, taken from the record's own id."""
     return str(record["id"]).rsplit("/", 1)[0]
 
 
 def previous_page_id(page_id: str) -> str:
+    """The id of the page before this one in the same item."""
     item, _, n = page_id.rpartition(":")
     return f"{item}:{int(n) - 1}"

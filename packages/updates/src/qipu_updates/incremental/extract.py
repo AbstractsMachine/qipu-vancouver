@@ -28,6 +28,8 @@ from qipu_updates.sources import Document
 
 @dataclass
 class Budget:
+    """How many pages the model may still read in this run, shared by all its documents."""
+
     pages: int
 
     def spend(self, n: int) -> None:
@@ -49,6 +51,8 @@ def _file_digest(path: Path | None) -> str:
 
 @dataclass(frozen=True)
 class Extractor:
+    """Reads and builds one document's records with a city's prompt, a reader and a gazetteer."""
+
     city: City
     reader: Reader
     model: str

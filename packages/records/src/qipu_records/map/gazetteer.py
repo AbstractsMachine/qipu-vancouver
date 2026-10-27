@@ -91,6 +91,9 @@ def split_intersection(text: str) -> tuple[str, str] | None:
 
 
 class Gazetteer:
+    """Known points by kind and name (addresses, intersections, streets, ...), loaded from a CSV, for placing
+    the places the model reports."""
+
     def __init__(self, rows: dict[tuple[str, str], tuple[float, float]]) -> None:
         self._rows = rows
 

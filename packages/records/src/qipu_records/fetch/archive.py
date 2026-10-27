@@ -103,6 +103,7 @@ def fetch_metadata(client: ArchiveClient, identifier: str) -> dict[str, Any]:
 
 
 def fetch_item(client: ArchiveClient, identifier: str) -> Item:
+    """The catalogue metadata of one archive.org item, as an Item."""
     return Item.from_metadata(identifier, fetch_metadata(client, identifier).get("metadata", {}))
 
 

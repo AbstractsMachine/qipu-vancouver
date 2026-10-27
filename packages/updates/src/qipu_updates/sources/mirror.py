@@ -33,6 +33,8 @@ def _load(path: Path) -> Any:
 
 
 class MirrorSource:
+    """A local copy of a collection, for tests and offline runs. The listing is complete."""
+
     complete = True
 
     def __init__(self, collection: Path, index: Path) -> None:

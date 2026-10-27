@@ -27,16 +27,20 @@ class Document:
 
 @dataclass(frozen=True)
 class Content:
+    """A document's catalogue item and the text of each of its pages."""
+
     item: Item
     pages: list[str]
     page_map: PageMap | None
 
 
 class SourceError(RuntimeError):
-    pass
+    """A source could not list or fetch its documents."""
 
 
 class Source(Protocol):
+    """Where documents come from: `discover` lists them, `content` fetches one."""
+
     complete: bool
     """True when `discover` lists everything the source holds; False when it shows a window, such as the last two
     months. Only a complete listing is compared with the last release to catch a listing that came back short.

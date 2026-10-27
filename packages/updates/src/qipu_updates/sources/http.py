@@ -27,6 +27,8 @@ def urlopen_get(url: str, headers: dict[str, str]) -> bytes:
 
 
 class Polite:
+    """GETs that pause between requests and retry a few times; SourceError when they all fail."""
+
     def __init__(
         self, get: Get = urlopen_get, pause: float = 1.0, retries: int = 3, sleep: Callable[[float], None] = time.sleep
     ):

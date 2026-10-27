@@ -101,6 +101,8 @@ def pdftotext(data: bytes) -> list[str]:
 
 
 class LegistarSource:
+    """Meetings with posted minutes on a Legistar calendar. The listing is a window, not complete."""
+
     complete = False
 
     def __init__(

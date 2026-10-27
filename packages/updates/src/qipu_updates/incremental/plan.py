@@ -24,6 +24,8 @@ class Built:
 
 @dataclass(frozen=True)
 class Plan:
+    """What a run has to do: which documents are new, changed, unchanged or gone from the listing."""
+
     new: tuple[Document, ...]
     changed: tuple[Document, ...]
     unchanged: tuple[Document, ...]
@@ -44,6 +46,7 @@ class Plan:
 
 
 def make_plan(found: Sequence[Document], previous: Mapping[str, Built], build_key: str) -> Plan:
+    """Sort today's listing into new, changed and unchanged against the last release; nothing is ever dropped."""
     new, changed, unchanged = [], [], []
     for doc in found:
         before = previous.get(doc.doc_id)

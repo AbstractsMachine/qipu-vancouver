@@ -31,6 +31,8 @@ class QuoteStatus(StrEnum):
 
 @dataclass(frozen=True)
 class QuoteMatch:
+    """Where, and how well, a quote was found in a page's text."""
+
     status: QuoteStatus
     offset: int | None
     """Character offset of the match in the original page text."""
