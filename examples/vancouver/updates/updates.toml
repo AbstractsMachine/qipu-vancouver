@@ -1,0 +1,39 @@
+# Vancouver City Council minutes, kept up to date.
+#
+# As shipped, this reads the two sample meetings in examples/vancouver as if they had been put on archive.org one week apart
+# (arrivals.json), with the model's recorded answers, so it runs offline and needs no key. For the real collection, swap in
+# the [source] and [reader] lines in the comments.
+
+name = "vancouver"
+
+[city]
+key = "vancouver"
+gazetteer = "../gazetteer.csv"
+
+[source]
+kind = "mirror"
+path = ".."
+index = "arrivals.json"
+every = "1d"
+# kind = "archive"
+# collection = "cityofvancouvercouncilminutes"
+
+[reader]
+kind = "replay"
+readings = "../readings.jsonl"
+model = "claude-haiku-5-5"        # the model that made the recorded answers
+max_pages_per_run = 50
+# kind = "anthropic"               # reads ANTHROPIC_API_KEY
+# model = "claude-haiku-5-5"
+
+[corrections]
+path = "corrections.jsonl"
+
+[gates]
+# Findings each gate allows before it fails. All default to 0.
+
+[publish]
+backend = "local"
+target = "../../../build/updates/vancouver"
+# backend = "rclone"
+# target = "r2:your-bucket/vancouver"

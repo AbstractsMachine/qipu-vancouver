@@ -8,6 +8,10 @@ make -C packages/records demo    # records: writes packages/records/build/demo/d
 make -C packages/records serve   # then open http://localhost:8000/map-preview/ to see them on a map
 ```
 
+```sh
+make -C packages/updates demo    # updates: the two meetings arrive a week apart; the second run processes only the new one
+```
+
 The map pipeline and viewer steps for the same sample are added here with those packages.
 
 ## The files
@@ -19,6 +23,7 @@ The map pipeline and viewer steps for the same sample are added here with those 
 | `pagemaps.json` | each item's OCR page to viewer page map, from archive.org |
 | `readings.jsonl` | the model's answers for those pages from the October 2026 run (Claude Haiku, prompt `v21-db2bcbe8fe`) |
 | `gazetteer.csv` | the addresses, corners and neighbourhoods those pages need, from the city's open data |
+| `updates/` | the updates config for this sample, `arrivals.json` (the made-up dates on which each meeting "appears", so a run can find a new one) and an empty `corrections.jsonl` |
 
 ## Where it comes from
 
