@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import datetime as dt
+import io
 import json
 import shutil
 import subprocess
 import urllib.error
 import urllib.parse
+import urllib.request
+from email.message import Message
 from pathlib import Path
 
 import pytest
@@ -46,6 +49,47 @@ def test_polite_retries_then_gives_up() -> None:
         http.get("https://example.org/x")
     assert http.requests == 3
     assert sleeps == [2.0, 4.0]
+
+
+class StatusOnce:
+    """Fails the first request with an HTTP status, then answers."""
+
+    def __init__(self, code: int) -> None:
+        self.code = code
+        self.urls: list[str] = []
+
+    def __call__(self, url: str, headers: dict[str, str]) -> bytes:
+        self.urls.append(url)
+        if len(self.urls) == 1:
+            raise urllib.error.HTTPError(url, self.code, "x", Message(), None)
+        return b"ok"
+
+
+def test_polite_retries_a_503() -> None:
+    fake = StatusOnce(503)
+    assert Polite(fake, pause=0, sleep=lambda s: None).get("https://example.org/x") == b"ok"
+    assert len(fake.urls) == 2
+
+
+def test_polite_does_not_retry_a_404() -> None:
+    fake = StatusOnce(404)
+    http = Polite(fake, pause=0, sleep=lambda s: None)
+    with pytest.raises(SourceError, match="404"):
+        http.get("https://example.org/x")
+    assert len(fake.urls) == 1
+
+
+def test_the_default_get_is_qipu_records_get_with_its_retry_rule(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    def urlopen(request: urllib.request.Request, timeout: float) -> io.BytesIO:
+        calls.append(request.full_url)
+        raise urllib.error.HTTPError(request.full_url, 404, "Not Found", Message(), None)
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    with pytest.raises(SourceError, match="404"):
+        Polite(pause=0, sleep=lambda s: None).get("https://example.org/missing")
+    assert calls == ["https://example.org/missing"]
 
 
 def test_an_archive_item_is_fingerprinted_by_its_last_update() -> None:
