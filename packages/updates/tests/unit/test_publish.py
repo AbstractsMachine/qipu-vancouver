@@ -155,3 +155,53 @@ def test_publish_refuses_without_the_lock_while_paused_or_when_latest_moved(tmp_
     pointer = rel.current(store)
     assert pointer is not None
     assert pointer.version == "2026-10-19.1"
+
+
+class CrashOn(LocalStore):
+    """A store that dies (as a killed process would) the first time one key is written."""
+
+    def __init__(self, root: Path, key: str) -> None:
+        super().__init__(root)
+        self.key, self.armed = key, True
+
+    def write(self, key: str, data: bytes) -> None:
+        if self.armed and key == self.key:
+            self.armed = False
+            raise KeyboardInterrupt(f"killed while writing {key}")
+        super().write(key, data)
+
+
+@pytest.mark.parametrize("crash_on", [rel.HISTORY, rel.POINTER])
+def test_a_crash_between_the_history_line_and_the_pointer_leaves_a_store_that_rolls_back(
+    tmp_path: Path, crash_on: str
+) -> None:
+    good = LocalStore(tmp_path / "s")
+    control.acquire(good, "run", NOW)
+    rel.publish(good, *release_folder(tmp_path, "2026-10-19.1"), NOW, "run")
+    rel.publish(good, *release_folder(tmp_path, "2026-10-26.1", "2026-10-19.1"), NOW, "run")
+
+    crashing = CrashOn(tmp_path / "s", crash_on)
+    with pytest.raises(KeyboardInterrupt):
+        rel.publish(crashing, *release_folder(tmp_path, "2026-10-27.1", "2026-10-26.1"), NOW, "run")
+    pointer = rel.current(good)
+    assert pointer is not None
+    assert pointer.version == "2026-10-26.1"  # latest.json never points at a release the history does not list
+    live = {e["version"] for e in rel.history(good) if e["event"] == "publish"}
+    assert pointer.version in live
+
+    back = rel.rollback(good, NOW, "after the crash", holder="run")
+    assert (back.version, back.previous) == ("2026-10-19.1", "2026-10-26.1")
+    assert rel.history(good)[-1]["event"] == "rollback"
+
+
+def test_a_crash_while_rolling_back_leaves_latest_where_it_was(tmp_path: Path) -> None:
+    good = LocalStore(tmp_path / "s")
+    control.acquire(good, "run", NOW)
+    rel.publish(good, *release_folder(tmp_path, "2026-10-19.1"), NOW, "run")
+    rel.publish(good, *release_folder(tmp_path, "2026-10-26.1", "2026-10-19.1"), NOW, "run")
+    with pytest.raises(KeyboardInterrupt):
+        rel.rollback(CrashOn(tmp_path / "s", rel.HISTORY), NOW, "r", holder="run")
+    pointer = rel.current(good)
+    assert pointer is not None
+    assert pointer.version == "2026-10-26.1"
+    assert rel.rollback(good, NOW, "again", holder="run").version == "2026-10-19.1"
