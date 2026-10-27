@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
-from qipu_records.verify.privacy import WITHHELD
+from qipu_records.verify.privacy import WITHHELD, mask_item
 from qipu_updates.gates import dates, integrity, outcomes, privacy, quotes
 from qipu_updates.release.corrections import Applied
 from tests.conftest import Pages, record
@@ -95,6 +95,29 @@ def test_a_mask_where_the_rule_keeps_the_name_is_over_redaction() -> None:
     assert found["m:0/5"].startswith("mask right before a firm")
     assert found["m:0/6"] == "mask in mover"
     assert found["m:0/7"] == "mask in a record that is not a sensitive matter (parties[0])"
+
+
+def test_the_gate_reads_every_text_field_the_mask_writes() -> None:
+    item = {
+        "kind": "claim",
+        "quote": QUOTE,
+        "summary": "Claim of Mrs. Ada Brown paid.",
+        "why": "Mrs. Ada Brown's car was damaged.",
+        "parties": [{"name": "Mrs. Ada Brown", "role": "claimant"}],
+        "money": [{"payee": "Mrs. Ada Brown", "purpose": "claim"}],
+        "places": [{"text": "Mrs. Ada Brown's driveway"}],
+    }
+    masked, _ = mask_item(item, officials=set())  # type: ignore[arg-type]
+    written = {name for name in masked if WITHHELD in str(masked[name])}  # type: ignore[literal-required]
+    assert written - {"parties", "money", "places"} == set(privacy.MASKABLE)
+
+
+def test_a_mask_in_why_is_checked_like_one_in_the_summary() -> None:
+    open_record = record("m:0/1", why=f"Lease to {WITHHELD} approved.")
+    result = privacy.over_redaction([open_record], AS_OF, 100)
+    assert [(f.record_id, f.why) for f in result.findings] == [
+        ("m:0/1", "mask in a record that is not a sensitive matter (why)")
+    ]
 
 
 def test_release_gates_catch_a_halved_release_a_zero_filled_file_and_a_bad_correction(tmp_path: Path) -> None:
