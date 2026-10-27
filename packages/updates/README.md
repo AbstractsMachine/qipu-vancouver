@@ -5,6 +5,10 @@ from only the new and changed meetings (with [qipu-records](../records)), checks
 publishes it as a new version, and keeps every earlier version for rollback. How it works, how to pause it, how to roll back
 and how to add a source: [docs/updates.md](../../docs/updates.md).
 
+The status that `make demo` prints for the second run: what changed, what the model read, the gates and the releases.
+
+![The second demo run: one new meeting, 33 records, all eight gates passing, and the list of two published releases](docs/status-output.webp)
+
 ## Quickstart
 
 You need Python 3.11 or newer. From this folder:

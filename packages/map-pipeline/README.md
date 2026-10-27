@@ -23,7 +23,7 @@ trees. The model only repaints its surface.*
 
 On a laptop, `make sample` runs the same chain with stand-ins for the GPU stages, and draws this:
 
-![The West End sample in four years, from the CPU stand-ins](docs/images/preview-years.jpg)
+![The West End sample in 1930, 1950, 1972 and today as `make sample` draws it on a CPU, with plain grey buildings and round trees](docs/images/sample-years.webp)
 
 ## Quickstart
 
