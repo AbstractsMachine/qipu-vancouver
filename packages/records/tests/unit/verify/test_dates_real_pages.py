@@ -28,3 +28,20 @@ def test_ocr_that_garbles_the_day_dates_nothing_and_the_meeting_carries_on() -> 
     clean, garbled = date_pages([pages.CLEAN_HEAD_1967, pages.GARBLED_HEAD_1967])
     assert (clean.at_start, clean.source) == (dt.date(1967, 5, 30), DateSource.RUNNING_HEAD)
     assert (garbled.at_start, garbled.source) == (dt.date(1967, 5, 30), DateSource.CARRIED)
+
+
+def test_a_received_stamp_does_not_override_the_meeting_in_progress() -> None:
+    opened, stamped = date_pages([pages.CHANGE_AFTER_1967, pages.STAMP_OVER_GARBLED_HEAD_1967])
+    assert opened.at_start == dt.date(1967, 6, 1)
+    assert (stamped.at_start, stamped.source) == (dt.date(1967, 6, 1), DateSource.CARRIED)
+
+
+def test_a_council_head_wins_over_the_stamp_beside_it() -> None:
+    assert running_head(pages.STAMP_BESIDE_COUNCIL_HEAD_1967) == dt.date(1967, 6, 1)
+    [page] = date_pages([pages.STAMP_BESIDE_COUNCIL_HEAD_1967])
+    assert (page.at_start, page.source) == (dt.date(1967, 6, 1), DateSource.RUNNING_HEAD)
+
+
+def test_on_a_bound_report_the_stamp_names_the_meeting() -> None:
+    [page] = date_pages([pages.STAMP_OVER_REPORT_HEAD_1970], item_date=dt.date(1970, 6, 9))
+    assert (page.at_start, page.source) == (dt.date(1970, 6, 9), DateSource.RUNNING_HEAD)
