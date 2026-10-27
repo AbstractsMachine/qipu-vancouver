@@ -30,7 +30,7 @@ const cities: readonly CityConfig[] = release
   : CITIES;
 
 function App() {
-  const [cityId, setCityId] = useState(initial.city ?? (release ? "vancouver" : "sf"));
+  const [cityId, setCityId] = useState(initial.city ?? "vancouver");
   const city = cities.find((c) => c.id === cityId) ?? cities[0];
   if (!city) return null;
   return (
@@ -58,7 +58,7 @@ function App() {
         <Viewer
           key={city.id}
           city={dataFor(city)}
-          initial={city.id === initial.city || (!initial.city && city.id === "sf") ? initial : {}}
+          initial={city.id === initial.city || (!initial.city && city.id === "vancouver") ? initial : {}}
           syncUrl
           {...(live ? {} : { notice: SAMPLE_NOTES[city.id] ?? "" })}
           {...(new URLSearchParams(window.location.search).get("gl") === "0" ? { compositor: "cpu" as const } : {})}
