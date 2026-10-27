@@ -30,6 +30,8 @@ def _newest(value: Any) -> str:
 
 
 def document(row: dict[str, Any]) -> Document:
+    """The Document for a row of the archive.org listing; its fingerprint is the newest update date, so a re-scan
+    changes it."""
     identifier = str(row["identifier"])
     stamp = _newest(row.get("oai_updatedate")) or str(row.get("publicdate") or "")
     date = str(row.get("date") or "")[:10] or None
@@ -70,6 +72,7 @@ class ArchiveSource:
         )
 
     def content(self, doc: Document) -> Content:
+        """Fetch an item's catalogue entry and page texts into the cache, dropping the cache of its older versions."""
         version = hashlib.sha256(doc.fingerprint.encode()).hexdigest()[:12]
         folder = self.cache_dir / doc.doc_id
         client = ArchiveClient(folder / version)

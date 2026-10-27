@@ -24,10 +24,12 @@ def pieces(quote: str) -> list[str]:
 
 
 def on_page(piece: str, page: str, previous: str | None) -> bool:
+    """True when the piece of quote is on the page, or on the page before it (a quote may run over the page break)."""
     return locate(piece, page).found or (previous is not None and locate(piece, previous).found)
 
 
 def check(records: list[dict[str, Any]], pages: PageTexts, limit: int = 0) -> GateResult:
+    """Fail each record whose quote is not found on the page it was read from."""
     result = GateResult("quote_on_page", limit=limit)
     for record in records:
         page_id = page_id_of(record)

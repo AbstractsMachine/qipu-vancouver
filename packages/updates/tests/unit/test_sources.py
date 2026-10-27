@@ -12,7 +12,7 @@ import pytest
 
 from qipu_records.fetch.archive import ArchiveClient
 from qipu_updates.sources import Document, SourceError, archive, legistar, mirror
-from qipu_updates.sources.http import Polite
+from qipu_updates.sources.http import Polite, urlopen_get
 from tests.conftest import EXAMPLE
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
@@ -166,3 +166,10 @@ def test_a_pdf_that_pdftotext_cannot_read_is_a_source_error(monkeypatch: pytest.
     monkeypatch.setattr(subprocess, "run", fails)
     with pytest.raises(SourceError, match="could not read the minutes PDF"):
         legistar.pdftotext(b"%PDF-1.7")
+
+
+def test_urlopen_get_refuses_anything_but_https() -> None:
+    with pytest.raises(SourceError, match="only https"):
+        urlopen_get("http://archive.org/", {})
+    with pytest.raises(SourceError, match="only https"):
+        urlopen_get("file:///etc/passwd", {})

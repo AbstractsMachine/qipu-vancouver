@@ -65,6 +65,7 @@ class Run:
         )
 
     def __call__(self, opts: Options) -> RunReport:
+        """Do the run and report it. Locks the store first and always unlocks and saves the report."""
         report = RunReport(
             opts.run_id, self.config.name, opts.as_of.isoformat(), opts.now.isoformat(), dry_run=opts.dry_run
         )

@@ -22,6 +22,8 @@ GH_TIMEOUT_S = 60.0
 
 
 class Issues(Protocol):
+    """The issue tracker the alert writes to. GhIssues implements it with the `gh` command."""
+
     def find_open(self, title: str) -> int | None: ...
 
     def create(self, title: str, body: str) -> int: ...
@@ -30,6 +32,8 @@ class Issues(Protocol):
 
 
 class GhIssues:
+    """Issues of a GitHub repository, through the `gh` command line."""
+
     def __init__(self, repo: str, runner: Runner | None = None) -> None:
         self.repo = repo
         self._run = runner or subprocess.run
@@ -57,6 +61,7 @@ class GhIssues:
 
 
 def title_for(config: str) -> str:
+    """The title of the failure issue for a config, so a repeat failure finds the open one."""
     return f"Scheduled update failed: {config}"
 
 

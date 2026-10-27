@@ -26,6 +26,7 @@ def _date(text: str | None) -> dt.date | None:
 
 
 def check(records: list[dict[str, Any]], pages: PageTexts, limit: int = 0) -> GateResult:
+    """Fail a record whose date is not the one the minutes' own header gives for its document."""
     result = GateResult("date_from_header", limit=limit)
     by_doc: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in records:

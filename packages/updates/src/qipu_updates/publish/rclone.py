@@ -28,7 +28,7 @@ kills it.
 
 
 class StoreError(RuntimeError):
-    pass
+    """rclone failed for a reason other than a missing file."""
 
 
 class RcloneStore:

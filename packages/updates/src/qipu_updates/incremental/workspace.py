@@ -21,6 +21,7 @@ from qipu_updates.sources import Content
 
 
 def text_hash(text: str) -> str:
+    """The sha256 of a page's text, to see whether a re-scan changed it."""
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
@@ -41,12 +42,15 @@ class Workspace:
         (root / "docs").mkdir(parents=True, exist_ok=True)
 
     def folder(self, doc_id: str, staged: bool = False) -> Path:
+        """The folder of a document's current (or staged) copy."""
         return self.root / "docs" / (safe_name(doc_id) + (".next" if staged else ""))
 
     def has(self, doc_id: str, staged: bool = False) -> bool:
+        """True when the document has a current (or staged) copy."""
         return (self.folder(doc_id, staged) / "pages.jsonl").exists()
 
     def collection(self, doc_id: str, staged: bool = False) -> Collection:
+        """The document's current (or staged) copy as a qipu-records collection."""
         return Collection(self.folder(doc_id, staged))
 
     def stage(self, doc_id: str, content: Content, keep: Callable[[Reading], bool]) -> int:
@@ -102,6 +106,7 @@ class Workspace:
         return sum(1 for p in collection.pages() if p.page_id not in done and len(p.text.strip()) >= MIN_PAGE_CHARS)
 
     def page_hashes(self, doc_id: str) -> dict[str, str]:
+        """The text hash of each page of the document's current copy."""
         return _hashes(self.collection(doc_id))
 
 
@@ -113,6 +118,7 @@ class WorkspacePages:
         self._docs: dict[str, tuple[list[str], str | None] | None] = {}
 
     def document(self, doc_id: str) -> tuple[list[str], str | None] | None:
+        """All page texts of a document and its catalogue date, or None when it has no current copy."""
         if doc_id not in self._docs:
             found = None
             if self.workspace.has(doc_id):
@@ -122,6 +128,7 @@ class WorkspacePages:
         return self._docs[doc_id]
 
     def text(self, page_id: str) -> str | None:
+        """The text of a page by its id, or None when it is not in the working copy."""
         doc_id, _, n = page_id.rpartition(":")
         document = self.document(doc_id)
         if document is None or not n.isdigit() or int(n) >= len(document[0]):

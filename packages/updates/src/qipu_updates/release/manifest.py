@@ -57,15 +57,18 @@ class Manifest:
     gates: dict[str, Any] = field(default_factory=dict)
 
     def to_json(self) -> str:
+        """The manifest as JSON text."""
         return json.dumps(asdict(self), indent=1, sort_keys=True, ensure_ascii=False) + "\n"
 
     @classmethod
     def from_json(cls, text: str) -> Manifest:
+        """A manifest read back from its JSON text."""
         data = json.loads(text)
         data["documents"] = {k: DocEntry(**v) for k, v in data.get("documents", {}).items()}
         return cls(**data)
 
     def applied_rules(self) -> set[str]:
+        """The ids of the correction rules that applied without a problem."""
         return {str(c["rule_id"]) for c in self.corrections if not c.get("problem")}
 
 
@@ -77,6 +80,7 @@ def next_version(existing: list[str], day: dt.date) -> str:
 
 
 def sha256_file(path: Path) -> str:
+    """The sha256 of a file, read in blocks."""
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for block in iter(lambda: handle.read(1 << 20), b""):

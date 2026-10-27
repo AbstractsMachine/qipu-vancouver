@@ -52,6 +52,8 @@ def _positive(text: str) -> int:
 
 
 def cmd_run(args: argparse.Namespace, config: Config) -> int:
+    """Run the source once: list, extract what changed, check, publish. Exit 0 when it succeeded, 3 when a gate refused,
+    1 when it failed."""
     now = _now()
     if args.as_of:  # run as if today were that date: replays and tests
         now = dt.datetime.combine(args.as_of, now.timetz())
@@ -76,6 +78,7 @@ def cmd_run(args: argparse.Namespace, config: Config) -> int:
 
 
 def cmd_status(args: argparse.Namespace, config: Config) -> int:
+    """Print what is published, whether runs are paused, when the source was last checked and the latest runs."""
     store = _store(args, config)
     pointer = rel.current(store)
     pause = control.paused(store)
@@ -90,6 +93,7 @@ def cmd_status(args: argparse.Namespace, config: Config) -> int:
 
 
 def cmd_releases(args: argparse.Namespace, config: Config) -> int:
+    """List the releases in the store, newest last, marking the published one and each one's gate result."""
     store = _store(args, config)
     pointer = rel.current(store)
     for version in rel.versions(store):
@@ -103,18 +107,21 @@ def cmd_releases(args: argparse.Namespace, config: Config) -> int:
 
 
 def cmd_pause(args: argparse.Namespace, config: Config) -> int:
+    """Pause publishing (or all runs) until `resume`."""
     marker = control.pause(_store(args, config), args.scope, args.reason, _now())
     print(f"paused ({marker.scope}) since {marker.since}")
     return 0
 
 
 def cmd_resume(args: argparse.Namespace, config: Config) -> int:
+    """Lift a pause."""
     control.resume(_store(args, config), _now())
     print("resumed")
     return 0
 
 
 def cmd_rollback(args: argparse.Namespace, config: Config) -> int:
+    """Point the published version at an earlier release and pause publishing so the next run does not undo it."""
     store = _store(args, config)
     pointer = rel.rollback(store, _now(), args.reason, args.to)
     print(f"latest is now {pointer.version} (was {pointer.previous})")
@@ -125,6 +132,7 @@ def cmd_rollback(args: argparse.Namespace, config: Config) -> int:
 
 
 def cmd_alert(args: argparse.Namespace, config: Config) -> int:
+    """Open or update the GitHub issue for a failed scheduled run."""
     path = Path(args.report)
     if path.exists():
         summary = metrics.markdown(RunReport(**json.loads(path.read_text(encoding="utf-8"))))
@@ -135,6 +143,7 @@ def cmd_alert(args: argparse.Namespace, config: Config) -> int:
 
 
 def parser() -> argparse.ArgumentParser:
+    """The argument parser of the `qipu-updates` command."""
     top = argparse.ArgumentParser(prog="qipu-updates", description=__doc__)
     sub = top.add_subparsers(dest="command", required=True)
 
