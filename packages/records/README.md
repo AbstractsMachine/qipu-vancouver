@@ -13,6 +13,10 @@ The core uses only the Python standard library. Part of [qipu-vancouver](../../R
 
 ![The map preview showing 1970s Vancouver council decisions](map-preview/screenshot.png)
 
+One decision record next to the scanned page it came from. The quote is the highlighted line on the page, and `page_url` opens that page on archive.org:
+
+![A page of the 19 February 1974 council minutes as OCR text, next to the decision record read from it: summary, exact quote, place and link to the archive.org page](docs/record-and-page.webp)
+
 ## Quickstart
 
 You need Python 3.11 or newer. From this folder:

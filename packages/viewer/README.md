@@ -7,7 +7,7 @@ It reads the painted tiles that [`packages/map-pipeline`](../map-pipeline) write
 [`packages/records`](../records) produces once they are placed on the city's blocks. It runs in the browser and needs no server
 of its own.
 
-![San Francisco's Mission district in 1906, after the fire, with the record of one block open](docs/screenshots/sf-1906-mission.jpg)
+![The demo on Vancouver in 1972, with the decisions for one Strathcona block open beside the map](docs/screenshots/viewer-vancouver-1972.webp)
 
 ## Quickstart
 
@@ -26,6 +26,8 @@ Pleasant in Vancouver. Try:
 - `?city=vancouver&year=1950&at=85,40,6.5`: the False Creek flats in 1950, rail yards and sawmills
 - `?gl=0`: the same pictures drawn without WebGL
 - `?tiles=<release folder>`: a release written by the map pipeline (`qipu-tiles/1`), over Vancouver's records
+
+![The demo map at the False Creek flats in 1950, with rail yards, log piles and sawmills along the water](docs/screenshots/viewer-vancouver-1950.webp)
 
 ## What it does
 
