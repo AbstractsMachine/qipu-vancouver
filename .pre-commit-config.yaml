@@ -1,0 +1,70 @@
+# Checks that run on `git commit`. Set up once with `pip install pre-commit && pre-commit install`; run them all with
+# `pre-commit run --all-files`. The hooks marked `local` use each package's own tools, so run `make install` first.
+# CI runs the same hooks (the pre-commit job in .github/workflows/ci.yml) besides each package's `make check`.
+
+# Data and pinned prompts keep their bytes exactly as committed.
+exclude: |
+  (?x)^(
+    examples/.*|
+    packages/[^/]+/tests/fixtures/.*|
+    packages/viewer/src/test/fixtures/.*|
+    packages/viewer/demo/public/sample/.*|
+    packages/records/src/qipu_records/read/prompts/.*|
+    packages/map-pipeline/src/qipu_map/paint/prompts/.*
+  )$
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        exclude: \.md$
+
+  # The same ruff as the packages' requirements-dev.txt, with the root ruff.toml.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.2
+    hooks:
+      - id: ruff-check
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: mypy-records
+        name: mypy (records)
+        entry: make -C packages/records typecheck
+        language: system
+        files: ^packages/records/.*\.py$
+        pass_filenames: false
+      - id: mypy-updates
+        name: mypy (updates)
+        entry: make -C packages/updates typecheck
+        language: system
+        files: ^packages/(updates|records)/.*\.py$
+        pass_filenames: false
+      - id: mypy-map-pipeline
+        name: mypy (map-pipeline)
+        entry: make -C packages/map-pipeline typecheck
+        language: system
+        files: ^packages/map-pipeline/.*\.py$
+        pass_filenames: false
+      - id: viewer-lint
+        name: eslint, prettier and tsc (viewer)
+        entry: sh -c 'make -C packages/viewer lint typecheck'
+        language: system
+        files: ^packages/viewer/
+        pass_filenames: false
