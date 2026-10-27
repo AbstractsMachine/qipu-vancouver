@@ -1,6 +1,6 @@
-# qipu-open
+# qipu-vancouver
 
-[![ci](https://github.com/AbstractsMachine/qipu-open/actions/workflows/ci.yml/badge.svg)](https://github.com/AbstractsMachine/qipu-open/actions/workflows/ci.yml)
+[![ci](https://github.com/AbstractsMachine/qipu-vancouver/actions/workflows/ci.yml/badge.svg)](https://github.com/AbstractsMachine/qipu-vancouver/actions/workflows/ci.yml)
 
 City councils have kept minutes for more than a century, and many of them have been scanned and put on the Internet Archive.
 They answer questions people still ask: who approved this building, when was this street widened, how did the vote go. But a
@@ -29,7 +29,7 @@ The records package runs offline on a sample of real Vancouver pages, with the m
 needs no API key:
 
 ```sh
-git clone https://github.com/AbstractsMachine/qipu-open && cd qipu-open
+git clone https://github.com/AbstractsMachine/qipu-vancouver && cd qipu-vancouver
 make -C packages/records demo      # Python 3.11+; writes packages/records/build/demo/
 ```
 

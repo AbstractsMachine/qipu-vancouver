@@ -1,6 +1,6 @@
 # Architecture
 
-qipu-open is four packages that hand files to each other. What passes between them is a folder of plain files with a
+qipu-vancouver is four packages that hand files to each other. What passes between them is a folder of plain files with a
 documented format, so each package can be run, tested and replaced on its own. The one import between packages is
 packages/updates, which runs packages/records on a schedule and publishes the same files.
 

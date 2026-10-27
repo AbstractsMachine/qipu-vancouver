@@ -13,8 +13,8 @@ requires-python = ">=3.11"
 dependencies = ["qipu-records"]
 
 [project.urls]
-Source = "https://github.com/AbstractsMachine/qipu-open/tree/main/packages/updates"
-Documentation = "https://github.com/AbstractsMachine/qipu-open/blob/main/docs/updates.md"
+Source = "https://github.com/AbstractsMachine/qipu-vancouver/tree/main/packages/updates"
+Documentation = "https://github.com/AbstractsMachine/qipu-vancouver/blob/main/docs/updates.md"
 
 [project.scripts]
 qipu-updates = "qipu_updates.cli:main"
