@@ -116,7 +116,7 @@ make e2e        # Playwright: the demo in Chromium on a desktop and a Pixel 7
   scan in a new tab; a shared link reopens the block; a failed tile server says so; the first view stays inside its tile budget.
   Tiles are served from fixtures, so CI never reaches tiles.qipu.org.
 
-279 unit and component tests (lines 99%, branches 91%) and 9 end-to-end tests on each of two devices.
+The unit and component tests run under a coverage floor (85 % lines, 75 % branches, set in `vitest.config.ts`), and the end-to-end tests run on each of two devices.
 
 Headless Chromium renders WebGL with SwiftShader, which is enough to check the shader's output but not how it looks or how fast
 it runs on a real GPU. Before a release, check by hand on a laptop and a phone: drag the slider across 1906 over the Mission and
