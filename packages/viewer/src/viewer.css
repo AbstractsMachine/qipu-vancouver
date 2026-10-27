@@ -100,8 +100,9 @@
 }
 
 @media (max-width: 640px) {
+  /* the notice sits beside the +/- buttons (10px margin + 34px), not over them */
   .qv-messages {
-    left: 8px;
+    left: 52px;
     right: 8px;
     top: 8px;
   }
