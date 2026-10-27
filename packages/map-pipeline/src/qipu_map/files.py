@@ -22,14 +22,18 @@ def write_atomic(path: Path, data: bytes) -> None:
 
 
 def json_text(value: Any, *, compact: bool = False) -> str:
+    """The value as JSON text in the pipeline's layout: sorted keys, UTF-8, final newline, indented one space unless
+    `compact`."""
     if compact:
         return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
     return json.dumps(value, sort_keys=True, indent=1, ensure_ascii=False) + "\n"
 
 
 def write_json(path: Path, value: Any, *, compact: bool = False) -> None:
+    """Write the value as JSON in the pipeline's layout (see `json_text`), atomically."""
     write_atomic(path, json_text(value, compact=compact).encode())
 
 
 def read_json(path: Path) -> Any:
+    """The JSON value in a UTF-8 file."""
     return json.loads(path.read_text(encoding="utf-8"))

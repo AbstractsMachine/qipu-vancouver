@@ -36,11 +36,13 @@ def decode_dates(codes: DateMap) -> NDArray[np.float64]:
 
 
 def to_rgb(codes: DateMap) -> NDArray[np.uint8]:
+    """The codes as an (h, w, 3) 8-bit image: R the high byte, G the low byte, B zero."""
     c = np.asarray(codes, dtype=np.uint16)
     return np.dstack([(c >> 8).astype(np.uint8), (c & 0xFF).astype(np.uint8), np.zeros(c.shape, np.uint8)])
 
 
 def from_rgb(rgb: NDArray[np.uint8]) -> DateMap:
+    """The 16-bit codes of a date-map image: R*256+G of each pixel. B is ignored."""
     out: DateMap = (rgb[..., 0].astype(np.uint16) * 256 + rgb[..., 1]).astype(np.uint16)
     return out
 

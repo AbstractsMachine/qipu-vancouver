@@ -49,7 +49,7 @@ class Upload:
 
 
 class PublishError(RuntimeError):
-    pass
+    """A release that cannot be published: a missing manifest, an unknown file type or store, or failed uploads."""
 
 
 def content_type(key: str) -> str:

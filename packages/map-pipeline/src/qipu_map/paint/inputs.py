@@ -16,6 +16,7 @@ from qipu_map.render.mosaic import load_canvas
 
 
 def load_inputs(render_dir: Path) -> Inputs:
+    """Read a render folder's beauty and class canvases and the canvas's top-left in world pixels."""
     beauty = np.asarray(load_canvas(render_dir, "beauty"), dtype=np.uint8)
     classes = np.asarray(load_canvas(render_dir, "class"), dtype=np.uint8)
     origin = load_plan(render_dir).canvas.world_px

@@ -70,6 +70,8 @@ class Verdict:
 
 
 def judge(painted: RGB, render: RGB, classes: NDArray[np.uint8]) -> Verdict:
+    """Compare a painted tile with its render and class pass and score the defects: area in pixels of vanished and of
+    invented buildings."""
     lp, lr = rgb_to_lab(painted), rgb_to_lab(render)
     return Verdict(
         {"vanish": vanished(lp, lr, classes), "invent": invented(painted, _cv_lab(lp), _cv_lab(lr), classes)}

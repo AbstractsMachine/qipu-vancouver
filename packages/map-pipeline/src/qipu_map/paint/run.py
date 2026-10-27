@@ -48,6 +48,9 @@ class Inputs:
 
 @dataclass(frozen=True)
 class Options:
+    """What varies per painted year: the year, today's year, an optional cap on tiles painted, and whether to restore
+    colour."""
+
     year: int
     today: int
     max_tiles: int | None = None
@@ -106,6 +109,7 @@ class _Run:
 def paint_canvas(
     inputs: Inputs, recipe: Paint, painter: Painter, *, prompts: PromptSet, cache: TileCache, options: Options
 ) -> tuple[RGB, Report]:
+    """Paint one year's canvas and return it with a report of tiles painted, reused, re-rolled and still flagged."""
     t0 = time.monotonic()
     report = Report(painter=painter.name, year=options.year)
     pre = pretone(inputs.beauty, inputs.classes, inputs.origin)

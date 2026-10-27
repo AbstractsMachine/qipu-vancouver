@@ -104,6 +104,8 @@ class Publish:
 
 @dataclass(frozen=True)
 class City:
+    """One city's settings as read from its TOML file; `area` looks up a named area."""
+
     id: str
     name: str
     projection: Projection

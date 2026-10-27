@@ -49,6 +49,8 @@ def on_water(classes: NDArray[np.uint8]) -> Mask:
 
 
 def protect(painted: RGB, render: RGB, classes: NDArray[np.uint8], keep: Mask | None = None) -> RGB:
+    """The painted canvas with the render's water, anything standing in the water and the optional `keep` mask put back,
+    softly at the shore."""
     water = classes == C.WATER
     hard = water | on_water(classes)
     if keep is not None:

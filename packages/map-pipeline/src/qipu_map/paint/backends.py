@@ -50,6 +50,9 @@ class Request:
 
 
 class Painter(Protocol):
+    """What the paint stage needs from a painter: a name, a recipe string for the cache key, and a call that returns one
+    image per request."""
+
     @property
     def name(self) -> str: ...
 
@@ -62,6 +65,7 @@ class Painter(Protocol):
 
 
 def resize(image: RGB, size: int) -> RGB:
+    """The square image resized to `size` pixels (Lanczos), or the same image if it already is."""
     if image.shape[0] == size and image.shape[1] == size:
         return image
     out: RGB = np.asarray(Image.fromarray(image).resize((size, size), Image.Resampling.LANCZOS), dtype=np.uint8)
@@ -95,10 +99,13 @@ class Replay:
 
 
 def model_recipe(model: str, steps: int, guidance: float) -> str:
+    """The recipe string of a model call, part of every tile's cache key."""
     return f"{model}|steps={steps}|guidance={guidance}|bf16"
 
 
 def make_painter(name: str, model: str, steps: int, guidance: float, replay_dir: Path | None = None) -> Painter:
+    """The painter called `name`: identity, replay (needs `replay_dir`) or diffusers. Raises `ValueError` for any other
+    name."""
     if name == "identity":
         return Identity()
     if name == "replay":

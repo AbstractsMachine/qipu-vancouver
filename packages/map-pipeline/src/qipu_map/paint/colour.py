@@ -29,6 +29,7 @@ _YCC = np.array([[0.299, 0.587, 0.114], [-0.168736, -0.331264, 0.5], [0.5, -0.41
 
 
 def rgb_to_lab(rgb: RGB) -> Floats:
+    """8-bit sRGB pixels to CIELAB (D65), L from 0 to 100."""
     c = rgb.astype(np.float32) / 255.0
     c = np.where(c > 0.04045, ((c + 0.055) / 1.055) ** 2.4, c / 12.92)
     xyz = c @ _XYZ.T / _WHITE
@@ -38,6 +39,7 @@ def rgb_to_lab(rgb: RGB) -> Floats:
 
 
 def lab_to_rgb(lab: Floats) -> RGB:
+    """Lab pixels (D65) to 8-bit sRGB, clipped to the gamut."""
     fy = (lab[..., 0] + 16.0) / 116.0
     f = np.stack([fy + lab[..., 1] / 500.0, fy, fy - lab[..., 2] / 200.0], -1)
     xyz = np.where(f > 0.206893, f**3, (f - 16.0 / 116.0) / 7.787) * _WHITE
@@ -48,6 +50,7 @@ def lab_to_rgb(lab: Floats) -> RGB:
 
 
 def chroma(lab: Floats) -> Floats:
+    """Chroma (distance from grey in the a-b plane) of each Lab pixel."""
     out: Floats = np.hypot(lab[..., 1], lab[..., 2]).astype(np.float32)
     return out
 

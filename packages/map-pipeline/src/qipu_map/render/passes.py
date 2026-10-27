@@ -26,6 +26,7 @@ KINDS: tuple[Kind, ...] = ("beauty", "class", "id")
 
 
 def pass_path(out_dir: Path, frame: str, kind: Kind) -> Path:
+    """The file of one frame's pass: `<out_dir>/<frame>.<kind>.png`."""
     return out_dir / f"{frame}.{kind}.png"
 
 
@@ -38,6 +39,8 @@ def encode_ids(ids: NDArray[np.integer]) -> NDArray[np.uint8]:
 
 
 def decode_ids(rgb: NDArray[np.generic]) -> NDArray[np.uint32]:
+    """An (h, w, 3) id-pass image to an (h, w) array of ids: 1 + the building's index in `scene.buildings`, 0 where
+    none."""
     a = rgb.astype(np.uint32)
     out: NDArray[np.uint32] = ((a[..., 0] << 16) | (a[..., 1] << 8) | a[..., 2]).astype(np.uint32)
     return out
@@ -76,6 +79,7 @@ def write_png(path: Path, a: NDArray[np.uint8]) -> None:
 
 
 def read_png(path: Path) -> NDArray[np.uint8]:
+    """Read a pass PNG as uint8, (h, w) for greyscale and (h, w, 3) for colour."""
     with Image.open(path) as im:
         a: NDArray[np.uint8] = np.asarray(
             im.convert("L" if im.mode in ("L", "P", "I", "I;16") else "RGB"), dtype=np.uint8

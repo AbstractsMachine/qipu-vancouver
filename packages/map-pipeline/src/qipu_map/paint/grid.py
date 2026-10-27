@@ -37,6 +37,8 @@ class Tile:
 
 @dataclass(frozen=True)
 class Grid:
+    """The world tile grid over one canvas: `tile` px tiles every `stride` px, fixed to the world through `origin`."""
+
     tile: int
     stride: int
     origin: tuple[int, int]  # the canvas's top-left pixel in world pixels

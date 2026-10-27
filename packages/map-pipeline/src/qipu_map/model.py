@@ -36,6 +36,8 @@ def ccw(ring: Ring) -> Ring:
 
 
 class RoofForm(StrEnum):
+    """The roof shapes the massing can build."""
+
     FLAT = "flat"
     GABLE = "gable"
     HIP = "hip"
@@ -52,6 +54,8 @@ class YearSource(StrEnum):
 
 
 class BuildingType(StrEnum):
+    """The kinds of building the look and the massing tell apart."""
+
     CHARACTER_HOUSE = "character_house"
     VANCOUVER_SPECIAL = "vancouver_special"
     MODERN_HOUSE = "modern_house"
@@ -68,6 +72,8 @@ class BuildingType(StrEnum):
 
 
 class StreetKind(StrEnum):
+    """The kinds of street the ground drawing tells apart, by how they are drawn."""
+
     ARTERIAL = "arterial"
     RESIDENTIAL = "residential"
     LANE = "lane"
@@ -76,6 +82,8 @@ class StreetKind(StrEnum):
 
 
 class TreeForm(StrEnum):
+    """The tree shapes the renderer can draw."""
+
     BROADLEAF = "broadleaf"
     CONIFER = "conifer"
     PALM = "palm"
@@ -83,12 +91,17 @@ class TreeForm(StrEnum):
 
 @dataclass(frozen=True)
 class Polygon:
+    """An outer ring with optional holes, in local metres."""
+
     outer: Ring
     holes: tuple[Ring, ...] = ()
 
 
 @dataclass(frozen=True)
 class Building:
+    """A building: footprint ring, ground and top heights in metres, roof form, type, and the years it was built and
+    demolished."""
+
     id: str
     footprint: Ring
     ground_m: float
@@ -110,6 +123,8 @@ class Building:
 
 @dataclass(frozen=True)
 class Street:
+    """A street centre line in local metres with its right-of-way width, kind and the years it opened and closed."""
+
     id: str
     line: tuple[Point, ...]
     width_m: float
@@ -121,6 +136,8 @@ class Street:
 
 @dataclass(frozen=True)
 class Tree:
+    """A tree at a point: height and crown width in metres, form, and optionally genus and the year planted."""
+
     id: str
     x: float
     y: float
@@ -133,6 +150,8 @@ class Tree:
 
 @dataclass(frozen=True)
 class Park:
+    """A named or unnamed park polygon."""
+
     id: str
     shape: Polygon
     name: str | None = None

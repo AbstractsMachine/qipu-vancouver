@@ -24,6 +24,8 @@ TERRAIN_FILE = "terrain.npz"
 
 @dataclass(frozen=True)
 class SceneArea:
+    """The city, area name, year, world box (metres) and projection a scene is made for."""
+
     city: str
     name: str
     year: int
