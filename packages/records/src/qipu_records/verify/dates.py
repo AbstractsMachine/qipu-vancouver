@@ -14,6 +14,11 @@ The Vancouver scans also carry a clerk's date stamp at the top ("JUN 9 1970"). O
 overrides the head of a council meeting, and a stamp alone never overrides the meeting in progress: on scan page 21 of
 CVAN_1967-05-30 a "JUN 14 1967" stamp sits over the garbled head of the June 1 meeting.
 
+The head of a bound report never dates a page: it is the day the report was written, and no council met that day. When
+the stamp is garbled or names no meeting of the item, the report belongs to the item's own meeting (its catalogue date),
+or else to the first meeting of the item held on or after the report's date (scan pages 34-69 of CVAN_1967-05-30:
+reports of May 12 and May 26, stamped for the council of May 30), and failing that to the meeting in progress.
+
 A printed weekday must agree with the date. When OCR has garbled a digit ("Monday, July 21, 1989" for the 24th) the line
 dates nothing, which is better than a wrong date. Dates of other events mentioned in the text ("adjourned to meet on
 Monday, February 18") sit in the body of the page and are not mistaken for headers.
@@ -53,6 +58,7 @@ OPENING_LOOKBEHIND = 140
 class DateSource(StrEnum):
     MEETING_OPENS = "meeting opens on the page"
     RUNNING_HEAD = "running head"
+    REPORT = "meeting that received the bound report"
     CARRIED = "carried from the meeting in progress"
     ITEM = "archive.org item date"
     NONE = "none"
@@ -92,8 +98,10 @@ def parse_date(match: re.Match[str]) -> dt.date | None:
 
 
 # "JUN 14 1967": a three-letter month in capitals and no comma before the year, as the clerk's stamp prints it.
-_STAMP = re.compile(r"[A-Z]{3}\.?\s{0,3}\d{1,2}\s{1,3}(?:18|19|20)[\dOo]{2}")
-_REPORT_HEAD = re.compile(r"board\s+of\s+admin|report", re.I)
+_STAMP = re.compile(r"[A-Z]{3}\.?\s{0,3}\d{1,2}\s{0,3}(?:18|19|20)[\dOo]{2}")
+# A report or committee minutes bound into the council's: "Board of Administration", also as the OCR garbles it
+# ("oard of Administration", "Board: of", "aninistration"), "Manager's Report", "Standing Committee of Council on ...".
+_REPORT_HEAD = re.compile(r"oard\W{1,3}of\W{1,3}ad|inistration|report|standing\s+committee", re.I)
 
 
 @dataclass(frozen=True)
@@ -126,15 +134,6 @@ def running_head(text: str) -> dt.date | None:
     return head.date if head else None
 
 
-def _page_date(text: str, meeting_in_progress: bool) -> dt.date | None:
-    head, stamp = _heads(text)
-    if head is not None and not head.report:
-        return head.date
-    if stamp is not None and (head is not None or not meeting_in_progress):
-        return stamp
-    return head.date if head else None
-
-
 def meeting_openings(text: str) -> list[tuple[int, dt.date]]:
     """(offset, date) of every meeting that opens on the page, in page order."""
     found: list[tuple[int, dt.date]] = []
@@ -148,26 +147,72 @@ def meeting_openings(text: str) -> list[tuple[int, dt.date]]:
     return found
 
 
+def _meeting_for_report(
+    head: _Head,
+    stamp: dt.date | None,
+    meetings: Sequence[dt.date],
+    item_date: dt.date | None,
+    in_progress: dt.date | None,
+) -> dt.date | None:
+    """The meeting a bound report came to.
+
+    Its stamp when that names a meeting of the item, else the item's own meeting, else the first meeting of the item on
+    or after the report, else the meeting in progress. Never the report's own date.
+    """
+    if stamp is not None and stamp in meetings:
+        return stamp
+    if item_date is not None and item_date >= head.date:
+        return item_date
+    later = [meeting for meeting in meetings if meeting >= head.date]
+    if later:
+        return min(later)
+    return in_progress or stamp
+
+
+def item_meetings(texts: Sequence[str], item_date: dt.date | None = None) -> list[dt.date]:
+    """Every meeting an item's pages show being held: openings, council running heads, and the catalogue date."""
+    found = {date for text in texts for _, date in meeting_openings(text)}
+    for text in texts:
+        head, _ = _heads(text)
+        if head is not None and not head.report:
+            found.add(head.date)
+    if item_date is not None:
+        found.add(item_date)
+    return sorted(found)
+
+
 def date_pages(texts: Sequence[str], item_date: dt.date | None = None) -> list[PageDates]:
     """Date every page of one archive.org item, in scan order.
 
     Pages before the first header or opening fall back to the item's catalogue date, when it has one.
     """
+    meetings = item_meetings(texts, item_date)
     in_progress = item_date
     read_from_pages = False
     out: list[PageDates] = []
     for text in texts:
         openings = tuple(meeting_openings(text))
-        head = _page_date(text, read_from_pages)
+        head, stamp = _heads(text)
+        page_date: dt.date | None
+        page_source = DateSource.RUNNING_HEAD
+        if head is not None and head.report:
+            page_source = DateSource.REPORT
+            page_date = _meeting_for_report(head, stamp, meetings, item_date, in_progress if read_from_pages else None)
+        elif head is not None:
+            page_date = head.date
+        elif stamp is not None and not read_from_pages:
+            page_date = stamp
+        else:
+            page_date = None
         if openings and openings[0][0] < HEADER_ZONE:
             out.append(PageDates(openings[0][1], DateSource.MEETING_OPENS, openings))
-        elif head is not None:
-            out.append(PageDates(head, DateSource.RUNNING_HEAD, openings))
+        elif page_date is not None:
+            out.append(PageDates(page_date, page_source, openings))
         elif in_progress is None:
             out.append(PageDates(None, DateSource.NONE, openings))
         else:
             out.append(PageDates(in_progress, DateSource.CARRIED if read_from_pages else DateSource.ITEM, openings))
-        if openings or head is not None:
-            in_progress = openings[-1][1] if openings else head
+        if openings or page_date is not None:
+            in_progress = openings[-1][1] if openings else page_date
             read_from_pages = True
     return out

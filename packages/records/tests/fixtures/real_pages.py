@@ -50,3 +50,9 @@ STAMP_OVER_REPORT_HEAD_1970 = (
     "'JUN   9  1970\nBOARD  OF  ADMINISTRATION     .   .   .  (WORKS)\nJUNE  5th,  1970.\n"
     "The  following  is  a  report  of  the  Board  of  Administration:\n"
 )
+# https://archive.org/details/19741022, scan page 102: a page of a standing committee's report (October 15) bound into
+# the minutes of the October 22 council that received it.
+STANDING_COMMITTEE_HEAD_1974 = (
+    "552\n-  2  -\nStanding  Committee  of  Council on  Housing October  15,  1974\n"
+    "C.       THAT  the  report  of  the  Fire  Chief  dated  October  11,  1974,\n"
+)
