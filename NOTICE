@@ -2,3 +2,13 @@ qipu-vancouver
 Copyright 2026 the qipu authors
 
 This product includes software developed for qipu (https://www.qipu.org).
+
+The sample data bundled with this repository includes information from these sources, used under their open licences
+(see LICENSE-DATA):
+
+- City of Vancouver Archives, council minutes on the Internet Archive (CC0 1.0).
+- City of Vancouver Open Data. Contains information licensed under the Open Government Licence – Vancouver.
+- LidarBC. Contains information licensed under the Open Government Licence – British Columbia.
+- National Air Photo Library, Natural Resources Canada. Contains information licensed under the Open Government
+  Licence – Canada.
+- OpenStreetMap. © OpenStreetMap contributors, under the Open Database Licence 1.0.
