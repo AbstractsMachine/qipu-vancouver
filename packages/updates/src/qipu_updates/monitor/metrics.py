@@ -47,7 +47,6 @@ class RunReport:
         return self.status in FAILED
 
     def to_json(self) -> str:
-        """The report as the JSON written to the store."""
         return json.dumps(asdict(self), indent=1, sort_keys=True) + "\n"
 
 

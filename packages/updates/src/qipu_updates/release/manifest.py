@@ -57,12 +57,10 @@ class Manifest:
     gates: dict[str, Any] = field(default_factory=dict)
 
     def to_json(self) -> str:
-        """The manifest as JSON text."""
         return json.dumps(asdict(self), indent=1, sort_keys=True, ensure_ascii=False) + "\n"
 
     @classmethod
     def from_json(cls, text: str) -> Manifest:
-        """A manifest read back from its JSON text."""
         data = json.loads(text)
         data["documents"] = {k: DocEntry(**v) for k, v in data.get("documents", {}).items()}
         return cls(**data)
