@@ -1,0 +1,122 @@
+/* The viewer's frame: the map fills its host, the slider docks at the bottom, the panel sits over the map. */
+
+.qv-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  overflow: hidden;
+  background: var(--qv-paper);
+  color: var(--qv-ink);
+  font-family: var(--qv-font);
+  --qv-panel-bottom: 92px;
+}
+
+.qv-map {
+  position: absolute;
+  inset: 0;
+  background: #c9d6dc;
+}
+
+.qv-map:focus-visible {
+  outline: 3px solid var(--qv-accent);
+  outline-offset: -3px;
+}
+
+/* tiles overlap their neighbours by a pixel (map/seams.ts); Leaflet's own seam
+   fix, additive blending, would brighten that pixel into a visible line */
+.qv-viewer .leaflet-container img.leaflet-tile {
+  mix-blend-mode: normal;
+}
+
+.qv-block-outline {
+  stroke: #fff8e6;
+  fill: #fff2c8;
+  fill-opacity: 0.22;
+  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.6));
+}
+
+.qv-slider-dock {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 30px;
+  z-index: 800;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.qv-messages {
+  position: absolute;
+  top: 10px;
+  left: 56px;
+  right: 56px;
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.qv-notice,
+.qv-status {
+  max-width: 560px;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: var(--qv-radius);
+  background: var(--qv-paper-raised);
+  box-shadow: var(--qv-shadow);
+  font-size: 0.8125rem;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.qv-status {
+  color: var(--qv-failed);
+}
+
+.qv-viewer .leaflet-container {
+  font-family: var(--qv-font);
+}
+
+.qv-viewer .leaflet-control-attribution {
+  max-width: 60%;
+  font-size: 10px;
+  background: rgb(255 255 255 / 0.7);
+}
+
+/* on a wide screen the open panel takes the right-hand side, and the dock and notice make room */
+@media (min-width: 641px) {
+  .qv-viewer--panel-open .qv-slider-dock,
+  .qv-viewer--panel-open .qv-messages {
+    right: 436px;
+    margin-right: 0;
+  }
+
+  .qv-viewer--panel-open {
+    --qv-panel-bottom: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .qv-messages {
+    left: 8px;
+    right: 8px;
+    top: 8px;
+  }
+
+  .qv-notice,
+  .qv-status {
+    font-size: 0.75rem;
+  }
+
+  /* the bottom sheet stops above the year slider */
+  .qv-viewer {
+    --qv-panel-bottom: 176px;
+  }
+
+  .qv-viewer .leaflet-control-attribution {
+    display: none;
+  }
+}

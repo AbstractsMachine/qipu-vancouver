@@ -30,7 +30,7 @@ publish = ["boto3>=1.35"]
 qipu-map = "qipu_map.cli:main"
 
 [project.urls]
-Source = "https://github.com/AbstractsMachine/qipu-open"
+Source = "https://github.com/AbstractsMachine/qipu-vancouver"
 
 [tool.setuptools.packages.find]
 where = ["src"]

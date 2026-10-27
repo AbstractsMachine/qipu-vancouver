@@ -43,7 +43,7 @@ def _entry(**fields: Unpack[ModelItem]) -> ModelItem:
 def context(tmp_path: Path) -> Context:
     path = tmp_path / "gazetteer.csv"
     write_gazetteer(iter([(Precision.ADDRESS, "1139 pendrell st", 49.2819, -123.1309)]), path)
-    return Context(VANCOUVER, Embargo(92, today=dt.date(2026, 10, 26)), Gazetteer.load(path))
+    return Context(VANCOUVER, Embargo(100, today=dt.date(2026, 10, 26)), Gazetteer.load(path))
 
 
 def _record(context: Context, entry: ModelItem) -> DecisionRecord:

@@ -1,0 +1,7 @@
+demo/public/sample
+dist
+demo-dist
+coverage
+playwright-report
+test-results
+package-lock.json

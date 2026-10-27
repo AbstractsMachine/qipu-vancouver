@@ -119,7 +119,7 @@ tiles yet.
 On a Linux box with an NVIDIA GPU (24 GB or more), CUDA 12 and Python 3.12+:
 
 ```
-git clone https://github.com/AbstractsMachine/qipu-open && cd qipu-open/packages/map-pipeline
+git clone https://github.com/AbstractsMachine/qipu-vancouver && cd qipu-vancouver/packages/map-pipeline
 pip install -e ".[paint]"
 python -c "from diffusers import Flux2KleinPipeline"     # needs a diffusers release with FLUX.2 klein; else:
 pip install "git+https://github.com/huggingface/diffusers"

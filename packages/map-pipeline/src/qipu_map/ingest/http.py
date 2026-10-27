@@ -11,7 +11,7 @@ from typing import Protocol
 
 log = logging.getLogger(__name__)
 
-USER_AGENT = "qipu-map/0.1 (+https://github.com/AbstractsMachine/qipu-open)"
+USER_AGENT = "qipu-map/0.1 (+https://github.com/AbstractsMachine/qipu-vancouver)"
 
 
 class Http(Protocol):
