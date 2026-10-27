@@ -18,9 +18,11 @@ open city data ──────────────────▶ painted
                                    packages/map-pipeline
 ```
 
-![The viewer demo on Vancouver in 1972, with the 1970s decisions for one Strathcona block open beside the map](docs/images/viewer-vancouver-1972.webp)
+![Vancouver today on qipu.org: the painted West End, with the story and council decisions for 1415 Barclay Street open beside the map](docs/images/vancouver-today.webp)
 
-**Live demo:** https://www.qipu.org/vancouver, Vancouver City Council decisions from the 1970s on, on the map.
+*Vancouver today on qipu.org: the painted city, and what council decided at each address.*
+
+**Live demo:** https://www.qipu.org/vancouver (going live 27 Oct), Vancouver City Council decisions from the 1970s on, on the map.
 
 | package | what it does | language |
 |---|---|---|
@@ -42,6 +44,10 @@ make -C packages/updates install demo         # two scheduled runs a week apart;
 make -C packages/map-pipeline install sample  # every map stage on a CPU: build/sample/release/sample/ (about three minutes, plus the first install of numpy, shapely and Pillow)
 make -C packages/viewer install demo          # the web map at http://localhost:5173 (Ctrl-C to stop)
 ```
+
+![The viewer in this repo, with the bundled demo records: Vancouver in 1972 and the 1970s decisions for one Strathcona block](docs/images/viewer-vancouver-1972.webp)
+
+*The viewer in this repo, with the bundled demo records.*
 
 To run every package's lint, type checks and tests with coverage, as CI does:
 
