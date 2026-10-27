@@ -15,12 +15,16 @@ page link rather than a wrong one.
 from __future__ import annotations
 
 import json
+import logging
 import re
+import urllib.error
 import urllib.parse
 from collections.abc import Sequence
 from typing import Any
 
 from qipu_records.fetch.archive import ArchiveClient, book_prefix, fetch_metadata
+
+log = logging.getLogger(__name__)
 
 PageMap = list[int | None]
 """For each OCR page, its viewer page, or None when the viewer hides that image."""
@@ -80,23 +84,38 @@ def page_url(item: str, ocr_page: int, page_map: PageMap | None) -> str | None:
     return f"https://archive.org/details/{item}/page/n{viewer_page}"
 
 
+_SERVER = re.compile(r"[a-z0-9-]+(\.[a-z0-9-]+)*\.archive\.org")
+
+
 def fetch_map(client: ArchiveClient, item: str) -> PageMap | None:
-    """Build an item's page map from archive.org's metadata, viewer manifest and zip listing (cached by the client)."""
-    metadata = fetch_metadata(client, item)
-    if "server" not in metadata:
+    """Build an item's page map from archive.org's metadata, viewer manifest and zip listing (cached by the client).
+
+    None when archive.org's answers are not in the shape this expects: the page map is optional (pages without one are
+    published without a viewer link), so an odd item must not stop a fetch. A network failure still raises, so the
+    fetch can be run again.
+    """
+    try:
+        return _fetch_map(client, item)
+    except (KeyError, TypeError, ValueError, urllib.error.HTTPError) as error:
+        log.warning("%s: no page map, archive.org's viewer data was not as expected (%r)", item, error)
         return None
+
+
+def _fetch_map(client: ArchiveClient, item: str) -> PageMap | None:
+    metadata = fetch_metadata(client, item)
+    server = metadata.get("server")
+    if not isinstance(server, str) or not _SERVER.fullmatch(server):
+        return None  # no scan server, or one that is not archive.org's: never build a URL from it
     query = urllib.parse.urlencode(
         {
             "id": item,
             "itemPath": metadata["dir"],
-            "server": metadata["server"],
+            "server": server,
             "format": "jsonp",
             "subPrefix": book_prefix(metadata),
         }
     )
-    manifest = json.loads(
-        client.get_text(f"https://{metadata['server']}/BookReader/BookReaderJSIA.php?{query}", f"{item}.br.json")
-    )
+    manifest = json.loads(client.get_text(f"https://{server}/BookReader/BookReaderJSIA.php?{query}", f"{item}.br.json"))
     names = [f["name"] for f in metadata.get("files", [])]
     zip_name = manifest_zip(manifest)
     if zip_name not in names:

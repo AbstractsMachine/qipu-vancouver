@@ -17,7 +17,14 @@ from qipu_records.fetch.archive import ArchiveClient, check_identifier
 from qipu_records.fetch.run import fetch_items
 from qipu_records.map import gazetteer
 from qipu_records.pipeline import build
-from qipu_records.read.readers import AnthropicReader, OpenAICompatibleReader, Reader, ReaderConfigError, ReplayReader
+from qipu_records.read.readers import (
+    AnthropicReader,
+    OpenAICompatibleReader,
+    Reader,
+    ReaderConfigError,
+    ReaderError,
+    ReplayReader,
+)
 from qipu_records.read.run import read_pages
 from qipu_records.verify.privacy import Embargo
 
@@ -132,6 +139,9 @@ def main(argv: list[str] | None = None) -> int:
     except ReaderConfigError as error:
         print(f"qipu-records: {error}", file=sys.stderr)
         return 2
+    except ReaderError as error:  # a --replay file without an answer for a page it is asked about
+        print(f"qipu-records: {error}", file=sys.stderr)
+        return 1
     except FileNotFoundError as error:
         print(f"qipu-records: no such file: {error.filename}", file=sys.stderr)
         return 1

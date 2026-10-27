@@ -96,3 +96,14 @@ def test_a_missing_client_library_is_explained(monkeypatch: pytest.MonkeyPatch) 
 def test_items_that_are_not_objects_with_a_text_quote_are_refused(answer: str) -> None:
     with pytest.raises(ReaderError):
         _parse("p", answer)
+
+
+@pytest.mark.parametrize(
+    "line", ["not json", '{"model": "m"}', '{"page_id": "x:1", "model": "m", "prompt_version": "v"}']
+)
+def test_a_bad_line_in_a_replay_file_names_the_file_and_line(tmp_path: Path, line: str) -> None:
+    path = tmp_path / "readings.jsonl"
+    good = {"page_id": "x:0", "model": "m", "prompt_version": "v", "items": []}
+    path.write_text(json.dumps(good) + "\n\n" + line + "\n", encoding="utf-8")
+    with pytest.raises(ReaderConfigError, match=r"readings\.jsonl:3: not a recorded reading"):
+        ReplayReader(path)

@@ -9,6 +9,7 @@ from typing import Any
 
 from qipu_map.cache import is_fresh, mark_done, stage_key
 from qipu_map.context import Context, add_common, context_from_args
+from qipu_map.errors import StageError
 from qipu_map.ingest.fetch import fetch_all
 from qipu_map.ingest.grid import LocalGrid
 from qipu_map.ingest.http import UrllibHttp
@@ -28,13 +29,22 @@ def register(sub: Any) -> None:
         "--raw", type=Path, default=None, help="use this raw folder as it is, with no network (CI, the sample)"
     )
     parser.add_argument(
-        "--margin", type=float, default=DEFAULT_MARGIN_M, help="metres fetched around the area (default 60)"
+        "--margin", type=_margin, default=DEFAULT_MARGIN_M, help="metres fetched around the area (default 60)"
     )
     parser.set_defaults(run=run)
 
 
+def _margin(text: str) -> float:
+    value = float(text)
+    if not value >= 0:  # also refuses nan
+        raise argparse.ArgumentTypeError(f"the margin is metres around the area, 0 or more, not {text}")
+    return value
+
+
 def run(args: argparse.Namespace) -> int:
     ctx = context_from_args(args)
+    if args.raw is not None and not args.raw.is_dir():
+        raise StageError(f"--raw {args.raw}: no such folder")
     counts = ingest(ctx, args.raw, args.margin)
     log.info(
         "ingest %s/%s: %s", ctx.city.id, ctx.area, ", ".join(f"{k} {v}" for k, v in counts.items()) or "up to date"

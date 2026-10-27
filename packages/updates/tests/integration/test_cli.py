@@ -104,3 +104,19 @@ def test_alert_reads_the_report_or_says_there_was_none(
     assert capsys.readouterr().out.count("opened #5") == 2
     assert bodies[0].startswith("### vancouver: failed")
     assert "stopped before it wrote a report" in bodies[-1]
+
+
+def test_a_bad_config_or_argument_is_a_message_not_a_traceback(
+    example: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    missing = tmp_path / "nowhere.toml"
+    assert cli.main(["status", "--config", str(missing)]) == 2
+    assert "no such file" in capsys.readouterr().err
+    config = example / "updates" / "updates.toml"
+    config.write_text(config.read_text(encoding="utf-8").replace('key = "vancouver"', 'key = "atlantis"'), "utf-8")
+    assert main(example, tmp_path, "run", "--as-of", "2026-10-19") == 2
+    assert "unknown city 'atlantis'" in capsys.readouterr().err
+    for bad in (["run", "--as-of", "2026/10/19"], ["status", "--last", "0"], ["status", "--last", "-3"]):
+        with pytest.raises(SystemExit) as stop:
+            main(example, tmp_path, *bad)
+        assert stop.value.code == 2

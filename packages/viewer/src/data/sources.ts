@@ -8,6 +8,8 @@
  *   l       a Legistar meeting:                        `u` = "<id>~<guid>/<page>"
  *   x       the row carries its own URL in `u`
  */
+import { FormatError } from "./validate";
+
 export type SourceSystem = "archive" | "clerk" | "legistar" | "url";
 
 export interface Source {
@@ -24,6 +26,8 @@ export interface Source {
 export function sourceOf(row: { u: string; c: string | undefined; approx: boolean }): Source {
   const { u, c, approx } = row;
   if (c === "x") {
+    // The row's own URL becomes a link: only a web page, never javascript:, data: or the like.
+    if (!/^https?:\/\//i.test(u)) throw new FormatError("source.u", `an http(s) URL (got "${u.slice(0, 40)}")`);
     return { system: "url", href: u, page: pageInUrl(u), document: hostOf(u), approximate: approx };
   }
   const slash = u.lastIndexOf("/");

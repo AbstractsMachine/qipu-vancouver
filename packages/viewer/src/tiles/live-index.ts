@@ -1,4 +1,4 @@
-import { type Json, FormatError, int, num, optional, record, pair, str } from "../data/validate";
+import { type Json, FormatError, num, optional, positive, positiveInt, record, pair, str } from "../data/validate";
 import type { EraManifest } from "../eras/model";
 import { frameOf } from "./frame";
 import { type TileMask, parseTileMask } from "./mask";
@@ -52,18 +52,18 @@ export function parsePyramidIndex(json: Json): PyramidIndex {
     levels.set(z, {
       tiles: pair(l.tiles, `index.levels.${key}.tiles`),
       px: pair(l.px, `index.levels.${key}.px`),
-      scale: num(l.scale, `index.levels.${key}.scale`),
+      scale: positive(l.scale, `index.levels.${key}.scale`),
     });
   }
   if (!levels.has(0)) throw new FormatError("index.levels", "a level 0");
   const proj = optional(o.proj, (p) => record(p, "index.proj"));
   return {
-    tile: int(o.tile, "index.tile"),
-    dpr: num(o.dpr, "index.dpr"),
+    tile: positiveInt(o.tile, "index.tile"),
+    dpr: positive(o.dpr, "index.dpr"),
     ref: {
       cx: num(ref.cx, "index.ref.cx"),
       cy: num(ref.cy, "index.ref.cy"),
-      scale: num(ref.scale, "index.ref.scale"),
+      scale: positive(ref.scale, "index.ref.scale"),
     },
     levels,
     zmax: Math.max(...levels.keys()),

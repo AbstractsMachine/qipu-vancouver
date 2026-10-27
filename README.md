@@ -66,7 +66,9 @@ the setup, the conventions and how to report a wrong record.
 ## Licences
 
 Code is under the [Apache License 2.0](LICENSE). Data the code produces, and the sample data in `examples/`, are dedicated to the
-public domain under [CC0 1.0](LICENSE-DATA), except where [LICENSE-DATA](LICENSE-DATA) names other terms.
+public domain under [CC0 1.0](LICENSE-DATA), except the third-party open data that [LICENSE-DATA](LICENSE-DATA) lists with its
+own terms (City of Vancouver, LidarBC, Natural Resources Canada, OpenStreetMap). [NOTICE](NOTICE) carries their attribution
+lines.
 
 ## Credits
 

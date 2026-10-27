@@ -49,6 +49,7 @@ describe("the live eras manifest", () => {
       '"c3", "c3c" or "c3d" (got "rise")',
     );
     expect(() => parseEraManifest(bad({ l9: [1, 2, 3] }))).toThrow("eras.quarters.x.l9: expected 4 numbers");
+    expect(() => parseEraManifest({ ...sfEras, years: {}, quarters: {} })).toThrow("eras: expected at least one year");
   });
 });
 

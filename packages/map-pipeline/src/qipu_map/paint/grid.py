@@ -54,9 +54,6 @@ class Grid:
         ys = range(_first(oy, self.tile, self.stride), oy + self.height, self.stride)
         return [Tile(x, y) for y in ys for x in xs]
 
-    def to_canvas(self, x: int, y: int) -> tuple[int, int]:
-        return x - self.origin[0], y - self.origin[1]
-
 
 def _first(o: int, tile: int, stride: int) -> int:
     """The leftmost grid position whose tile still reaches past canvas pixel 0 (world `o`)."""

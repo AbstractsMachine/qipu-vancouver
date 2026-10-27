@@ -107,7 +107,7 @@ export function parseDecision(json: Json, path: string): Decision {
     source: sourceOf({
       u: str(r.u, `${path}.u`),
       c: optional(r.c, (v) => str(v, `${path}.c`)),
-      approx: isRecord(r) && r.approx !== undefined && r.approx !== 0,
+      approx: isRecord(r) && (r.approx === 1 || r.approx === true),
     }),
   };
 }

@@ -36,6 +36,9 @@ describe("parsePyramidIndex", () => {
   it("names the field that is wrong", () => {
     expect(() => parsePyramidIndex({ ...sfIndex, tile: "512" })).toThrow("index.tile: expected a number");
     expect(() => parsePyramidIndex({ ...sfIndex, levels: { 1: sfIndex.levels[1] } })).toThrow(FormatError);
+    // sizes and scales are divided by: zero would put the map at infinity
+    expect(() => parsePyramidIndex({ ...sfIndex, tile: 0 })).toThrow("index.tile: expected a positive integer");
+    expect(() => parsePyramidIndex({ ...sfIndex, ref: { ...sfIndex.ref, scale: 0 } })).toThrow("index.ref.scale");
     expect(() => parsePyramidIndex({ ...sfIndex, levels: { x: {} } })).toThrow("index.levels.x");
     expect(() => parsePyramidIndex(null)).toThrow("index: expected an object");
   });
@@ -101,7 +104,9 @@ describe("tile mask", () => {
 
   it("rejects a malformed row", () => {
     expect(() => parseTileMask({ 1: [0, 0, 2] }, "have")).toThrow("have.1: expected [x0, y0, cols, bits]");
-    expect(() => parseTileMask({ 1: [0, 0, 0, "AA=="] }, "have")).toThrow("positive count");
+    expect(() => parseTileMask({ 1: [0, 0, 0, "AA=="] }, "have")).toThrow("have.1[2]: expected a positive integer");
+    expect(() => parseTileMask({ 1: [0, 0, 2, "not base64!"] }, "have")).toThrow("have.1[3]: expected base64 bits");
+    expect(() => parseTileMask({ top: [0, 0, 2, "AA=="] }, "have")).toThrow("have.top: expected a level number");
   });
 });
 

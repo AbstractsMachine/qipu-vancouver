@@ -29,6 +29,8 @@ def parse_every(text: str) -> dt.timedelta:
     if not match:
         raise ConfigError(f"'every' must look like 6h or 1d, not {text!r}")
     n = int(match.group(1))
+    if n < 1:
+        raise ConfigError(f"'every' must be at least 1h, not {text!r}")
     return dt.timedelta(hours=n) if match.group(2) == "h" else dt.timedelta(days=n)
 
 
@@ -87,9 +89,28 @@ def _section(data: dict[str, Any], key: str) -> dict[str, Any]:
     return dict(value)
 
 
+def _gate_limits(data: dict[str, Any]) -> dict[str, int]:
+    gates = data.get("gates", {})
+    if not isinstance(gates, dict) or not all(isinstance(v, int) and v >= 0 for v in gates.values()):
+        raise ConfigError("[gates] must map each gate to a whole number of failures it allows")
+    return {str(k): int(v) for k, v in gates.items()}
+
+
+def _table(data: dict[str, Any], key: str) -> dict[str, Any]:
+    """An optional table; absent is empty."""
+    value = data.get(key, {})
+    if not isinstance(value, dict):
+        raise ConfigError(f"{key} must be a [{key}] table")
+    return value
+
+
 def load(path: Path) -> Config:
+    """Read and check a config. Raises `ConfigError` for anything malformed, `OSError` if the file cannot be read."""
     raw = path.read_bytes()
-    data = tomllib.loads(raw.decode("utf-8"))
+    try:
+        data = tomllib.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
+        raise ConfigError(f"{path}: not valid TOML: {error}") from error
     base = path.parent.resolve()
     source = _section(data, "source")
     reader = _section(data, "reader")
@@ -108,9 +129,9 @@ def load(path: Path) -> Config:
             str(reader.pop("kind", "")), str(reader.pop("model", "")), int(reader.pop("max_pages_per_run", 50)), reader
         ),
         publish=PublishConfig(str(publish.get("backend", "local")), target),
-        gate_limits={str(k): int(v) for k, v in data.get("gates", {}).items()},
-        gazetteer=_path(base, data.get("city", {}).get("gazetteer")),
-        corrections=_path(base, data.get("corrections", {}).get("path")),
+        gate_limits=_gate_limits(data),
+        gazetteer=_path(base, _table(data, "city").get("gazetteer")),
+        corrections=_path(base, _table(data, "corrections").get("path")),
         path=path.resolve(),
         digest=hashlib.sha256(raw).hexdigest(),
     )

@@ -50,5 +50,5 @@ def add_common(parser: argparse.ArgumentParser, *, explicit: bool = False) -> No
 
 def context_from_args(args: argparse.Namespace) -> Context:
     city = load_city(args.city)
-    city.area(args.area)
+    city.area(args.area)  # raises StageError for an area the city file does not name
     return Context(city=city, area=args.area, work=WorkDir(work_root(args.work), city.id, args.area))

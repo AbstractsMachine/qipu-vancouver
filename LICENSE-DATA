@@ -6,12 +6,21 @@ https://creativecommons.org/publicdomain/zero/1.0/
 
 To the extent possible under law, the authors have waived all copyright and related or neighbouring rights to them.
 
-Two parts of examples/vancouver/ come from others under their own terms:
+These parts come from others and keep their own terms:
 
 - examples/vancouver/pages.jsonl: OCR text of City of Vancouver council minutes, scanned by the City of Vancouver Archives and
   published on the Internet Archive under CC0 1.0. Names of private people in sensitive matters have been withheld.
 - examples/vancouver/gazetteer.csv: derived from City of Vancouver open data (property addresses, street intersections and local
   area boundaries), under the Open Government Licence – Vancouver: https://opendata.vancouver.ca/pages/licence/
   Contains information licensed under the Open Government Licence – Vancouver.
+- examples/vancouver/west-end/: the open data the map pipeline's sample is built from. City of Vancouver files under the
+  Open Government Licence – Vancouver; LidarBC grids under the Open Government Licence – British Columbia; masks derived
+  from National Air Photo Library mosaics (Natural Resources Canada) under the Open Government Licence – Canada 2.0;
+  osm.json, an OpenStreetMap extract, under the Open Database Licence 1.0 (© OpenStreetMap contributors). Details and
+  attribution lines: examples/vancouver/west-end/README.md.
+- packages/viewer/demo/public/sample/: block records from qipu.org. The San Francisco records are CC0 1.0 and quote
+  public-domain Board of Supervisors proceedings; the Vancouver records quote City of Vancouver records, © City of
+  Vancouver, under CC BY 3.0 and the Open Government Licence – Vancouver. Details:
+  packages/viewer/demo/public/sample/README.md.
 
 The software itself is licensed under the Apache License 2.0; see LICENSE.

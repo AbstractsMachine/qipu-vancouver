@@ -108,6 +108,8 @@ describe("records", () => {
     expect(d.precision).toBeNull();
     expect(d.outcome).toBeNull();
     expect(() => parseDecision({ y: "1916", k: "W", u: "v/1", t: "x" }, "row")).toThrow("row.y");
+    const approx = (value: unknown) => parseDecision({ y: 1916, k: "W", u: "v/1", t: "x", approx: value }, "row");
+    expect([1, true, 0, false].map((v) => approx(v).source.approximate)).toEqual([true, true, false, false]);
   });
 
   it("reads a block out of its shard, newest first", () => {
@@ -184,7 +186,12 @@ describe("sourceOf", () => {
     const s = sourceOf({ u: "https://archive.org/details/19740730/page/n6", c: "x", approx: false });
     expect(s).toMatchObject({ system: "url", document: "archive.org", page: 6 });
     expect(sourceOf({ u: "https://www.example.org/a", c: "x", approx: false }).document).toBe("example.org");
-    expect(sourceOf({ u: "not a url", c: "x", approx: false }).document).toBe("not a url");
+  });
+
+  it("links a row's own URL only when it is a web page", () => {
+    for (const u of ["not a url", "javascript:alert(1)", "data:text/html,<b>x</b>"]) {
+      expect(() => sourceOf({ u, c: "x", approx: false })).toThrow("source.u: expected an http(s) URL");
+    }
   });
 
   it("handles a citation with no page", () => {

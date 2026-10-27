@@ -148,5 +148,5 @@ focus where it was; links say where they go and that they open a new tab; ESLint
 
 ## Licence
 
-Code: Apache-2.0, like the rest of the repository. The sample records are described, with their licences, in
+Code: Apache-2.0 ([LICENSE](LICENSE)), like the rest of the repository. The sample records are described, with their licences, in
 [demo/public/sample/README.md](demo/public/sample/README.md).
