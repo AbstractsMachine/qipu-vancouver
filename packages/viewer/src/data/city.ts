@@ -49,7 +49,16 @@ export async function loadCityData(city: CityConfig, fetcher: Fetch = fetch): Pr
   const shard = memo((file: string) => fetchJson(`${base}/blocks/${file}`, fetcher));
   const money = memo(async (): Promise<MoneyFile | null> => {
     const json = await fetchOptionalJson(`${base}/blocks/block-money.json`, fetcher);
-    return json === null ? null : parseMoneyFile(json);
+    if (json === null) return null;
+    const file = parseMoneyFile(json);
+    /* the panel prints amounts in the city's currency, so a file in another one must not be shown as if it were */
+    if (file.currency !== null && file.currency !== city.record.currency) {
+      throw new FormatError(
+        "block-money.currency",
+        `${city.record.currency}, the city's currency (got ${file.currency})`,
+      );
+    }
+    return file;
   });
   return {
     blocks,

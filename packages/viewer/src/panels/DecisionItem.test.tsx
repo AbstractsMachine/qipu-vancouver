@@ -1,41 +1,42 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { SAN_FRANCISCO, VANCOUVER } from "../config";
+import { VANCOUVER } from "../config";
 import { type Decision, parseDecision } from "../data/records";
 import { DecisionItem } from "./DecisionItem";
 
-const streetArtists = parseDecision(
+const leases = parseDecision(
   {
-    y: 1976,
-    d: "11-17",
-    k: "R",
-    p: 3,
+    y: 1979,
+    d: "03-13",
+    k: "N",
+    p: 2,
     a: 0,
-    u: "journalseptdecofproceed71sanfrich/292",
-    t: "Hearings sought to drop two street-artist selling spots near Beach Street",
-    pl: "Proposed: dropping two street-artist selling spots near Beach Street",
+    u: "https://archive.org/details/CVAN_1979-03-13/page/n11",
+    c: "x",
+    t: "THAT clause 1 in this report be received for information and the recommendations of the City Manager be approved.",
+    pl: "City land lease, 275 East 8th encroachment and Barclay Manor rent review approved",
     hp: "n",
   },
-  "sf",
+  "van",
 );
 
-const bonds = parseDecision(
+const housing = parseDecision(
   {
-    y: 2025,
-    d: "10-07",
-    k: "R",
+    y: 2017,
+    d: "10-17",
+    k: "C",
     p: 3,
     a: 60000000,
-    u: "bag100725/22",
-    c: "b",
-    t: "$60,000,000 in bonds sought for 136 flats at 2970 16th Street",
+    u: "https://opendata.vancouver.ca/explore/dataset/council-voting-records/table/?q=%221.%20REZONING%22",
+    c: "x",
+    t: "$60,000,000 for 145 social housing homes at 2221-2223 Main Street",
     hp: "u",
   },
-  "sf",
+  "van",
 );
 
-function renderItem(decision: Decision, city = SAN_FRANCISCO) {
+function renderItem(decision: Decision, city = VANCOUVER) {
   render(
     <ul>
       <DecisionItem decision={decision} kinds={city.record.kinds} currency={city.record.currency} />
@@ -46,18 +47,18 @@ function renderItem(decision: Decision, city = SAN_FRANCISCO) {
 
 describe("DecisionItem", () => {
   it("shows the date, series and outcome", () => {
-    const item = renderItem(streetArtists);
-    expect(within(item).getByText("17 Nov 1976")).toHaveAttribute("datetime", "1976-11-17");
-    expect(within(item).getByText("Resolution")).toBeInTheDocument();
+    const item = renderItem(leases);
+    expect(within(item).getByText("13 Mar 1979")).toHaveAttribute("datetime", "1979-03-13");
+    expect(within(item).getByText("Council minutes")).toBeInTheDocument();
     expect(within(item).getByText("Pending")).toBeInTheDocument();
   });
 
   it("leads with qipu's summary and keeps the printed words one click away", async () => {
     const user = userEvent.setup();
-    const item = renderItem(streetArtists);
-    expect(within(item).getByText(/^Proposed: dropping/)).toBeVisible();
+    const item = renderItem(leases);
+    expect(within(item).getByText(/^City land lease/)).toBeVisible();
     expect(within(item).getByText("qipu's summary")).toBeInTheDocument();
-    const printed = within(item).getByText(/^Hearings sought/);
+    const printed = within(item).getByText(/^THAT clause 1/);
     expect(printed).not.toBeVisible();
     await user.click(within(item).getByText("As printed"));
     expect(printed).toBeVisible();
@@ -65,19 +66,19 @@ describe("DecisionItem", () => {
   });
 
   it("shows the printed words alone when there is no summary", () => {
-    const item = renderItem(bonds);
-    expect(within(item).getByText(/^\$60,000,000 in bonds/)).toBeVisible();
+    const item = renderItem(housing);
+    expect(within(item).getByText(/^\$60,000,000 for 145 social housing homes/)).toBeVisible();
     expect(within(item).queryByText("As printed")).not.toBeInTheDocument();
     expect(within(item).queryByText("qipu's summary")).not.toBeInTheDocument();
   });
 
   it("says where on the block the row sits and what it is worth", () => {
-    const item = renderItem(bonds);
-    expect(within(item).getByText("at an address on this block · $60,000,000")).toBeInTheDocument();
+    const item = renderItem(housing);
+    expect(within(item).getByText("at an address on this block · CA$60,000,000")).toBeInTheDocument();
     expect(within(item).queryByText(/Decided|Pending|Failed/)).not.toBeInTheDocument();
   });
 
-  it("formats Vancouver amounts in Canadian dollars and writes the address", () => {
+  it("writes a building permit's address and amount", () => {
     const permit = parseDecision(
       {
         y: 2022,
@@ -92,7 +93,7 @@ describe("DecisionItem", () => {
       },
       "van",
     );
-    const item = renderItem(permit, VANCOUVER);
+    const item = renderItem(permit);
     expect(within(item).getByText("Building permit")).toBeInTheDocument();
     expect(
       within(item).getByText("at an address on this block · 3122 SE Marine Dr · CA$4,000,000"),
@@ -100,7 +101,10 @@ describe("DecisionItem", () => {
   });
 
   it("falls back to the year and the row code", () => {
-    const undated = parseDecision({ y: 1938, k: "Z", u: "journal1938/4", t: "Street lights for Pine Street" }, "sf");
+    const undated = parseDecision(
+      { y: 1938, k: "Z", u: "https://archive.org/details/CVAN_1938", c: "x", t: "Street lights for Main Street" },
+      "van",
+    );
     const item = renderItem(undated);
     expect(within(item).getByText("1938")).toHaveAttribute("datetime", "1938");
     expect(within(item).getByText("Z")).toBeInTheDocument();
