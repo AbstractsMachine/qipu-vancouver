@@ -41,3 +41,10 @@ def test_unknown_kinds_are_config_errors(tmp_path: Path) -> None:
         wiring.make_reader(ReaderConfig("oracle", "m", 1))
     with pytest.raises(ConfigError, match="publish backend"):
         wiring.make_store(PublishConfig("s3", "x"))
+
+
+def test_a_missing_required_option_names_its_section() -> None:
+    with pytest.raises(ConfigError, match=r"\[source\] needs collection"):
+        wiring.make_source(SourceConfig("archive", DAY, {}), Path("cache"))
+    with pytest.raises(ConfigError, match=r"\[reader\] needs readings"):
+        wiring.make_reader(ReaderConfig("replay", "", 50, {}))

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from qipu_records.read.readers import AnthropicReader, OpenAICompatibleReader, Reader, ReplayReader
 from qipu_updates.config import ConfigError, PublishConfig, ReaderConfig, SourceConfig
@@ -15,12 +16,19 @@ from qipu_updates.sources.legistar import SF_BASE, LegistarSource
 from qipu_updates.sources.mirror import MirrorSource
 
 
+def _required(options: dict[str, Any], key: str, section: str) -> str:
+    value = options.get(key)
+    if not value:
+        raise ConfigError(f"[{section}] needs {key}")
+    return str(value)
+
+
 def make_source(config: SourceConfig, cache: Path) -> Source:
     options = config.options
     if config.kind == "archive":
-        return ArchiveSource(str(options["collection"]), cache / "archive")
+        return ArchiveSource(_required(options, "collection", "source"), cache / "archive")
     if config.kind == "mirror":
-        return MirrorSource(Path(str(options["path"])), Path(str(options["index"])))
+        return MirrorSource(Path(_required(options, "path", "source")), Path(_required(options, "index", "source")))
     if config.kind == "legistar":
         return LegistarSource(base=str(options.get("base", SF_BASE)))
     raise ConfigError(f"unknown source kind {config.kind!r} (archive, mirror or legistar)")
@@ -28,13 +36,13 @@ def make_source(config: SourceConfig, cache: Path) -> Source:
 
 def make_reader(config: ReaderConfig) -> Reader:
     if config.kind == "replay":
-        return ReplayReader(Path(str(config.options["readings"])))
+        return ReplayReader(Path(_required(config.options, "readings", "reader")))
     if config.kind == "anthropic":
         return AnthropicReader(model=config.model)
     if config.kind == "openai":
         return OpenAICompatibleReader(
             model=config.model,
-            base_url=str(config.options["base_url"]),
+            base_url=_required(config.options, "base_url", "reader"),
             api_key_env=str(config.options.get("api_key_env", "OPENAI_API_KEY")),
         )
     raise ConfigError(f"unknown reader kind {config.kind!r} (replay, anthropic or openai)")
