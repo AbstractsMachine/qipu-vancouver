@@ -4,15 +4,38 @@ Bug reports, corrections to records and support for more cities are all welcome.
 
 ## Setting up
 
-Each package is self-contained, with its own Makefile:
+Each package is self-contained, with its own Makefile and the same targets:
 
 ```sh
-make -C packages/records install   # a virtual environment in packages/records/.venv with pinned tools
+make -C packages/records install   # a virtual environment in packages/records/.venv with pinned, hashed tools
 make -C packages/records check     # lint, types, tests with coverage, as CI runs them
-make -C packages/records e2e       # the demo and its map page in a headless browser
+make -C packages/records e2e       # the end-to-end test on the sample (here: the demo and its map page in a browser)
 ```
 
-`make check` at the root runs `check` in every package.
+`make install check` at the root does the same in every package. The Python packages pin their development tools with
+hashes in `requirements-dev.txt` (`make lock` re-pins after a change to `requirements-dev.in`); the viewer pins with
+`package-lock.json`.
+
+Then install the commit hooks, which run ruff, the type checks, eslint and prettier, and a secret scan on the files you
+change:
+
+```sh
+pip install pre-commit && pre-commit install
+pre-commit run --all-files         # the same hooks over everything, as CI runs them
+```
+
+## Layout
+
+```
+packages/<name>/   one package: its README, ARCHITECTURE.md where it has one, Makefile, src/, tests/
+docs/              what crosses package boundaries: the record and tile formats, accuracy, privacy, updates
+examples/          the shared sample every package's demo and end-to-end test runs on
+```
+
+The Python packages keep their tests in three layers: `tests/unit` (one module at a time), `tests/integration` (several
+modules together, on the sample) and `tests/e2e` (the package's demo end to end). The viewer keeps its unit and component
+tests beside the code (`src/**/*.test.ts(x)`) and its browser tests in `e2e/`. None of them uses the network: every Python test
+suite fails a test that tries to, and the viewer's browser tests serve every remote request from fixtures.
 
 ## Reporting a wrong record
 

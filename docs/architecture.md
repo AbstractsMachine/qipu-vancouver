@@ -10,7 +10,7 @@ flowchart LR
     R -->|decisions.jsonl<br/>decisions.geojson| V[packages/viewer]
     U[packages/updates<br/>daily] -->|runs on new and changed minutes| R
     U -->|releases/version/,<br/>latest.json| V
-    S[(rendered city<br/>one image per era)] -->|cut, encode| M[packages/map-pipeline]
+    O[(open city data<br/>footprints, tax roll,<br/>LiDAR, OSM, air photos)] -->|scene, render,<br/>paint, eras, tiles| M[packages/map-pipeline]
     M -->|tiles + manifest.json| V
     V --> B[browser: painted map,<br/>year slider, records]
 ```
@@ -36,13 +36,21 @@ Output: `releases/<version>/` holding the same `decisions.jsonl` and `decisions.
 
 ## packages/map-pipeline
 
-From a rendered image of the city to a tile pyramid the browser can stream, one pyramid per era, with a manifest that says
-which eras exist and how to address their tiles. Format: [tiles-format.md](tiles-format.md).
+From open data about the city to a painted bird's-eye map that plays through time. It builds a 3D scene of the city today
+from building footprints, tax-roll years, LiDAR heights, streets, trees and the shoreline; works out what stood in each past
+year; renders every year in Blender through one fixed camera; has an image model repaint each render as an aerial
+photograph, tile by tile, with checks that it invented or removed nothing; and cuts the results into tile pyramids with
+"date maps" that say when each pixel changes. Each stage reads the previous stage's files and can run on its
+own; on a laptop, stand-ins replace Blender and the image model. [packages/map-pipeline/ARCHITECTURE.md](../packages/map-pipeline/ARCHITECTURE.md)
+has the stages and the reasons behind them.
+
+Output: a release folder of WebP tiles per era and a `manifest.json`, in the format of [tiles-format.md](tiles-format.md).
 
 ## packages/viewer
 
 The web map. It draws the painted tiles for the year on the slider and shows the decision records of the place under the
-cursor, each with its quote and a link to the scanned page.
+cursor, each with its quote and a link to the scanned page. It is a React component with no server of its own, plus a demo
+app. [packages/viewer/ARCHITECTURE.md](../packages/viewer/ARCHITECTURE.md) walks through its modules.
 
 ## Boundaries
 
@@ -51,3 +59,6 @@ cursor, each with its quote and a link to the scanned page.
 - Each package owns its language, dependencies, tests and Makefile. Shared lint and format settings live at the root
   (`ruff.toml`, `.prettierrc.json`, `eslint.config.mjs`, `.editorconfig`).
 - The sample in [examples/vancouver](../examples/vancouver) is the common test bed: every package's demo runs on it.
+- Network access sits behind one small module per package (`fetch/http.py`, `sources/http.py`, `ingest/http.py`), each
+  with a timeout and retries, so tests replace it and run offline; every Python test suite fails a test that tries to
+  reach another host.
