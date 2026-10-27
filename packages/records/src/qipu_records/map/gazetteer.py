@@ -14,12 +14,13 @@ from __future__ import annotations
 import csv
 import io
 import re
-import urllib.request
 from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
+from qipu_records.fetch import http
+from qipu_records.fetch.archive import USER_AGENT
 from qipu_records.read.schema import ModelPlace
 
 ORDINALS = {
@@ -138,9 +139,8 @@ VANCOUVER_DATASETS = "https://opendata.vancouver.ca/api/explore/v2.1/catalog/dat
 
 def _open_data_rows(dataset: str) -> Iterator[dict[str, str]]:
     url = VANCOUVER_DATASETS.format(dataset)  # a fixed https URL
-    request = urllib.request.Request(url, headers={"User-Agent": "qipu-records/0.1"})  # noqa: S310
-    with urllib.request.urlopen(request, timeout=600) as response:  # noqa: S310
-        yield from csv.DictReader(io.StringIO(response.read().decode("utf-8-sig")))
+    body = http.get(url, user_agent=USER_AGENT, timeout=600)  # the address list is a large export
+    yield from csv.DictReader(io.StringIO(body.decode("utf-8-sig")))
 
 
 def _point(row: dict[str, str]) -> tuple[float, float]:

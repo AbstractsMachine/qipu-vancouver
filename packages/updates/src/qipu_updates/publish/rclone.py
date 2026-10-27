@@ -20,19 +20,30 @@ error must never read as "no pause marker" or "nothing published yet".
 """
 
 
+TIMEOUT_S = 3600.0
+"""A wall-clock limit on one rclone call. rclone retries a dropped connection itself (--retries, --low-level-retries);
+this only stops a run that hangs, so the scheduled job fails and alerts instead of holding the runner until GitHub
+kills it.
+"""
+
+
 class StoreError(RuntimeError):
     pass
 
 
 class RcloneStore:
-    def __init__(self, remote: str, runner: Runner = subprocess.run) -> None:
+    def __init__(self, remote: str, runner: Runner = subprocess.run, timeout_s: float = TIMEOUT_S) -> None:
         self.remote = remote.rstrip("/")
         self._run = runner
+        self._timeout_s = timeout_s
 
     def _rclone(
         self, args: Sequence[str], missing_ok: bool = False, **kwargs: Any
     ) -> subprocess.CompletedProcess[bytes] | None:
-        done = self._run(["rclone", *args], capture_output=True, **kwargs)
+        try:
+            done = self._run(["rclone", *args], capture_output=True, timeout=self._timeout_s, **kwargs)
+        except subprocess.TimeoutExpired as e:
+            raise StoreError(f"rclone {args[0]} {args[1]}: no answer after {self._timeout_s:.0f} s") from e
         if done.returncode == 0:
             return done
         if missing_ok and done.returncode in NOT_FOUND:
