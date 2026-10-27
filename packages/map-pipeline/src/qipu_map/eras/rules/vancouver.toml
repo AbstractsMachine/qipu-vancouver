@@ -1,0 +1,172 @@
+# Vancouver's era rules, as the map at qipu.org/vancouver uses them.
+#
+# Two rules need no entry here because the data carries them, and both are SOURCED:
+#   a building stands from its tax-roll year built (City of Vancouver property tax report, BC Assessment year_built);
+#   a building is gone from its lot's demolition permit date (City of Vancouver issued building permits, 2017 on).
+# Everything below says whether it is sourced or a convention.
+
+city = "ca/vancouver"
+
+[undated]
+basis = "convention"
+why = "2,572 footprints have no year (parks, schools, exempt land); their neighbours' median is the best guess, capped at the footprint survey"
+radii_m = [60, 120, 250]
+cap_year = 2015
+fallback_year = 1950
+# A tower with no year never takes an old neighbourhood's median: every dated building over 30 m in the West End sample is
+# from 1961 or later, except a 1928 front with a 1989 tower behind it (see [improved]).
+tall_m = 30
+tall_floor_year = 1960
+
+[improved]
+basis = "sourced"
+why = "the roll's big-improvement year dates a tower added to an older building on the same footprint"
+tall_m = 30
+
+[standins]
+basis = "convention"
+why = "the tax roll only knows today's buildings, so without stand-ins the West End is empty in 1930 and 1950 where the air photos show it full"
+radius_m = 80.0
+min_neighbours = 6
+old_share = 0.6
+gap_years = 25
+fallback_year = 1910
+default_height_m = 9.0
+early_year = 1930
+early_max_height_m = 14.0
+evidence_threshold = 0.3
+evidence_margin_years = 5
+max_overlap = 0.3
+# a tower's footprint becomes a row of houses on the city's 33 by 122 ft lots, not one slab
+lot_width_m = 10.0
+lot_depth_m = 37.0
+split_over_m2 = 300.0
+
+[streets]
+# CONVENTION: OpenStreetMap gives no opening year for Vancouver's rail lines; an undated SkyTrain line on a 1950 map is
+# worse than a missing freight spur, so undated rails stand only today.
+undated_rail_in_past = false
+
+# Built-up masks from the National Air Photo Library's Salish mosaics (NRCan, Open Government Licence - Canada).
+# The 1950 photos speak for 1930 to 1954: nothing older covers the whole city.
+[[evidence]]
+name = "napl1950"
+photo_year = 1950
+first_year = 1930
+last_year = 1954
+source = "NRCan National Air Photo Library, napl-salish 1950 mosaic"
+
+[[evidence]]
+name = "napl1959"
+photo_year = 1959
+first_year = 1955
+last_year = 1962
+source = "NRCan National Air Photo Library, napl-salish 1959 mosaic"
+
+# Bridges standing today, with their opening years (Wikidata P1619, CC0, read 5 Oct 2026).
+[[dated]]
+what = "Burrard Bridge"
+layer = "streets"
+basis = "sourced"
+source = "Wikidata Q919808, opened 1 July 1932"
+names = ["Burrard Bridge", "Burrard Street Bridge"]
+opened = 1932
+
+[[dated]]
+what = "Lions Gate Bridge and the Stanley Park Causeway"
+layer = "streets"
+basis = "sourced"
+source = "Wikidata Q124352, opened 14 November 1938 (the causeway with it)"
+names = ["Lions Gate Bridge", "Stanley Park Causeway"]
+opened = 1938
+
+[[dated]]
+what = "Granville Bridge (today's, the third)"
+layer = "streets"
+basis = "sourced"
+source = "Wikidata Q1543294, opened 4 February 1954"
+names = ["Granville Bridge", "Granville Street Bridge"]
+opened = 1954
+
+[[dated]]
+what = "Oak Street Bridge"
+layer = "streets"
+basis = "sourced"
+source = "Wikidata Q2008430, opened 3 July 1957"
+names = ["Oak Street Bridge"]
+opened = 1957
+
+[[dated]]
+what = "Ironworkers Memorial Second Narrows Crossing"
+layer = "streets"
+basis = "sourced"
+source = "Wikidata Q1477359, opened 25 August 1960"
+names = ["Ironworkers Memorial Second Narrows Crossing", "Second Narrows Bridge"]
+opened = 1960
+
+[[dated]]
+what = "Georgia Viaduct (today's)"
+layer = "streets"
+basis = "sourced"
+source = "Wikipedia 'Georgia Viaduct': the new Georgia viaduct opened in 1971"
+names = ["Georgia Viaduct"]
+opened = 1971
+
+[[dated]]
+what = "Dunsmuir Viaduct"
+layer = "streets"
+basis = "sourced"
+source = "Wikipedia 'Georgia Viaduct': the Dunsmuir viaduct opened in January 1972"
+names = ["Dunsmuir Viaduct"]
+opened = 1972
+
+[[dated]]
+what = "Knight Street Bridge"
+layer = "streets"
+basis = "sourced"
+source = "Wikidata Q6422284, opened 15 January 1974"
+names = ["Knight Street Bridge"]
+opened = 1974
+
+[[dated]]
+what = "Arthur Laing Bridge"
+layer = "streets"
+basis = "sourced"
+source = "Wikidata Q710283, opened August 1975"
+names = ["Arthur Laing Bridge"]
+opened = 1975
+
+[[dated]]
+what = "Cambie Bridge (today's, the second)"
+layer = "streets"
+basis = "sourced"
+source = "Wikidata Q278084, opened 8 December 1985"
+names = ["Cambie Bridge", "Cambie Street Bridge"]
+opened = 1985
+
+[[dated]]
+what = "SkyTrain Expo Line"
+layer = "streets"
+basis = "sourced"
+source = "TransLink: Expo Line service began in 1985"
+names = ["Expo Line"]
+opened = 1985
+
+[[dated]]
+what = "SkyTrain Millennium Line"
+layer = "streets"
+basis = "sourced"
+source = "TransLink: Millennium Line service began in 2002"
+names = ["Millennium Line"]
+opened = 2002
+
+[[dated]]
+what = "Canada Line"
+layer = "streets"
+basis = "sourced"
+source = "TransLink: Canada Line service began in 2009"
+names = ["Canada Line"]
+opened = 2009
+
+# Area overrides ([[areas]]) hold a period rule inside a polygon for a span of years. North False Creek as rail
+# yards before Expo 86 is one; it is left out here until its outline is traced from a dated map.
