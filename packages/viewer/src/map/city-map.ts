@@ -1,3 +1,4 @@
+import { clipToPainting } from "./extent";
 import * as L from "leaflet";
 import type { CityConfig } from "../config";
 import type { Blocks } from "../data/blocks";
@@ -93,19 +94,25 @@ export function createCityMap(options: CityMapOptions): CityMap {
     compositorKind = c.kind;
     return c;
   };
+  const clipped = (layer: EraLayer): EraLayer => {
+    clipToPainting(layer, painting, grid.zoomOffset);
+    return layer;
+  };
   const images = tileImages({ capacity: phone ? 160 : 400 });
   const eraLayer = painting.eras
-    ? new EraLayer({
-        manifest: painting.eras,
-        base: city.tiles.base,
-        images,
-        grid,
-        compositor: makeCompositor,
-        year: options.year,
-        tilePx: painting.tile,
-        bounds,
-        maxNativeZoom: zmax - grid.zoomOffset,
-      }).addTo(map)
+    ? clipped(
+        new EraLayer({
+          manifest: painting.eras,
+          base: city.tiles.base,
+          images,
+          grid,
+          compositor: makeCompositor,
+          year: options.year,
+          tilePx: painting.tile,
+          bounds,
+          maxNativeZoom: zmax - grid.zoomOffset,
+        }),
+      ).addTo(map)
     : null;
 
   if (options.view) map.setView(toLatLng([options.view.x, options.view.y]), options.view.zoom);

@@ -2,6 +2,7 @@ import * as L from "leaflet";
 import type { GridOptions } from "../tiles/levels";
 import { type Painting, presentTileExists } from "../tiles/painting";
 import { tileTemplate } from "../tiles/urls";
+import { clipToPainting } from "./extent";
 import { closeSeams } from "./seams";
 
 export interface PyramidLayerOptions {
@@ -36,6 +37,7 @@ export class PyramidLayer extends L.TileLayer {
     this.painting = options.painting;
     this.offset = options.grid.zoomOffset;
     closeSeams(this, options.grid.tileSize);
+    clipToPainting(this, options.painting, options.grid.zoomOffset);
   }
 
   override createTile(coords: L.Coords, done: L.DoneCallback): HTMLElement {

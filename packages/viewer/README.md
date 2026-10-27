@@ -15,7 +15,7 @@ You need Node 20 or newer. From this folder:
 
 ```sh
 make install    # npm ci: exactly the versions in package-lock.json
-make demo       # the demo app at http://localhost:5173
+make demo       # the demo app at http://localhost:5173, opening on Vancouver
 ```
 
 The demo draws the live tiles from tiles.qipu.org (read only) and the block records from a sample in
