@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from qipu_map import cli
-from qipu_map.config import load_city
+from qipu_map.config import CITIES_DIR, load_city
 from qipu_map.errors import StageError
 
 
@@ -44,3 +44,27 @@ def test_a_malformed_city_file_is_a_stage_error(tmp_path: Path, text: str, messa
     path.write_text(text, encoding="utf-8")
     with pytest.raises(StageError, match=message):
         load_city(path)
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    [
+        ("years = [1930, 1950, 1972, 1982]", "years = [1950, 1930]", "increasing and unique"),
+        ("stride_px = 512", "stride_px = 0", "stride_px"),
+        ("bbox = [49.2782, -123.1405, 49.2836, -123.1295]", "bbox = [49.29, -123.1405, 49.28, -123.1295]", "bbox"),
+    ],
+)
+def test_a_value_the_city_file_refuses_is_one_line_and_exit_2(
+    old: str, new: str, message: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    text = (CITIES_DIR / "vancouver.toml").read_text(encoding="utf-8")
+    assert old in text
+    path = tmp_path / "bad.toml"
+    path.write_text(text.replace(old, new), encoding="utf-8")
+    with pytest.raises(StageError, match=message):
+        load_city(path)
+    assert cli.main(["ingest", "--city", str(path), "--work", str(tmp_path)]) == 2
+    err = capsys.readouterr().err
+    assert message in err
+    assert "Traceback" not in err
+    assert err.count("\n") == 1
