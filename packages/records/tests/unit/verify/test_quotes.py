@@ -1,4 +1,5 @@
-from qipu_records.verify.quotes import QuoteStatus, locate
+from qipu_records.verify.quotes import QuoteStatus, locate, locate_across
+from tests.fixtures import real_decisions as pages
 
 PAGE = (
     "Regular Council, February 19, 1974 3\nCOMMUNICATIONS OR PETITIONS (cont'd)\n"
@@ -26,3 +27,14 @@ def test_quote_from_another_page_is_not_found() -> None:
 
 def test_short_quotes_are_not_evidence() -> None:
     assert not locate("Station", PAGE).found
+
+
+def test_a_continued_quote_is_not_found_on_the_heading_page_alone() -> None:
+    assert not locate(pages.CONTINUED_QUOTE_1970, pages.CONTINUED_HEADING_1970).found
+
+
+def test_a_continued_quote_is_found_when_the_page_before_is_at_hand() -> None:
+    match = locate_across(pages.CONTINUED_QUOTE_1970, pages.CONTINUED_HEADING_1970, pages.CONTINUED_FROM_1970)
+    assert match.found
+    assert match.offset == pages.CONTINUED_HEADING_1970.index("Capilano")
+    assert not locate_across(pages.CONTINUED_QUOTE_1970, pages.CONTINUED_HEADING_1970, "Another page.").found

@@ -14,7 +14,7 @@ from tests.conftest import SAMPLE, SavedArchive
 
 def test_demo(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert cli.main(["demo", "--out", str(tmp_path), "--sample", str(SAMPLE)]) == 0
-    assert '"decisions": 33' in capsys.readouterr().out
+    assert '"decisions": 32' in capsys.readouterr().out
     assert (tmp_path / "decisions.geojson").exists()
 
 

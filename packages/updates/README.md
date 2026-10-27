@@ -7,7 +7,7 @@ and how to add a source: [docs/updates.md](../../docs/updates.md).
 
 The status that `make demo` prints for the second run: what changed, what the model read, the gates and the releases.
 
-![The second demo run: one new meeting, 33 records, all eight gates passing, and the list of two published releases](docs/status-output.webp)
+![The second demo run: one new meeting, 33 records (32 since the field checks hold back one), all eight gates passing, and the list of two published releases](docs/status-output.webp)
 
 ## Quickstart
 

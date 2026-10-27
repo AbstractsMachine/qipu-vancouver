@@ -57,13 +57,32 @@ def _item_date(item: Item) -> dt.date | None:
 def _find_quote(entry: ModelItem, page: Page, previous: Page | None) -> tuple[quotes.QuoteMatch, bool]:
     """Where the item's quote is, on this page or the previous one, and whether it was found on this page."""
     quote = entry.get("quote") or ""
-    order = [(previous, False), (page, True)] if entry.get("heading_on_prev") else [(page, True), (previous, False)]
-    for candidate, on_this_page in order:
-        if candidate is not None:
-            match = quotes.locate(quote, candidate.text)
+    before = previous.text if previous is not None else None
+    if entry.get("heading_on_prev"):
+        order = [(before, None, False), (page.text, before, True)]
+    else:
+        order = [(page.text, before, True), (before, None, False)]
+    for text, page_before, on_this_page in order:
+        if text is not None:
+            match = quotes.locate_across(quote, text, page_before)
             if match.found:
                 return match, on_this_page
     return quotes.NOT_FOUND, True
+
+
+def _spans(page: Page, previous: Page | None, found: list[tuple[quotes.QuoteMatch, bool]]) -> list[str]:
+    """The text of each item: from its quote to the next item's quote on the page, or to the end of the page."""
+    starts = sorted({m.offset or 0 for m, here in found if m.found and here})
+    out: list[str] = []
+    for match, here in found:
+        at = match.offset or 0
+        if here:
+            end = next((s for s in starts if s > at), len(page.text))
+            out.append(page.text[at:end])
+        else:
+            end = starts[0] if starts else len(page.text)
+            out.append((previous.text[at:] if previous else "") + "\n" + page.text[:end])
+    return out
 
 
 def _pages_by_item(pages: list[Page]) -> dict[str, list[Page]]:
@@ -99,12 +118,13 @@ def build_records(ctx: Context, collection: Collection) -> tuple[list[DecisionRe
         if isinstance(pc, Page):
             continue
         summary.pages_read += 1
-        for seq, entry in enumerate(pc.reading.items, start=1):
-            match, on_this_page = _find_quote(entry, pc.page, pc.previous)
+        found = [_find_quote(entry, pc.page, pc.previous) for entry in pc.reading.items]
+        spans = _spans(pc.page, pc.previous, found)
+        for seq, (entry, (match, on_this_page), span) in enumerate(zip(pc.reading.items, found, spans, strict=True), 1):
             if not match.found:
                 rejected.append(_rejected(ctx, pc, seq, entry))
                 continue
-            record = decision_record(ctx, pc, seq, entry, match=match, on_this_page=on_this_page)
+            record = decision_record(ctx, pc, seq, entry, match=match, on_this_page=on_this_page, span=span)
             records.append(record)
             _count(summary.counts, record)
     summary.decisions, summary.rejected = len(records), len(rejected)
@@ -125,6 +145,8 @@ def _count(counts: Counter[str], record: DecisionRecord) -> None:
     counts["dated"] += record["date"] is not None
     counts["placed"] += any("lat" in place for place in record["places"])
     counts["with_names_withheld"] += record["names_withheld"]
+    counts["fields_corrected"] += any(c["result"] == "corrected" for c in record["checks"])
+    counts["fields_in_conflict"] += any(c["result"] == "conflict" for c in record["checks"])
 
 
 def build(ctx: Context, collection: Collection) -> Summary:
