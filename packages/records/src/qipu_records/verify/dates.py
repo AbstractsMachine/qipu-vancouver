@@ -9,6 +9,11 @@ new year, and one page can close one meeting and open the next. Dates come from 
   page;
 * a page without either carries the meeting in progress from the page before.
 
+The Vancouver scans also carry a clerk's date stamp at the top ("JUN 9 1970"). On a report bound into the minutes
+("Board of Administration, June 5, 1970") the stamp names the council meeting it came to, so it dates the page. It never
+overrides the head of a council meeting, and a stamp alone never overrides the meeting in progress: on scan page 21 of
+CVAN_1967-05-30 a "JUN 14 1967" stamp sits over the garbled head of the June 1 meeting.
+
 A printed weekday must agree with the date. When OCR has garbled a digit ("Monday, July 21, 1989" for the 24th) the line
 dates nothing, which is better than a wrong date. Dates of other events mentioned in the text ("adjourned to meet on
 Monday, February 18") sit in the body of the page and are not mistaken for headers.
@@ -86,13 +91,48 @@ def parse_date(match: re.Match[str]) -> dt.date | None:
     return date
 
 
-def running_head(text: str) -> dt.date | None:
-    """The date in the running head at the top of a page, if there is one."""
-    for match in DATE_LINE.finditer(text[:HEADER_ZONE]):
+# "JUN 14 1967": a three-letter month in capitals and no comma before the year, as the clerk's stamp prints it.
+_STAMP = re.compile(r"[A-Z]{3}\.?\s{0,3}\d{1,2}\s{1,3}(?:18|19|20)[\dOo]{2}")
+_REPORT_HEAD = re.compile(r"board\s+of\s+admin|report", re.I)
+
+
+@dataclass(frozen=True)
+class _Head:
+    date: dt.date
+    report: bool
+    """the head of a report bound into the minutes, whose date is the report's, not the meeting's"""
+
+
+def _heads(text: str) -> tuple[_Head | None, dt.date | None]:
+    """The first running head at the top of a page and the first date stamp, either None where there is none."""
+    zone = text[:HEADER_ZONE]
+    head: _Head | None = None
+    stamp: dt.date | None = None
+    for match in DATE_LINE.finditer(zone):
         date = parse_date(match)
-        if date is not None:
-            return date
-    return None
+        if date is None:
+            continue
+        if _STAMP.fullmatch(match.group(0)):
+            stamp = stamp or date
+        elif head is None:
+            before = _STAMP.sub(" ", zone[: match.start()])
+            head = _Head(date, bool(_REPORT_HEAD.search(before)))
+    return head, stamp
+
+
+def running_head(text: str) -> dt.date | None:
+    """The date in the running head at the top of a page, if there is one. A date stamp is not a running head."""
+    head, _ = _heads(text)
+    return head.date if head else None
+
+
+def _page_date(text: str, meeting_in_progress: bool) -> dt.date | None:
+    head, stamp = _heads(text)
+    if head is not None and not head.report:
+        return head.date
+    if stamp is not None and (head is not None or not meeting_in_progress):
+        return stamp
+    return head.date if head else None
 
 
 def meeting_openings(text: str) -> list[tuple[int, dt.date]]:
@@ -118,7 +158,7 @@ def date_pages(texts: Sequence[str], item_date: dt.date | None = None) -> list[P
     out: list[PageDates] = []
     for text in texts:
         openings = tuple(meeting_openings(text))
-        head = running_head(text)
+        head = _page_date(text, read_from_pages)
         if openings and openings[0][0] < HEADER_ZONE:
             out.append(PageDates(openings[0][1], DateSource.MEETING_OPENS, openings))
         elif head is not None:
