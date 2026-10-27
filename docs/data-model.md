@@ -17,13 +17,14 @@
 | `zoning` | `rezoned` (final passage only), `rezoning proposed`, or `null` |
 | `summary` | one plain sentence written by the model |
 | `quote` | the first words of the item's heading, copied from the OCR |
-| `quote_check` | `exact` or `fuzzy`: how the quote was found on the page. Items whose quote was not found are in `rejected.jsonl` instead |
+| `quote_check` | `exact` or `fuzzy`: how the quote was found on the page. Items whose quote was not found are in `rejected.jsonl` instead. A quote that glues a "(Cont'd.)" heading to words on the page before is found only when both pages are at hand |
 | `vote` | `ayes`, `noes`, `absent` counts and names when a roll call is printed for the item, else `null`. Many minutes only say "CARRIED" |
 | `mover`, `seconder` | as printed |
 | `money` | amounts with `currency`, `purpose` and `payee` |
 | `parties` | people and organisations with a role: `claimant`, `contractor`, `appointee`, `owner`, `applicant`, `payee`, `grantee`, `grantor`, `petitioner`, `employee`, `sponsor`, `other` |
 | `places` | each place as printed, with its `precision`; placed ones add `lat`, `lon` and `placed_as` (`address`, `intersection` or `area`) |
 | `topics` | broad subjects such as `housing`, `parks`, `transit` |
+| `checks` | the model's fields checked against the words of the cited page (`qipu_records.verify.fields`): each `{field, result, why}`, with `result` `corrected` (the published value is the page's; `was` is the model's) or `conflict` (left as read, in doubt). Checked: `outcome` against the CARRIED/LOST verdicts, `amended` against the amendment's own verdict, `vote` against "voted against"/"opposed" lines, and the years a `summary` names. Empty when all agree |
 | `names_withheld` | `true` when a private person's name was withheld (see [privacy.md](privacy.md)) |
 | `source` | `item`, `title`, `ocr_page`, `page_url` (the page in the archive.org viewer, or `null` when it cannot be placed exactly), `item_url`, `licence`, `archive` |
 | `reading` | the `model` and `prompt_version` that read the page |
@@ -36,7 +37,8 @@
 looked at.
 
 `summary.json` counts pages, pages read, decisions, rejected items, and how many records were found exactly or fuzzily,
-dated, linked to a page, placed on the map and had names withheld.
+dated, linked to a page, placed on the map, had names withheld, had a field corrected from the page
+(`fields_corrected`) and had a field in conflict with it (`fields_in_conflict`).
 
 ## Block shards
 

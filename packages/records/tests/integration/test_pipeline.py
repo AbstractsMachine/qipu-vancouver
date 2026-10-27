@@ -34,7 +34,7 @@ def built(sample_copy: Path) -> Path:
 
 def test_every_decision_is_quoted_dated_and_linked(built: Path) -> None:
     records = _records(built)
-    assert len(records) == 33
+    assert len(records) == 32
     for record in records:
         assert record["quote_check"] in ("exact", "fuzzy")
         assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", record["date"])
@@ -83,8 +83,8 @@ def test_map_data_matches_the_records(built: Path) -> None:
 def test_summary_counts_each_check(built: Path) -> None:
     summary = json.loads((built / "summary.json").read_text(encoding="utf-8"))
     assert summary == {
-        "pages": 9, "pages_read": 9, "decisions": 33, "rejected": 0, "dated": 33, "linked_to_page": 33, "placed": 9,
-        "quote_exact": 31, "quote_fuzzy": 2, "with_names_withheld": 1,
+        "pages": 9, "pages_read": 9, "decisions": 32, "rejected": 1, "dated": 32, "linked_to_page": 32, "placed": 9,
+        "quote_exact": 31, "quote_fuzzy": 1, "with_names_withheld": 1, "fields_corrected": 2, "fields_in_conflict": 0,
     }  # fmt: skip
 
 
@@ -96,9 +96,11 @@ def test_an_invented_item_is_rejected_not_published(sample_copy: Path) -> None:
     rows[0]["items"].append(invented)
     (sample_copy / "readings.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
     summary = build(_context(), Collection(sample_copy))
-    assert (summary.decisions, summary.rejected) == (33, 1)
+    assert (summary.decisions, summary.rejected) == (32, 2)
     [rejected] = [
-        json.loads(line) for line in (sample_copy / "rejected.jsonl").read_text(encoding="utf-8").splitlines()
+        row
+        for row in map(json.loads, (sample_copy / "rejected.jsonl").read_text(encoding="utf-8").splitlines())
+        if "monorail" in row["quote"]
     ]
     assert rejected["reason"] == "quote not found on the page"
     assert all("monorail" not in r["quote"] for r in _records(sample_copy))
@@ -130,3 +132,26 @@ def test_a_rejected_item_keeps_the_privacy_rule(sample_copy: Path) -> None:
     rejected = (sample_copy / "rejected.jsonl").read_text(encoding="utf-8")
     assert "Quill" not in rejected
     assert "Claim of [name withheld] for injuries" in rejected
+
+
+def test_the_model_fields_a_review_found_wrong_are_corrected_or_held_back(built: Path) -> None:
+    """Four records a review checked against the archive.org pages (19700609 scan pages 10-11, 19740219 scan page 1)."""
+    records = {r["id"]: r for r in _records(built)}
+    # The quote glues the "(Cont'd.)" heading of scan page 10 to words printed on scan page 9, which is not in the
+    # sample: it cannot be checked on the pages at hand, so the item is not published (its summary also said "2019").
+    assert "19700609:10/1" not in records
+    rejected = [json.loads(line) for line in (built / "rejected.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert [r["id"] for r in rejected] == ["19700609:10/1"]
+    # "THAT no further action be taken on this development permit application ... - CARRIED"
+    ymca = records["19700609:10/2"]
+    assert (ymca["outcome"], ymca["checks"][0]["was"]) == ("refused", "unknown")
+    # "MOVED by Ald. Phillips, in Amendment, ... - LOST"; the main motion was then put and CARRIED.
+    iwa = records["19700609:11/2"]
+    assert (iwa["outcome"], iwa["amended"]) == ("passed", False)
+    assert iwa["checks"] == [
+        {"field": "amended", "result": "corrected", "why": "the amendment moved was LOST", "was": True}
+    ]
+    # "- CARRIED (Alderman Massey voted against the motion)"
+    birks = records["19740219:1/1"]
+    assert birks["vote"] is not None
+    assert birks["vote"]["noes_names"] == ["Massey"]

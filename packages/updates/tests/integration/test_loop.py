@@ -68,7 +68,7 @@ def test_a_new_meeting_is_the_only_thing_processed(example: Path, tmp_path: Path
     assert (first.status, first.release, first.records, first.pages_read) == (
         "published",
         "2026-10-19.1",
-        11,
+        10,
         PAGES_1970,
     )
 
@@ -77,7 +77,7 @@ def test_a_new_meeting_is_the_only_thing_processed(example: Path, tmp_path: Path
     assert second.plan == {"new": 1, "changed": 0, "unchanged": 1, "missing": 0}
     assert second.documents_built == ["19740219"]
     assert second.pages_read == PAGES_1974
-    assert (second.release, second.records, second.records_before) == ("2026-10-26.1", 33, 11)
+    assert (second.release, second.records, second.records_before) == ("2026-10-26.1", 32, 10)
 
     releases = tmp_path / "store" / "releases"
     old = (releases / "2026-10-19.1" / "records" / "19700609.jsonl").read_bytes()
@@ -93,7 +93,7 @@ def test_every_record_traces_to_a_page_a_prompt_and_a_run(example: Path, tmp_pat
     run(example, tmp_path, DAY2, "day2")
     manifest = rel.manifest(store(tmp_path), "2026-10-26.1")
     assert manifest is not None
-    assert manifest.counts == {"documents": 2, "records": 33, "withdrawn": 0}
+    assert manifest.counts == {"documents": 2, "records": 32, "withdrawn": 0}
     for record in published_records(tmp_path, "2026-10-26.1"):
         assert record["reading"] == {"model": "claude-haiku-5-5", "prompt_version": manifest.build_key.split("|")[1]}
         provenance = record["provenance"]
@@ -106,7 +106,7 @@ def test_every_record_traces_to_a_page_a_prompt_and_a_run(example: Path, tmp_pat
 def test_a_rerun_with_nothing_new_publishes_nothing(example: Path, tmp_path: Path) -> None:
     run(example, tmp_path, DAY2, "day2")
     again = run(example, tmp_path, DAY2, "day2-again")
-    assert (again.status, again.pages_read, again.records) == ("no-change", 0, 33)
+    assert (again.status, again.pages_read, again.records) == ("no-change", 0, 32)
     assert rel.versions(store(tmp_path)) == ["2026-10-26.1"]
 
 
@@ -136,7 +136,7 @@ def test_a_correction_withdraws_a_record_in_every_later_release(example: Path, t
         example, {"rule_id": "c1", "action": "drop", "where": {"id": target}, "reason": "not a decision", "min_rows": 1}
     )
     second = run(example, tmp_path, DAY2, "day2")
-    assert (second.status, second.records) == ("published", 32)
+    assert (second.status, second.records) == ("published", 31)
     withdrawn = (tmp_path / "store" / "releases" / "2026-10-26.1" / "withdrawn.jsonl").read_text(encoding="utf-8")
     assert json.loads(withdrawn)["id"] == target
 
@@ -153,7 +153,7 @@ def test_a_failed_gate_stops_the_publish(example: Path, tmp_path: Path) -> None:
     run(example, tmp_path, DAY1, "day1")
     quote = str(published_records(tmp_path, "2026-10-19.1")[0]["quote"])
     set_rules(
-        example, {"rule_id": "bad", "action": "replace_text", "find": quote[:20], "replace": "Something else entirely"}
+        example, {"rule_id": "bad", "action": "replace_text", "find": quote, "replace": "Something else entirely"}
     )
     refused = run(example, tmp_path, DAY2, "day2")
     assert refused.status == "refused"
@@ -172,7 +172,7 @@ def test_the_page_budget_carries_work_to_the_next_run(example: Path, tmp_path: P
     assert (partial.status, partial.pages_read, partial.documents_left) == ("no-change", 4, ["19740219"])
     assert "left for the next run: 19740219" in partial.detail
     rest = run(example, tmp_path, DAY2, "day2-later")
-    assert (rest.status, rest.pages_read, rest.readings_reused, rest.records) == ("published", 2, 4, 33)
+    assert (rest.status, rest.pages_read, rest.readings_reused, rest.records) == ("published", 2, 4, 32)
 
 
 def test_a_short_listing_fails_the_run_instead_of_dropping_records(example: Path, tmp_path: Path) -> None:
@@ -204,7 +204,7 @@ def test_rollback_pauses_publishing_until_resumed(example: Path, tmp_path: Path)
 
 def test_a_dry_run_writes_nothing_to_the_store(example: Path, tmp_path: Path) -> None:
     report = run(example, tmp_path, DAY2, "dry", dry_run=True)
-    assert (report.status, report.release, report.records) == ("dry-run", "2026-10-26.1", 33)
+    assert (report.status, report.release, report.records) == ("dry-run", "2026-10-26.1", 32)
     assert store(tmp_path).list("") == []
 
 
@@ -226,7 +226,7 @@ def test_a_windowed_source_may_list_fewer_documents_than_the_release_holds(examp
     run(example, tmp_path, DAY2, "day2")
     (example / "updates" / "arrivals.json").write_text("[]", encoding="utf-8")
     later = run(example, tmp_path, DAY3, "day3", windowed=True)
-    assert (later.status, later.plan["missing"], later.records) == ("no-change", 2, 33)
+    assert (later.status, later.plan["missing"], later.records) == ("no-change", 2, 32)
 
 
 def test_records_of_an_unfinished_rescan_are_still_checked_against_their_own_pages(

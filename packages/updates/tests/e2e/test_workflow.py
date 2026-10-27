@@ -84,7 +84,7 @@ def test_a_dry_run_builds_and_checks_but_writes_nothing(tmp_path: Path) -> None:
     done = run_step(tmp_path, DRY_RUN="1")
     assert done.returncode == 0, done.stdout + done.stderr
     report = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))
-    assert (report["status"], report["plan"]["new"], report["records"]) == ("dry-run", 2, 33)
+    assert (report["status"], report["plan"]["new"], report["records"]) == ("dry-run", 2, 32)
     assert all(g["passed"] for g in report["gates"].values())
     assert not (tmp_path / "updates-state" / "store").exists() or not any(
         (tmp_path / "updates-state" / "store").rglob("*")

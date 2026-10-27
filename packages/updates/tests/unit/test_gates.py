@@ -139,6 +139,14 @@ def test_release_gates_catch_a_halved_release_a_zero_filled_file_and_a_bad_corre
     assert (gate.passed, gate.findings[0].record_id) == (False, "c1")
 
 
+def test_an_outcome_corrected_from_the_page_verdict_passes_only_with_its_check() -> None:
+    corrected = {"field": "outcome", "result": "corrected", "why": "the motion was CARRIED", "was": "unknown"}
+    fixed = record("m:0/1", action="other", stage=None, outcome="passed", checks=[corrected])
+    bare = record("m:0/2", action="other", stage=None, outcome="passed")
+    result = outcomes.check([fixed, bare])
+    assert [f.record_id for f in result.findings] == ["m:0/2"]
+
+
 def test_a_date_no_meeting_of_the_item_was_held_on_fails_even_when_the_reader_agrees(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

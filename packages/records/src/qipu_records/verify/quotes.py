@@ -3,7 +3,12 @@
 Every decision the model lists carries a quote: the first words of the item's heading, copied from the OCR. A decision
 is only as good as that quote, so each one is looked up again in the page text before it is published. OCR text is noisy
 and models tidy it up a little, so the lookup ignores case and runs of whitespace, and falls back to a fuzzy match of
-the quote's opening words.
+the whole quote.
+
+A quote may run over a page break: the model glues the "(Cont'd.)" heading at the top of a page to the words that
+opened the item on the page before ("Capilano Stadium: Future Uses (Cont'd.) Subsequent to the last meeting of the
+Sub-Committee the Board", 19700609 scan pages 9-10). Such a quote is found only when both pages are at hand: the heading
+on the cited page and the rest on the page before it. On one page alone it is not found.
 """
 
 from __future__ import annotations
@@ -21,6 +26,10 @@ MIN_QUOTE_CHARS = 8
 FUZZY_PREFIX_CHARS = 60
 FUZZY_MIN_BLOCK = 20
 FUZZY_MIN_RATIO = 0.6
+FUZZY_MAX_CHARS = 300
+"""A fuzzy match is scored over the whole quote, up to this length, not just its opening words."""
+
+_CONTINUED = re.compile(r"\(\s*cont(?:'|’)?(?:inue)?d\.?\s*\)\.?", re.I)
 
 
 class QuoteStatus(StrEnum):
@@ -64,8 +73,45 @@ def normalise(text: str) -> tuple[str, list[int]]:
     return "".join(out), offsets
 
 
+def continuation(quote: str) -> tuple[str, str] | None:
+    """A quote that glues a "(Cont'd.)" heading to more words, split into (heading, rest); else None."""
+    marker = _CONTINUED.search(quote)
+    if marker is None:
+        return None
+    rest = quote[marker.end() :].strip()
+    if len(rest) < MIN_QUOTE_CHARS:
+        return None
+    return quote[: marker.end()], rest
+
+
 def locate(quote: str, text: str) -> QuoteMatch:
-    """Where the quote is on the page: an exact match after normalising, else a fuzzy match of its opening words."""
+    """Where the quote is on the page: an exact match after normalising, else a fuzzy match of the whole quote.
+
+    A quote that runs on past a "(Cont'd.)" heading is found only if the words after the heading are on the page too.
+    """
+    match = _locate(quote, text)
+    split = continuation(quote)
+    if match.found and split is not None and match.status is not QuoteStatus.EXACT:
+        rest = _locate(split[1], text)
+        if not rest.found or (rest.offset or 0) < (match.offset or 0):
+            return NOT_FOUND
+    return match
+
+
+def locate_across(quote: str, text: str, previous: str | None) -> QuoteMatch:
+    """Where the quote is on the page; a "(Cont'd.)" quote may have its heading here and the rest on the page before."""
+    match = locate(quote, text)
+    split = continuation(quote)
+    if match.found or split is None or previous is None:
+        return match
+    heading, rest = _locate(split[0], text), _locate(split[1], previous)
+    if not (heading.found and rest.found):
+        return NOT_FOUND
+    status = QuoteStatus.EXACT if heading.status is rest.status is QuoteStatus.EXACT else QuoteStatus.FUZZY
+    return QuoteMatch(status, heading.offset, min(heading.score, rest.score))
+
+
+def _locate(quote: str, text: str) -> QuoteMatch:
     needle = _WHITESPACE.sub(" ", quote.strip().lower())
     if len(needle) < MIN_QUOTE_CHARS:
         return NOT_FOUND
@@ -84,9 +130,10 @@ def _fuzzy(needle: str, haystack: str, offsets: list[int]) -> QuoteMatch:
     )
     if block.size < FUZZY_MIN_BLOCK:
         return NOT_FOUND
+    whole = needle[:FUZZY_MAX_CHARS]
     start = max(0, block.a - block.b)
-    window = haystack[start : start + len(needle[:80])]
-    ratio = difflib.SequenceMatcher(None, window, needle[:80]).ratio()
+    window = haystack[start : start + len(whole)]
+    ratio = difflib.SequenceMatcher(None, window, whole).ratio()
     if ratio < FUZZY_MIN_RATIO:
         return NOT_FOUND
     return QuoteMatch(QuoteStatus.FUZZY, offsets[start], round(ratio, 3))
