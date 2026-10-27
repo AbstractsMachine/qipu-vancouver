@@ -97,7 +97,10 @@ make e2e      # the whole sample chain, as `make sample`, with checks on the rel
 
 496 unit and integration tests run in about 40 seconds, with 98 % line coverage. The integration tests run the stages
 together on a corner of the sample; the end-to-end test runs the whole sample. Blender and the image model are not run
-in CI: their drivers are tested with the subprocess and the model mocked, and the stand-ins exercise everything after them.
+in CI, because both need a GPU: their drivers are tested with the subprocess and the model mocked, and the stand-ins exercise
+everything after them. `tests/integration/test_chain_to_paint.py` runs every stage up to the paint on a CPU. The paint stage
+itself runs in CI only with fake painters (`tests/unit/paint`); the real model runs by hand with `make sample-gpu`, and the
+tests that need a GPU carry the `gpu` marker and are never selected by `make check`.
 
 ## Limitations
 
