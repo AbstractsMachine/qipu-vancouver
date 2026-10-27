@@ -19,7 +19,7 @@ from typing import Any
 
 from qipu_records.fetch.archive import Item
 from qipu_records.link.pagemap import PageMap
-from qipu_records.read.readers import Reading, reading_from_row
+from qipu_records.read.readers import Reading, load_readings
 
 
 @dataclass(frozen=True)
@@ -93,8 +93,7 @@ class Collection:
         path = self.path("readings.jsonl")
         if not path.exists():
             return {}
-        readings = (reading_from_row(row) for row in read_jsonl(path))
-        return {reading.page_id: reading for reading in readings}
+        return load_readings(path)
 
     def append_reading(self, reading: Reading) -> None:
         row = {

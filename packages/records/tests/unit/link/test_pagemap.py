@@ -1,3 +1,10 @@
+import json
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
+
+import pytest
+
 from qipu_records.fetch.archive import book_prefix
 from qipu_records.link.pagemap import build_map, fetch_map, manifest_zip, page_url, shown_images, zip_images
 from tests.conftest import SavedArchive
@@ -54,3 +61,30 @@ def test_book_prefix_is_read_from_the_file_list() -> None:
 
 def test_map_of_a_real_item_from_its_saved_responses(saved_archive: SavedArchive) -> None:
     assert fetch_map(saved_archive, "19700609") == [0, 1, 2, 3, 4]
+
+
+class _OddArchive(SavedArchive):
+    """The saved item, with archive.org's metadata changed by `edit`."""
+
+    def __init__(self, cache_dir: Path, edit: Callable[[dict[str, Any]], None]) -> None:
+        super().__init__(cache_dir)
+        self.edit = edit
+
+    def get_text(self, url: str, cache_name: str) -> str:
+        text = super().get_text(url, cache_name)
+        if url.startswith("https://archive.org/metadata/"):
+            record = json.loads(text)
+            self.edit(record)
+            text = json.dumps(record)
+        return text
+
+
+@pytest.mark.parametrize(
+    "edit",
+    [
+        lambda r: r.update(server="evil.example.com"),  # never build a URL on a host that is not archive.org's
+        lambda r: r.pop("dir"),  # an unexpected shape is no page map, not a failed fetch
+    ],
+)
+def test_odd_metadata_gives_no_page_map(tmp_path: Path, edit: Callable[[dict[str, Any]], None]) -> None:
+    assert fetch_map(_OddArchive(tmp_path, edit), "19700609") is None
