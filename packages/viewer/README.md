@@ -21,7 +21,7 @@ The demo draws the live tiles from tiles.qipu.org (read only) and the block reco
 Pleasant in Vancouver. Try:
 
 - `?city=sf&year=1906&at=95.3,49.2,6.25&block=3531`: the Mission the summer after the fire, one block's record open
-- `?city=vancouver&year=1950&at=99,35.8,6.5`: Strathcona and the False Creek flats in 1950
+- `?city=vancouver&year=1950&at=85,40,6.5`: the False Creek flats in 1950, rail yards and sawmills
 - `?gl=0`: the same pictures drawn without WebGL
 - `?tiles=<release folder>`: a release written by the map pipeline (`qipu-tiles/1`), over Vancouver's records
 
