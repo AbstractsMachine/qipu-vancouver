@@ -68,3 +68,24 @@ def test_the_san_francisco_config_reads_legistar_with_a_live_model() -> None:
         "anthropic",
         "rclone",
     )
+
+
+BASE = '[city]\nkey = "x"\n[source]\nkind = "archive"\n[reader]\nkind = "replay"\n[publish]\n'
+
+
+@pytest.mark.parametrize(
+    ("extra", "message"),
+    [
+        ('[source]\nkind = "archive"\nevery = "0h"\n', "at least 1h"),
+        ("[gates]\nquote_on_page = 1.5\n", "whole number"),
+        ("[gates]\nquote_on_page = -1\n", "whole number"),
+        ('corrections = "x"\n', r"\[corrections\] table"),
+        ("[city\n", "not valid TOML"),
+    ],
+)
+def test_a_malformed_config_is_a_config_error(tmp_path: Path, extra: str, message: str) -> None:
+    path = tmp_path / "c.toml"
+    text = BASE.replace('[source]\nkind = "archive"\n', extra) if extra.startswith("[source]") else extra + BASE
+    path.write_text(text, encoding="utf-8")
+    with pytest.raises(cfg.ConfigError, match=message):
+        cfg.load(path)

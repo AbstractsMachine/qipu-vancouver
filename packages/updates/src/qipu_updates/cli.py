@@ -15,7 +15,8 @@ import sys
 from pathlib import Path
 
 from qipu_records.cities import get_city
-from qipu_updates.config import Config, format_every, load
+from qipu_records.read.readers import ReaderConfigError
+from qipu_updates.config import Config, ConfigError, format_every, load
 from qipu_updates.incremental.extract import Extractor
 from qipu_updates.incremental.workspace import Workspace
 from qipu_updates.loop import Options, Run
@@ -37,14 +38,30 @@ def _store(args: argparse.Namespace, config: Config) -> Store:
     return make_store(config.publish, Path(args.store) if args.store else None)
 
 
+def _date(text: str) -> dt.date:
+    try:
+        return dt.date.fromisoformat(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"not a date in YYYY-MM-DD form: {text!r}") from None
+
+
+def _positive(text: str) -> int:
+    if not text.isdigit() or int(text) < 1:
+        raise argparse.ArgumentTypeError(f"must be a whole number of at least 1, not {text!r}")
+    return int(text)
+
+
 def cmd_run(args: argparse.Namespace, config: Config) -> int:
     now = _now()
     if args.as_of:  # run as if today were that date: replays and tests
-        now = dt.datetime.combine(dt.date.fromisoformat(args.as_of), now.timetz())
+        now = dt.datetime.combine(args.as_of, now.timetz())
     as_of = now.date()
     run_id = args.run_id or f"{now:%Y%m%dT%H%M%SZ}-{secrets.token_hex(3)}"
     work = Path(args.work or Path(".updates-work") / config.name)
-    city = get_city(config.city)
+    try:
+        city = get_city(config.city)
+    except ValueError as error:
+        raise ConfigError(f"[city] key: {error}") from error
     extractor = Extractor(city, make_reader(config.reader), config.reader.model, as_of, config.gazetteer)
     run = Run(config, _store(args, config), Workspace(work), make_source(config.source, work / "cache"), extractor)
     report = run(Options(run_id, as_of, now, dry_run=args.dry_run, force=args.force, publish=not args.no_publish))
@@ -130,7 +147,9 @@ def parser() -> argparse.ArgumentParser:
     p = command("run", "one scheduled run: find what changed, extract it, check, release, publish")
     p.add_argument("--work", help="the working copy kept between runs (default .updates-work/<name>)")
     p.add_argument(
-        "--as-of", help="run as if today were this date (YYYY-MM-DD): for replays and tests, on a scratch store"
+        "--as-of",
+        type=_date,
+        help="run as if today were this date (YYYY-MM-DD): for replays and tests, on a scratch store",
     )
     p.add_argument("--run-id", default=os.environ.get("GITHUB_RUN_ID"))
     p.add_argument("--dry-run", action="store_true", help="do everything but write to the store")
@@ -141,7 +160,7 @@ def parser() -> argparse.ArgumentParser:
     p.set_defaults(run=cmd_run)
 
     p = command("status", "what is published, whether paused, the last runs")
-    p.add_argument("--last", type=int, default=10)
+    p.add_argument("--last", type=_positive, default=10, help="how many recent runs to list")
     p.set_defaults(run=cmd_status)
 
     command("releases", "every release in the store; * marks the published one").set_defaults(run=cmd_releases)
@@ -168,8 +187,16 @@ def parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run one command. Exit 0 on success, 1 for a failed run, 2 for a bad config or setup, 3 for a refused release."""
     args = parser().parse_args(argv)
-    code: int = args.run(args, load(Path(args.config)))
+    try:
+        code: int = args.run(args, load(Path(args.config)))
+    except (ConfigError, ReaderConfigError) as error:
+        print(f"qipu-updates: {error}", file=sys.stderr)
+        return 2
+    except FileNotFoundError as error:
+        print(f"qipu-updates: no such file: {error.filename}", file=sys.stderr)
+        return 2
     return code
 
 
