@@ -3,6 +3,10 @@
 The published stage and outcome must be what qipu-records' rule gives for the recorded action, and a rezoning is
 "rezoned" only when a by-law or resolution was finally passed. A correction, or a record carried over from an older
 extractor, can break either rule.
+
+The one exception is an outcome qipu-records corrected from the verdict printed on the page (an `unknown` action whose
+motion was CARRIED, a `passed` one whose every motion was LOST): the record then lists that correction in `checks`, with
+the outcome the action gave as `was`.
 """
 
 from __future__ import annotations
@@ -24,7 +28,13 @@ def check(records: list[dict[str, Any]], limit: int = 0) -> GateResult:
         action = str(record.get("action") or "other")
         stage, outcome = stage_and_outcome(action)
         rid = str(record["id"])
-        if record.get("outcome") != outcome.value or record.get("stage") != stage:
+        corrected = {
+            str(c.get("was"))
+            for c in record.get("checks") or []
+            if c.get("field") == "outcome" and c.get("result") == "corrected"
+        }
+        outcome_follows = record.get("outcome") == outcome.value or outcome.value in corrected
+        if not outcome_follows or record.get("stage") != stage:
             shown = f"outcome '{record.get('outcome')}' / stage '{record.get('stage')}'"
             result.findings.append(Finding(rid, f"{shown} does not follow from action '{action}'"))
         elif record.get("zoning") == "rezoned" and not (

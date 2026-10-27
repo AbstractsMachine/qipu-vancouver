@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from qipu_records.verify.privacy import WITHHELD
-from qipu_records.verify.quotes import locate
+from qipu_records.verify.quotes import locate, locate_across
 from qipu_updates.gates import Finding, GateResult, PageTexts, page_id_of, previous_page_id
 
 MIN_PIECE = 12
@@ -24,8 +24,11 @@ def pieces(quote: str) -> list[str]:
 
 
 def on_page(piece: str, page: str, previous: str | None) -> bool:
-    """True when the piece of quote is on the page, or on the page before it (a quote may run over the page break)."""
-    return locate(piece, page).found or (previous is not None and locate(piece, previous).found)
+    """True when the piece of quote is on the page, or on the page before it (a quote may run over the page break).
+
+    A quote that glues a "(Cont'd.)" heading on this page to words on the page before is found only with both pages.
+    """
+    return locate_across(piece, page, previous).found or (previous is not None and locate(piece, previous).found)
 
 
 def check(records: list[dict[str, Any]], pages: PageTexts, limit: int = 0) -> GateResult:

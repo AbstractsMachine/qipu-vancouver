@@ -62,8 +62,8 @@ def test_two_runs_a_rollback_and_a_resume(example: Path, tmp_path: Path, capsys:
     capsys.readouterr()
     main(example, tmp_path, "releases")
     assert capsys.readouterr().out.splitlines() == [
-        "  2026-10-19.1       11 records  gates passed  run a",
-        "* 2026-10-26.1       33 records  gates passed  run b",
+        "  2026-10-19.1       10 records  gates passed  run a",
+        "* 2026-10-26.1       32 records  gates passed  run b",
     ]
     assert main(example, tmp_path, "rollback", "--reason", "a wrong date") == 0
     assert "latest is now 2026-10-19.1 (was 2026-10-26.1)" in capsys.readouterr().out

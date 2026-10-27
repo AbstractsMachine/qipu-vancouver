@@ -33,13 +33,15 @@ make serve    # then open http://localhost:8000/map-preview/
 {
  "pages": 9,
  "pages_read": 9,
- "decisions": 33,
- "rejected": 0,
- "dated": 33,
- "linked_to_page": 33,
+ "decisions": 32,
+ "rejected": 1,
+ "dated": 32,
+ "fields_corrected": 2,
+ "fields_in_conflict": 0,
+ "linked_to_page": 32,
  "placed": 9,
  "quote_exact": 31,
- "quote_fuzzy": 2,
+ "quote_fuzzy": 1,
  "with_names_withheld": 1
 }
 ```

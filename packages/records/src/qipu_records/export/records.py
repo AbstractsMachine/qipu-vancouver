@@ -18,6 +18,7 @@ from qipu_records.read.readers import Reading
 from qipu_records.read.schema import ModelItem
 from qipu_records.verify import outcomes, privacy
 from qipu_records.verify.dates import PageDates
+from qipu_records.verify.fields import check_fields
 from qipu_records.verify.quotes import QuoteMatch
 
 
@@ -65,6 +66,13 @@ class ReadBy(TypedDict):
     prompt_version: str
 
 
+class FieldCheck(TypedDict):
+    field: str
+    result: str
+    why: str
+    was: NotRequired[object]
+
+
 class DecisionRecord(TypedDict):
     """One published decision. docs/data-model.md describes each field."""
 
@@ -92,6 +100,7 @@ class DecisionRecord(TypedDict):
     places: list[Place]
     topics: list[str]
     names_withheld: bool
+    checks: list[FieldCheck]
     source: Source
     reading: ReadBy
 
@@ -123,7 +132,9 @@ def _blank_to_none(value: str | None) -> str | None:
 
 
 def _vote(entry: ModelItem) -> Vote | None:
-    if entry.get("ayes") is None and not entry.get("ayes_names"):
+    counts = (entry.get("ayes"), entry.get("noes"), entry.get("absent"))
+    names = (entry.get("ayes_names"), entry.get("noes_names"), entry.get("absent_names"))
+    if all(c is None for c in counts) and not any(names):
         return None
     return {
         "ayes": entry.get("ayes"),
@@ -172,9 +183,16 @@ def _source(ctx: Context, pc: PageContext) -> Source:
 
 
 def decision_record(
-    ctx: Context, pc: PageContext, seq: int, entry: ModelItem, *, match: QuoteMatch, on_this_page: bool
+    ctx: Context,
+    pc: PageContext,
+    seq: int,
+    entry: ModelItem,
+    *,
+    match: QuoteMatch,
+    on_this_page: bool,
+    span: str | None = None,
 ) -> DecisionRecord:
-    """One published decision record."""
+    """One published decision record. `span` is the item's text on the page; its model fields are checked against it."""
     date, date_source = pc.dates.at(match.offset if on_this_page else None)
     withheld: set[str] = set()
     if ctx.embargo.applies(date.year if date else None) and privacy.item_is_sensitive(entry):
@@ -182,6 +200,15 @@ def decision_record(
     stage, outcome = outcomes.stage_and_outcome(entry.get("action") or "other")
     kind, action = entry.get("kind") or "", entry.get("action") or ""
     shown = f"{entry.get('quote')} {entry.get('summary')} {entry.get('parties')}"
+    fields = check_fields(
+        span if span is not None else pc.page.text,
+        pc.page.text if on_this_page or pc.previous is None else f"{pc.previous.text}\n{pc.page.text}",
+        date,
+        outcome=outcome.value,
+        amended=bool(entry.get("amended")),
+        vote=dict(_vote(entry) or {}) or None,
+        summary=entry.get("summary") or "",
+    )
     return {
         "id": f"{pc.page.page_id}/{seq}",
         "city": ctx.city.key,
@@ -193,13 +220,13 @@ def decision_record(
         "file": _blank_to_none(entry.get("file")),
         "action": action,
         "stage": stage,
-        "outcome": outcome.value,
-        "amended": bool(entry.get("amended")),
+        "outcome": fields.outcome,
+        "amended": fields.amended,
         "zoning": outcomes.zoning_status(kind, action, entry.get("zoning_from") or "", entry.get("zoning_to") or ""),
         "summary": entry.get("summary") or "",
         "quote": entry.get("quote") or "",
         "quote_check": match.status.value,
-        "vote": _vote(entry),
+        "vote": fields.vote,  # type: ignore[typeddict-item]
         "mover": _blank_to_none(entry.get("mover")),
         "seconder": _blank_to_none(entry.get("seconder")),
         "money": _money(entry, ctx.city.currency),
@@ -207,6 +234,7 @@ def decision_record(
         "places": _places(entry, ctx.gazetteer),
         "topics": entry.get("topics") or [],
         "names_withheld": bool(withheld) or privacy.WITHHELD in shown,
+        "checks": [check.as_dict() for check in fields.checks],  # type: ignore[misc]
         "source": _source(ctx, pc),
         "reading": {"model": pc.reading.model, "prompt_version": pc.reading.prompt_version},
     }

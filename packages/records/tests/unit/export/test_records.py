@@ -19,7 +19,7 @@ from qipu_records.verify.quotes import QuoteMatch, QuoteStatus
 FIELDS = {
     "id", "city", "body", "date", "date_source", "kind", "number", "file", "action", "stage", "outcome", "amended",
     "zoning", "summary", "quote", "quote_check", "vote", "mover", "seconder", "money", "parties", "places", "topics",
-    "names_withheld", "source", "reading",
+    "names_withheld", "checks", "source", "reading",
 }  # fmt: skip
 
 ITEM = Item("19700609", "Council Meeting Minutes : June 9, 1970", "1970-06-09", None, None, "City of Vancouver, B.C.")
