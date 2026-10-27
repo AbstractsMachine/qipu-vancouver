@@ -1,15 +1,20 @@
 """Withhold the names of private people in sensitive matters, and nothing else.
 
-Council minutes are public records, and most names in them belong to officials, firms and groups acting in public: they
-stay. The rule protects private people where the record could hurt them: a claim for damages, an injury, an illness,
-welfare, an eviction, a crime. In those items, for records younger than the city's embargo (75 years in San Francisco,
-92 in Vancouver), a private person's name is replaced by "[name withheld]" in everything published: the quote, the
-summary and the parties. The decision itself, its place, amount and outcome stay visible.
+This is the rule in docs/privacy.md, the Canadian rule (BC FIPPA ss. 22 and 33): every decision, motion and page link is
+published. A record 100 years old or more is completely open. In a newer record one thing is masked: the name of a
+private person, and only when the record is about that person's sensitive matter. There are seven such matters: health;
+social or income assistance; a police or criminal matter, or an enforcement order at someone's home; personal finances
+(debts, tax arrears, bankruptcy, a damage or injury claim, a lawsuit against the city); a discrimination or harassment
+complaint; a child; and the discipline or dismissal of an employee. A land-use, permit, licence, contract, grant,
+appointment or honour record is never one of them, even when a sensitive word appears in it.
 
-Who counts as an official is read from the record: the mover and seconder, the people in its roll call, and anyone the
-page names next to a role ("Ald. Linnell", "Mayor Phillips", "Supervisor Kopp"). Organisations are recognised by the
-words in their names. When in doubt the name is withheld: a withheld official costs a little readability, a leaked
-private name cannot be taken back.
+Never masked: councillors, aldermen, the mayor and staff in their role; delegations, speakers, petitioners and letter
+writers; businesses and organisations; contractors and payees; people honoured; places named after people. A payee is
+withheld only when the payment settles the sensitive matter itself, which makes the payee the claimant.
+
+Who counts as an official is read from the record: the mover and seconder, the roll call, and anyone the page names next
+to a role ("Ald. Linnell", "Mayor Phillips"). A name the record shows in a public role anywhere (after "letter from",
+before "Ltd.") is public in all of the record.
 """
 
 from __future__ import annotations
@@ -23,17 +28,120 @@ from qipu_records.read.schema import ModelItem
 
 WITHHELD = "[name withheld]"
 
-SENSITIVE = re.compile(
-    r"\b(?:welfare|social\s+assistance|public\s+assistance|indigent|hospitali[sz]\w*|patients?|medical\s+(?:care|treatment|bills?)"
-    r"|mental(?:ly)?\s+ill\w*|psychiatric|disabilit\w*|injur\w*|damages?|accidents?|collision|wrongful\s+death|death\s+of"
-    r"|claims?\s+(?:of|by|for|against)|claimants?|lawsuits?|litigation|plaintiffs?|defendants?|false\s+arrest|evict\w*|nuisance"
-    r"|crim\w*|arrest\w*|victims?|assault\w*|robber\w*|burglar\w*|homicide|murder\w*|probation|parole|jail|inmates?|prisoners?"
-    r"|juvenile|minors|child\s+welfare|foster)\b"
-    r"|(?-i:\w\s+v\.\s+[A-Z])",
-    re.I,
+# The patterns are the rule's own (config/privacy/van.yaml of the rule, 26 October 2026), one regex per sensitive
+# matter.
+MATTER_PATTERNS = {
+    "health": (
+        r"\b(?:medical\s+(?:condition|treatment|grounds|reasons|certificate|history|report)"
+        r"|hospitali[sz]ed|psychiatric|mental(?:ly)?\s+(?:ill|illness|disorder|incapab\w*|incompetent)"
+        r"|illness\s+of|terminally\s+ill|compassionate\s+(?:grounds|leave|grant|assistance)"
+        r"|disability\s+(?:pension|benefit)s?\s+(?:of|for|to)|long[- ]term\s+disability"
+        r"|personal\s+health|health\s+reasons|medical\s+(?:and\s+\w+\s+)?circumstances"
+        r"|letter\s+from\s+(?:his|her|their)\s+(?:doctor|physician)|(?:doctor"
+        r"|physician)['’]s\s+(?:letter|certificate|note))\b"
+    ),
+    "social_assistance": (
+        r"\b(?:social\s+assistance|income\s+assistance|welfare\s+(?:recipient|payment|case|appeal"
+        r"|assistance|benefits?|cheque|lien)s?|on\s+welfare|relief\s+(?:recipient|payment|case)s?"
+        r"|indigent|destitute|emergency\s+shelter\s+allowance|GAIN\s+(?:recipient|benefits?))\b"
+    ),
+    "police_criminal": (
+        r"\b(?:charged\s+with|convicted|conviction\s+(?:of|for)|criminal\s+(?:record|charge|offence"
+        r"|offense)s?|arrest(?:ed)?\s+of|prosecution\s+of\s+(?:Mr|Mrs|Ms|Miss|Dr)\b|prosecute\s+(?:Mr"
+        r"|Mrs|Ms|Miss|Dr)\b|assault(?:ed)?|sexual\s+(?:assault|offence)|young\s+offenders?|probation"
+        r"|parole|police\s+(?:complaint|investigation)\s+(?:against|into|of)|(?:declared|declare|is"
+        r"|be)\s+(?:a\s+)?nuisance|unsightly\s+premises|remedial\s+action\s+(?:order|requirement)s?"
+        r"|unsafe\s+(?:condition|building|premises)\s+(?:at|of)|method\s+of\s+enforcement"
+        r"|enforcement\s+(?:action\s+)?against|be\s+(?:charged|prosecuted)\b"
+        r"|charges?\s+(?:that\s+(?:has|have)\s+been\s+)?laid\s+against|defending\s+(?:himself"
+        r"|herself))\b"
+    ),
+    "personal_finances": (
+        r"\b(?:hardship\s+cases?|tax\s+arrears|arrears\s+of\s+(?:taxes|rent|account)"
+        r"|delinquent\s+tax(?:es)?|tax\s+sale|bankrupt(?:cy)?|garnish\w*"
+        r"|write[- ]off\s+of\s+(?:an?\s+)?(?:account|debt|arrears|balance)|uncollectable"
+        r"|debts?\s+(?:owed|owing)\s+by|claim\s+for\s+(?:damages|compensation|injur\w+)"
+        r"|personal\s+injur\w*|injured\s+(?:in|at|when|by)|wrongful\s+death|(?:lawsuit|action|suit"
+        r"|claim)\s+(?:by|of)\s+(?:Mr|Mrs|Ms|Miss|Dr)\b|v\.\s+(?:the\s+)?City\s+of\s+Vancouver"
+        r"|settlement\s+of\s+(?:a\s+|the\s+)?(?:claim|action|lawsuit|suit))\b"
+    ),
+    "discrimination_harassment": (
+        r"\b(?:discrimination\s+complaint|complaint\s+of\s+(?:discrimination|harassment)"
+        r"|human\s+rights\s+(?:complaint|tribunal|case)|harass(?:ed|ment)\s+(?:of|by|complaint)"
+        r"|sexual\s+harassment)\b"
+    ),
+    "children": (
+        r"\b(?:juvenile\s+(?:offender|delinquen\w*|court\s+case|record)s?|a\s+juvenile\b"
+        r"|foster\s+(?:child|children|care|home|parent)s?|child(?:ren)?\s+in\s+care"
+        r"|custody\s+of\s+(?:a|the|his|her|their)?\s*(?:child|children|son|daughter|infant|minor)"
+        r"|adoption\s+of\s+(?:a|the)?\s*(?:child|infant|baby)|apprehension\s+of\s+(?:a\s+)?child"
+        r"|ward\s+of\s+the\s+(?:court|province|crown))\b"
+    ),
+    "employment_discipline": (
+        r"\b(?:dismissal\s+of|dismissed\s+from|wrongful\s+dismissal|suspen(?:ded|sion)\s+(?:of"
+        r"|without\s+pay)\s+(?!the\s+(?:rules|bylaw|by-law|licence|license))|disciplinary\s+action"
+        r"|discipline\s+of|grievance\s+(?:of|by|re|filed)|reprimand(?:ed)?"
+        r"|termination\s+of\s+(?:the\s+)?employment|arbitration\s+award\s+(?:re"
+        r"|in\s+the\s+matter\s+of))\b"
+    ),
+}
+_PUBLIC_FUNCTION = (
+    r"\b(?:rezon\w+|zoning|development\s+permit|building\s+permit|subdivision"
+    r"|heritage\s+(?:designation|revitali[sz]ation|alteration)|(?:business|liquor|cabaret|taxi|vendor"
+    r"|licen[cs]e)\s+(?:licen[cs]e\s+)?(?:application|hearing|renewal|transfer|amendment)"
+    r"|licen[cs]e\s+(?:application|hearing|renewal)|business\s+licen[cs]e|tender|contract\s+award"
+    r"|award\s+of\s+contract|freedom\s+of\s+the\s+city|civic\s+(?:merit|award)|in\s+honou?r\s+of"
+    r"|proclamation|appointment\s+(?:of|to)|appointed\s+to|grant\s+to)\b"
 )
-SENSITIVE_KINDS = {"claim"}
-SENSITIVE_ROLES = {"claimant"}
+_KEEP_BEFORE = (  # "8s" near the end is how the OCR often reads "&" in a firm's name
+    r"(?:Councill?ors?|Cllrs?\.?|Coun\.?|Ald\.|Alderm[ae]n|Alderwoman|Mayor|Deputy\s+Mayor"
+    r"|Acting\s+Mayor|Director|Manager|City\s+Clerk|Clerk|City\s+Engineer|Engineer|Solicitor|Chief"
+    r"|Commissioner|Inspector|Officer|Superintendent|Supervisor|Chair(?:man|woman|person)?|Constable"
+    r"|Sgt\.?|Sergeant|Staff\s+Sergeant|Inspector|Medical\s+Health\s+Officer|Trustee|Commissioner"
+    r"|M\.?L\.?A\.?|M\.?P\.?|Premier|Minister|Hon\.|Judge|Justice|Magistrate|Architect|Planner"
+    r"|Assessor|Auditor|Treasurer|Comptroller|Fire\s+Chief|delegation|delegations|speakers?|speaking"
+    r"|addressed\s+(?:the\s+)?Council|appeared\s+(?:before|on\s+behalf)|petition(?:ers?)?\s+(?:from|of"
+    r"|by)|submitted\s+by|letter\s+from|on\s+behalf\s+of|representing|contract(?:\s+awarded)?\s+to"
+    r"|paid\s+to|payment\s+to|payable\s+to|in\s+honou?r\s+of|honouring|named\s+(?:after|for)"
+    r"|memorial\s+to|Freedom\s+of\s+the\s+City|services\s+rendered\s+by|account\s+of|retained"
+    r"|counsel\s+for|proprietors?(?:\s+is)?|operator|P\.\s?C\.(?:\s*\d+)?|[A-Z][a-z]+,?\s+(?:&"
+    r"|8s))(?:\s+(?:of|for)\s+(?:the\s+)?(?:[A-Z][A-Za-z&]+\s*){1,3})?\W{0,4}(?:(?:Mr|Mrs|Ms|Miss"
+    r"|Dr)\.?\s+)?(?:[A-Z]\.\s*){0,3}$"
+)
+_KEEP_AFTER = (
+    r"^(?:,?\s+(?:doing|carrying\s+on)\s+business|,?\s+d\.?b\.?a\b)"
+    r"|^\W{0,3}(?:,\s*)?(?:the\s+)?(?:(?:[A-Z][a-z]+|of|the|and|for|&)\s+){0,4}?(?:Ltd|Limited|Inc"
+    r"|Incorporated|Corp|Corporation|Company|Co\b|Society|Association|Foundation|Holdings|Enterprises"
+    r"|Investments|Developments|Properties|Construction|Contracting|Club|Church|Hospital|Centre|Center"
+    r"|Council|Union|Board|Bank|Hotel|Restaurant|Cafe|Architects|Engineers|Consultants|Partnership"
+    r"|& Sons|Bros|Street|St\b|Avenue|Ave\b|Road|Rd\b|Drive|Park|Bridge|Building|School|Hall|Square"
+    r"|Way|Crescent|Place|Boulevard|Lane|Day|Award|Director|Manager|Engineer|Clerk|Councill?or"
+    r"|Alderm[ae]n|Mayor|Solicitor|Barrister|Lawyer|Notary|Agent|Architect|Inspector|Officer|Chair"
+    r"|M\.?L\.?A|M\.?P\b|Q\.C)"
+)
+
+MATTERS = {name: re.compile(pattern, re.I) for name, pattern in MATTER_PATTERNS.items()}
+PUBLIC_FUNCTION = re.compile(_PUBLIC_FUNCTION, re.I)
+PUBLIC_KINDS = {"permit", "license", "contract", "appointment"}
+"""Kinds of record that are public functions whatever words they contain."""
+CLAIM_KINDS = {"claim"}
+"""A claim against the city is a damage or injury claim: a personal-finances matter."""
+SUBJECT_ROLES = {"claimant"}
+PUBLIC_ROLES = {"contractor", "appointee", "applicant", "payee", "grantee", "grantor", "petitioner", "sponsor"}
+"""Party roles that are public by what the person does in the record."""
+SETTLEMENT = re.compile(r"\b(?:claims?|settle\w*|damages?|compensation|injur\w*|ex\s+gratia)\b", re.I)
+"""A payment whose purpose says this settles the matter itself: its payee is the claimant."""
+KEEP_BEFORE = re.compile(_KEEP_BEFORE)
+"""Text right before a name that makes it public: a title, a delegation, a letter writer, a payee, a firm, a
+namesake.
+"""
+KEEP_AFTER = re.compile(_KEEP_AFTER)
+"""Text right after a name that makes it public: a firm, an organisation, a place, a role."""
+PAYEE_BEFORE = re.compile(
+    r"(?:paid\s+to|payment\s+to|payable\s+to|services\s+rendered\s+by|account\s+of)\W{0,4}"
+    r"(?:(?:Mr|Mrs|Ms|Miss|Dr)\.?\s+)?(?:[A-Z]\.\s*){0,3}$"
+)
+"""The payee words of KEEP_BEFORE. A payee is public, unless the payment settles the claim the record is about."""
 
 ROLE_WORDS = (
     r"Ald(?:erm[ae]n)?\.?|Mayor|Deputy\s+Mayor|Supervisors?|Councill?ors?|Councilm[ae]n|Councilwoman|Commissioners?|Director|"
@@ -76,8 +184,12 @@ class Embargo:
         return year is None or year > self.cutoff_year
 
 
-def is_sensitive(text: str) -> bool:
-    return bool(SENSITIVE.search(text))
+def matter_of(text: str) -> str | None:
+    """The sensitive matter a text is about (a key of MATTERS), or None. A public-function text is never sensitive."""
+    flat = " ".join(text.split())
+    if not flat or PUBLIC_FUNCTION.search(flat):
+        return None
+    return next((name for name, pattern in MATTERS.items() if pattern.search(flat)), None)
 
 
 def is_organisation(name: str) -> bool:
@@ -92,7 +204,8 @@ def is_organisation(name: str) -> bool:
 
 def people_in(name: str) -> list[str]:
     """The private people a printed name stands for: none for an organisation, both people of a couple, the person
-    behind "Estate of the late John Smith"."""
+    behind "Estate of the late John Smith".
+    """
     bare = _ESTATE_OF.sub("", name.strip())
     if not bare or is_organisation(bare):
         return []
@@ -125,39 +238,101 @@ def officials_of_item(item: ModelItem) -> set[str]:
     return {surname(n) for n in names if n}
 
 
-def item_is_sensitive(item: ModelItem) -> bool:
-    text = " ".join([item.get("quote") or "", item.get("summary") or ""])
+def in_public_role(before: str) -> bool:
+    """The text right before a name shows the person in a public role: a title, a delegation, a letter, a firm. Payee
+    words do not count here, because the payee of a settled claim is the claimant.
+    """
+    return bool(KEEP_BEFORE.search(before)) and not PAYEE_BEFORE.search(before)
+
+
+def names_a_firm_or_place(after: str) -> bool:
+    """The text right after a name makes it part of a firm's, organisation's or place's name ("Gibson Construction
+    Ltd.", "Gibson Street"), or a role. "Gibson of Main Street" is a person and an address, not a place name.
+    """
+    return bool(KEEP_AFTER.match(after)) and not re.match(r"\W*(?:of|for|and)\b", after)
+
+
+def _settlement_payees(item: ModelItem) -> list[str]:
+    """Payees of the payments that settle the claim itself: they are the claimants."""
+    claim = item.get("kind") in CLAIM_KINDS
+    return [
+        m.get("payee") or ""
+        for m in item.get("money") or []
+        if SETTLEMENT.search(m.get("purpose") or "") or (claim and not m.get("purpose"))
+    ]
+
+
+def _settles(item: ModelItem) -> bool:
+    """The item is a claim, or pays one: a payment whose purpose names the claim, the damages or the injury."""
+    return item.get("kind") in CLAIM_KINDS or any(
+        SETTLEMENT.search(m.get("purpose") or "") for m in item.get("money") or []
+    )
+
+
+def matter(item: ModelItem) -> str | None:
+    """The sensitive matter an item is about, or None."""
+    if item.get("kind") in PUBLIC_KINDS:
+        return None
+    text = " ".join([item.get("quote") or "", item.get("summary") or "", item.get("why") or ""])
+    if PUBLIC_FUNCTION.search(" ".join(text.split())):
+        return None
     roles = {party.get("role") for party in item.get("parties") or []}
-    return item.get("kind") in SENSITIVE_KINDS or bool(roles & SENSITIVE_ROLES) or is_sensitive(text)
+    if _settles(item) or roles & SUBJECT_ROLES:
+        return "personal_finances"
+    return matter_of(text)
+
+
+def item_is_sensitive(item: ModelItem) -> bool:
+    return matter(item) is not None
+
+
+def _public_in(texts: Iterable[str], name: str) -> bool:
+    """The record shows this name in a public role somewhere: after a title, a delegation or a payee word, or before a
+    firm, organisation, place or role word.
+    """
+    printed = re.compile(r"(?<![\w])" + r"\s+".join(re.escape(w) for w in name.split()) + r"(?![\w])")
+    for text in texts:
+        for match in printed.finditer(text):
+            before, after = text[max(0, match.start() - 60) : match.start()], text[match.end() : match.end() + 80]
+            if KEEP_BEFORE.search(before) or KEEP_AFTER.match(after):
+                return True
+    return False
 
 
 def private_names(item: ModelItem, officials: set[str]) -> set[str]:
     """Names of private people in an item, as printed, for `mask` to withhold.
 
-    Candidates are the item's parties, the payees of its amounts, and every name after an honorific in its text. A name
-    is kept when it belongs to an organisation or to an official, except that a claimant is never taken for an official
-    just because an alderman on the page shares the surname.
+    Candidates are the parties (except those in a public role: contractor, applicant, payee, ...) and every name after
+    an honorific in the item's text. The people the matter is about, its claimants and, when the item settles a claim,
+    its payees, are always withheld. Anyone else is kept when they are an official, an organisation, or shown in a
+    public role somewhere in the record.
     """
     parties = item.get("parties") or []
-    candidates = [party.get("name") or "" for party in parties]
-    candidates += [money.get("payee") or "" for money in item.get("money") or []]
-    texts = [item.get("quote"), item.get("summary"), item.get("why")] + [
-        p.get("text") for p in item.get("places") or []
-    ]
+    texts = [item.get("quote") or "", item.get("summary") or "", item.get("why") or ""]
+    texts += [p.get("text") or "" for p in item.get("places") or []]
+    subjects = [party.get("name") or "" for party in parties if party.get("role") in SUBJECT_ROLES]
+    if _settles(item):
+        subjects += _settlement_payees(item)
+        subjects += [
+            party.get("name") or ""
+            for party in parties
+            if party.get("role") == "payee" and party.get("name") in _settlement_payees(item)
+        ]
+    subject_surnames = {surname(person) for name in subjects for person in people_in(name)}
+    candidates = subjects + [party.get("name") or "" for party in parties if party.get("role") not in PUBLIC_ROLES]
     for text in texts:
-        candidates.extend(match.group(0) for match in _HONORIFIC_NAME.finditer(text or ""))
-    claimants = {
-        surname(person)
-        for party in parties
-        if party.get("role") in SENSITIVE_ROLES
-        for person in people_in(party.get("name") or "")
-    }
+        candidates.extend(match.group(0) for match in _HONORIFIC_NAME.finditer(text))
     names: set[str] = set()
     for candidate in candidates:
         printed = re.sub(r"['’]s$", "", candidate.strip())
         if not printed or WITHHELD in printed:
             continue
-        people = [p for p in people_in(printed) if surname(p) in claimants or surname(p) not in officials]
+        people = [
+            p
+            for p in people_in(printed)
+            if surname(p) in subject_surnames
+            or (surname(p) not in officials and not _public_in(texts, _HONORIFIC.sub("", p)))
+        ]
         names.update(people)
         if len(people) > 1:
             names.add(printed)  # a couple is withheld as printed, in one piece
@@ -166,7 +341,8 @@ def private_names(item: ModelItem, officials: set[str]) -> set[str]:
 
 def name_variants(name: str) -> list[str]:
     """The ways a name may be printed, longest first: "Miss Jessie I. Hendry", "Jessie I. Hendry", "Jessie Hendry",
-    "Hendry"."""
+    "Hendry".
+    """
     bare = _HONORIFIC.sub("", name).strip()
     if _JOINED.search(bare):
         return [name.strip()]
@@ -184,13 +360,14 @@ def mask(text: str, names: Iterable[str]) -> str:
     """Replace every printed form of the names with WITHHELD, together with any title in front of it.
 
     A name printed right after a public role ("Ald. Gibson") is an official who shares a surname with the private
-    person, and stays.
+    person, and stays; so does one printed before a firm or place word ("Gibson Construction Ltd.", "Gibson Street").
     """
     if not text:
         return text
 
     def withhold(match: re.Match[str]) -> str:
-        return match.group(0) if _AFTER_ROLE.search(text[: match.start()]) else WITHHELD
+        kept = _AFTER_ROLE.search(text[: match.start()]) or names_a_firm_or_place(text[match.end() : match.end() + 80])
+        return match.group(0) if kept else WITHHELD
 
     variants = sorted({v for name in names for v in name_variants(name)}, key=len, reverse=True)
     for variant in variants:
@@ -203,7 +380,8 @@ def mask(text: str, names: Iterable[str]) -> str:
 
 def mask_item(item: ModelItem, officials: set[str]) -> tuple[ModelItem, set[str]]:
     """The item with private people's names withheld, and the names withheld. The caller decides whether the rule
-    applies."""
+    applies.
+    """
     names = private_names(item, officials | officials_of_item(item))
     if not names:
         return item, set()

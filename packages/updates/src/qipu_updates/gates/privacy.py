@@ -1,17 +1,16 @@
 """Two privacy gates, both on the published text: no leak, and no over-redaction.
 
-The rule (qipu-records' verify.privacy): in a record younger than the city's embargo, about a sensitive matter, the name
-of a private person is replaced by "[name withheld]". Nothing else is hidden: not the page, not the decision, not
-officials, firms, places or the record's source.
+The rule is qipu-records' verify.privacy (docs/privacy.md): in a record younger than 100 years (Vancouver) and about a
+private person's sensitive matter, that person's name is replaced by "[name withheld]". Nothing else is hidden.
 
-Leak: in every sensitive record under the embargo, the rule finds no private name still shown. The topic is read again
+Leak: in every sensitive record under the embargo, the rule finds no private name still shown. The matter is read again
 from the published text rather than trusted from the extractor.
 
-Over-redaction: a mask fails when it is in a record that is not sensitive or is older than the embargo; in the record's
-source, date, action or outcome, or on a mover, seconder or voter (officials); right after an official title, a
-delegation or petitioner word, or a contract award; or right before a word that makes the name a firm, an organisation,
-a place or a role. A payee is not on the list: in a damage claim the payee is the claimant, whom the rule withholds.
-"""
+Over-redaction: a mask fails when it is in a record that is not about a sensitive matter or is 100 years old or more; in
+the record's source, date, action or outcome, or on a mover, seconder or voter (officials); right after a word that
+shows the person in a public role (a title, a delegation, a letter, a contract award); or right before a word that makes
+the name a firm, an organisation, a place or a role. A mask right after "paid to" is allowed only because a record that
+settles a claim pays the claimant; in an ordinary payment the record is not sensitive and any mask fails."""
 
 from __future__ import annotations
 
@@ -22,10 +21,12 @@ from typing import Any, cast
 
 from qipu_records.read.schema import ModelItem
 from qipu_records.verify.privacy import (
-    ROLE_WORDS,
     WITHHELD,
     Embargo,
+    in_public_role,
     item_is_sensitive,
+    matter,
+    names_a_firm_or_place,
     officials_of_item,
     officials_on_page,
     private_names,
@@ -47,20 +48,6 @@ NEVER_MASKED = (
     "seconder",
     "source",
     "vote",
-)
-
-KEEP_BEFORE = re.compile(
-    rf"(?:\b(?:{ROLE_WORDS})|\bdelegations?|\bspeakers?|\bpetition(?:ers?)?\s+(?:from|of|by)|\bsubmitted\s+by|\bon\s+behalf\s+of"
-    r"|\brepresenting|\bcontract(?:\s+awarded)?\s+to|\bin\s+honou?r\s+of|\bnamed\s+(?:after|for)"
-    r"|\bmemorial\s+to|\bFreedom\s+of\s+the\s+City)\W{0,4}$",
-    re.I,
-)
-KEEP_AFTER = re.compile(
-    r"^\W{0,3}(?:the\s+)?(?:Ltd|Limited|Inc|Incorporated|Corp|Corporation|Company|Co\b|Society|Association"
-    r"|Foundation|Holdings|Enterprises|Investments|Developments|Properties|Construction|Contracting|Club|Church"
-    r"|Hospital|Centre|Center|Council|Union|Board|Bank|Hotel|Restaurant|Architects|Engineers|Consultants|Partnership"
-    r"|& Sons|Bros|Street|St\b|Avenue|Ave\b|Road|Rd\b|Drive|Park|Bridge|Building|School|Hall|Square|Way|Crescent"
-    r"|Place|Boulevard|Lane|Day|Award)\b"
 )
 
 
@@ -104,7 +91,8 @@ def leaks(
             continue
         result.checked += 1
         for name in sorted(private_names(item, officials_on_page(page) | officials_of_item(item))):
-            result.findings.append(Finding(str(record["id"]), "private name shown in a sensitive record", name))
+            why = f"private name shown in a sensitive record ({matter(item)})"
+            result.findings.append(Finding(str(record["id"]), why, name))
     return result
 
 
@@ -113,9 +101,9 @@ def _over(record: dict[str, Any], text: str, at: int, embargo: Embargo) -> str |
         return f"mask in an open record (year {_year(record)} is not after {embargo.cutoff_year})"
     if not item_is_sensitive(_as_item(record)):
         return "mask in a record that is not a sensitive matter"
-    if KEEP_BEFORE.search(text[max(0, at - 60) : at]):
-        return "mask right after an official title, a delegation or a contract award"
-    if KEEP_AFTER.match(text[at + len(WITHHELD) : at + len(WITHHELD) + 80]):
+    if in_public_role(text[max(0, at - 60) : at]):
+        return "mask right after a word that shows a public role"
+    if names_a_firm_or_place(text[at + len(WITHHELD) : at + len(WITHHELD) + 80]):
         return "mask right before a firm, organisation, place or role word"
     return None
 

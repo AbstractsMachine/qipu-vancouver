@@ -71,7 +71,7 @@ def test_a_private_name_left_in_a_sensitive_record_is_a_leak() -> None:
     shown = record("m1:0/1", quote=QUOTE, kind="claim")
     masked = record("m1:0/2", quote=MASKED, kind="claim")
     old = record("m1:0/3", quote=QUOTE, kind="claim", date="1920-01-06")
-    result = privacy.leaks([shown, masked, old, record("m9:0/1", quote=QUOTE, kind="claim")], pages, AS_OF, 92)
+    result = privacy.leaks([shown, masked, old, record("m9:0/1", quote=QUOTE, kind="claim")], pages, AS_OF, 100)
     assert (result.checked, result.skipped) == (2, 1)
     assert [(f.record_id, f.text) for f in result.findings] == [("m1:0/1", "Mrs. Ada Brown")]
 
@@ -85,11 +85,13 @@ def test_a_mask_where_the_rule_keeps_the_name_is_over_redaction() -> None:
         "before-firm": record("m:0/5", kind="claim", quote=f"claim for damages against {WITHHELD} Construction Ltd."),
         "in-source": record("m:0/6", kind="claim", quote=MASKED, mover=WITHHELD),
         "in-a-party": record("m:0/7", quote="lease approved", parties=[{"name": WITHHELD, "role": "lessee"}]),
+        "claimant-paid": record("m:0/8", kind="claim", summary=f"Claim settled; $120 paid to {WITHHELD}."),
+        "ordinary-payment": record("m:0/9", summary=f"Payment of $400 to {WITHHELD} for snow clearing."),
     }
-    result = privacy.over_redaction(list(cases.values()), AS_OF, 92)
+    result = privacy.over_redaction(list(cases.values()), AS_OF, 100)
     found = {f.record_id: f.why for f in result.findings}
-    assert set(found) == {"m:0/2", "m:0/3", "m:0/4", "m:0/5", "m:0/6", "m:0/7"}
-    assert found["m:0/4"].startswith("mask right after an official title")
+    assert set(found) == {"m:0/2", "m:0/3", "m:0/4", "m:0/5", "m:0/6", "m:0/7", "m:0/9"}
+    assert found["m:0/4"].startswith("mask right after a word that shows a public role")
     assert found["m:0/5"].startswith("mask right before a firm")
     assert found["m:0/6"] == "mask in mover"
     assert found["m:0/7"] == "mask in a record that is not a sensitive matter (parties[0])"

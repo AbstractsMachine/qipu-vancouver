@@ -1,15 +1,18 @@
 import datetime as dt
 from typing import Unpack
 
+import pytest
+
 from qipu_records.read.schema import ModelItem
 from qipu_records.verify.privacy import (
     WITHHELD,
     Embargo,
     is_organisation,
-    is_sensitive,
     item_is_sensitive,
     mask,
     mask_item,
+    matter,
+    matter_of,
     officials_on_page,
     people_in,
     private_names,
@@ -29,23 +32,36 @@ def _item(**fields: Unpack[ModelItem]) -> ModelItem:
     }
 
 
-def test_embargo_counts_back_from_today() -> None:
-    vancouver = Embargo(92, today=dt.date(2026, 10, 26))
-    assert vancouver.cutoff_year == 1934
-    assert not vancouver.applies(1934)
-    assert vancouver.applies(1935)
+def test_a_record_100_years_old_or_more_is_open() -> None:
+    vancouver = Embargo(100, today=dt.date(2026, 10, 26))
+    assert vancouver.cutoff_year == 1926
+    assert not vancouver.applies(1926)
+    assert vancouver.applies(1927)
     assert vancouver.applies(None)
 
 
-def test_sensitive_matters() -> None:
-    assert is_sensitive("claim of Mrs. Smith for damages to her car")
-    assert is_sensitive("social assistance for persons laid off work")
-    assert is_sensitive("Jones v. City and County")
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Application for relief on compassionate grounds by reason of her medical condition", "health"),
+        ("Appeal of a social assistance recipient against the reduction of her allowance", "social_assistance"),
+        ("That the premises at 2300 Oak Street be declared a nuisance", "police_criminal"),
+        ("Claim of Mrs. Smith for damages to her car", "personal_finances"),
+        ("Writ of summons: Jones v. City of Vancouver", "personal_finances"),
+        ("Complaint of discrimination against the Parks Board", "discrimination_harassment"),
+        ("Placement of a child in foster care", "children"),
+        ("Dismissal of a labourer in the Engineering Department", "employment_discipline"),
+    ],
+)
+def test_the_seven_sensitive_matters(text: str, expected: str) -> None:
+    assert matter_of(text) == expected
 
 
-def test_words_that_only_look_sensitive() -> None:
-    assert not is_sensitive("Comments on Mr. C. Campbell's Minority Report on False Creek")
-    assert not is_sensitive("Cl. 2: T.V. Inspection of Sewers")
+def test_public_functions_and_ordinary_words_are_not_sensitive() -> None:
+    assert matter_of("Rezoning of 2300 Oak Street; neighbours say the vacant lot is a nuisance") is None
+    assert matter_of("Comments on Mr. C. Campbell's Minority Report on False Creek") is None
+    assert matter_of("Cl. 2: T.V. Inspection of Sewers") is None
+    assert matter(_item(kind="permit", summary="Permit refused after a claim for damages")) is None
 
 
 def test_organisations_are_recognised() -> None:
@@ -149,15 +165,71 @@ def test_both_people_of_a_couple_are_withheld() -> None:
     assert masked["parties"] == [{"name": WITHHELD, "role": "claimant"}]
 
 
-def test_a_payee_in_a_sensitive_payment_is_withheld() -> None:
+def test_the_payee_of_an_injury_settlement_is_the_claimant_and_is_withheld() -> None:
     item = _item(
         summary="Payment for injuries suffered on a city sidewalk.",
         money=[{"amount": 250, "purpose": "injury settlement", "payee": "Tom Wu"}],
     )
-    assert item_is_sensitive(item)
+    assert matter(item) == "personal_finances"
     masked, names = mask_item(item, officials=set())
     assert names == {"Tom Wu"}
     assert masked["money"][0]["payee"] == WITHHELD
+
+
+def test_a_claimant_paid_by_name_is_withheld_after_paid_to_as_well() -> None:
+    item = _item(
+        kind="claim",
+        summary="Claim of Mrs. Ada Brown for damages; $120 to be paid to Mrs. Ada Brown.",
+        parties=[{"name": "Mrs. Ada Brown", "role": "claimant"}],
+    )
+    masked, _ = mask_item(item, officials=set())
+    assert "Brown" not in masked["summary"]
+
+
+def test_an_owner_named_in_a_nuisance_order_is_withheld() -> None:
+    item = _item(summary="That the premises of Mrs. Jane Roe, 2300 Oak Street, be declared a nuisance.")
+    assert matter(item) == "police_criminal"
+    masked, _ = mask_item(item, officials=set())
+    assert masked["summary"] == f"That the premises of {WITHHELD}, 2300 Oak Street, be declared a nuisance."
+
+
+def test_a_sensitive_policy_record_that_names_nobody_masks_nothing() -> None:
+    item = _item(summary="Report on the interest rate charged on property tax arrears.")
+    assert matter(item) == "personal_finances"
+    assert mask_item(item, officials=set()) == (item, set())
+
+
+def test_payees_in_ordinary_payments_stay_named() -> None:
+    item = _item(
+        summary="Payment of $400 to Mr. John Doe for snow clearing on Main Street.",
+        money=[{"amount": 400, "purpose": "snow clearing", "payee": "Mr. John Doe"}],
+        parties=[{"name": "Mr. John Doe", "role": "payee"}],
+    )
+    assert matter(item) is None
+    claim = _item(
+        kind="claim",
+        summary="Claim of Mrs. Ada Brown for damages; legal fees paid to Mr. Paul Low, Barrister.",
+        parties=[{"name": "Mrs. Ada Brown", "role": "claimant"}],
+        money=[{"amount": 90, "purpose": "legal fees", "payee": "Mr. Paul Low"}],
+    )
+    assert private_names(claim, officials=set()) == {"Mrs. Ada Brown"}
+
+
+def test_letter_writers_firms_and_places_stay_named_in_a_sensitive_record() -> None:
+    item = _item(
+        kind="claim",
+        summary=(
+            "Claim of Mr. Ross Gibson for damages at Gibson Street; Gibson Construction Ltd. to repair; "
+            "letter from Mr. Ian Hay supporting the claim."
+        ),
+        parties=[{"name": "Mr. Ross Gibson", "role": "claimant"}],
+    )
+    masked, names = mask_item(item, officials=set())
+    assert names == {"Mr. Ross Gibson"}
+    assert masked["summary"] == (
+        f"Claim of {WITHHELD} for damages at Gibson Street; Gibson Construction Ltd. to repair; "
+        "letter from Mr. Ian Hay supporting the claim."
+    )
 
 
 def test_a_claimant_who_shares_a_surname_with_an_alderman_is_still_withheld() -> None:
