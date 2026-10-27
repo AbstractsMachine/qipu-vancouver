@@ -84,7 +84,13 @@ through building solids for that, at the cost of a terrain model and the buildin
 ## Records, in tiers
 
 `data/city.ts` loads the block outlines and the record index at start (a few hundred kB), one shard of records per click, and the
-money file only when a panel first asks for it. The outlines and the index are two files built separately and joined by position,
+money file only when a panel first asks for it. The shards are qipu.org's published format (docs/data-model.md, "Block shards").
+
+A city config can instead name a `decisions.jsonl` written by packages/records. Then `data/decisions.ts` reads it at load and
+puts every row on the block its places fall in: latitude and longitude go through the city manifest's projection into the
+outlines' metres, and a point that lands in a street (a corner is geocoded to the middle of the crossing) goes to the nearest
+block within 25 m. Places geocoded only to a neighbourhood are not put on any block. The result has the same shape as the
+index and the shards, so nothing past the loader knows which one it read. The outlines and the index are two files built separately and joined by position,
 so the loader checks that their ids agree and refuses to start if they do not: a silent off-by-one would put every decision on the
 wrong block.
 

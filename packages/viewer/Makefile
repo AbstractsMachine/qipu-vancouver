@@ -1,4 +1,4 @@
-.PHONY: install lint typecheck test e2e check demo build clean
+.PHONY: install lint typecheck test e2e check demo build clean records-sample
 
 install:
 	npm ci
@@ -28,3 +28,8 @@ build:
 
 clean:
 	rm -rf dist demo-dist coverage playwright-report test-results
+
+# The demo's ?decisions=sample: packages/records' own output on the Vancouver example, as the records demo writes it.
+records-sample:
+	$(MAKE) -C ../records demo
+	cp ../records/build/demo/decisions.jsonl demo/public/sample/vancouver/decisions.jsonl

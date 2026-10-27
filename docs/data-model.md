@@ -37,3 +37,44 @@ looked at.
 
 `summary.json` counts pages, pages read, decisions, rejected items, and how many records were found exactly or fuzzily,
 dated, linked to a page, placed on the map and had names withheld.
+
+## Block shards
+
+The viewer can also read decisions already grouped by block, in the files qipu.org publishes for its whole-city maps under
+`/data/<country>/<city>/city/`. Nothing in this repository writes them; the demo's sample in
+`packages/viewer/demo/public/sample` is a cut of them. The parsers are `packages/viewer/src/data/{blocks,city,records}.ts`.
+A folder holds:
+
+| file                      | what                                                                                                                                                                                                                                                                                   |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `manifest.json`           | `proj`, the local projection of the outlines (`lon0`, `lat0`, `mpd` metres per degree of latitude, `cosl` = cos `lat0`), and `chunks`, whose entry with `kind: "blocks"` lists `hoodNames`                                                                                             |
+| `base/blocks.qc`          | the block outlines, a QCT1 binary chunk (`src/data/qct.ts` documents the container): per block `cnt` vertices, `sc` scale, `ox`/`oy` origin and `z` ground height in decimetres, `hood` index into `hoodNames` (255 for none); per vertex `vx`/`vy` offsets in tenths of 2^`sc` metres |
+| `base/blocks-id.json`     | the block ids in outline order: `id` (strings) or `block_idx` (numbers)                                                                                                                                                                                                                |
+| `blocks/block-index.json` | one entry per block, in outline order: `b` ids (must equal `blocks-id.json`), `n` decisions placed, `y0`/`y1` first and last year (0 for none), and `meta.shards`, the number of shard files                                                                                           |
+| `blocks/block-NN.json`    | the decisions of block number _i_ (its position in `b`) are in shard `i % meta.shards`, named with two digits: an object keyed by block id, each `{"d": [rows], "s": [street keys such as "PINE                                                                                        | ST"]}` |
+| `blocks/block-money.json` | optional: `b`, places by block id, each with `slug`, `name`, `kind`, amounts `agreed` and `paid` (qipu.org's own files name them `agreed_usd` and `paid_usd` in every city), `n_contracts`; `currency` (ISO 4217) for the amounts; `href`, the place page pattern with `{slug}`        |
+
+A shard row:
+
+| field    | meaning                                                                                                                                                                                                                     |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `y`      | the year                                                                                                                                                                                                                    |
+| `d`      | `MM-DD`, or empty when the record gives no day                                                                                                                                                                              |
+| `k`      | the record series, a code the city config names (`C` council vote, `N` council minutes, `P` building permit, `R` resolution, ...)                                                                                           |
+| `p`      | how it was placed, 0 to 4: `street`, `corner`, `segment`, `address`, `stated` (the record names the block)                                                                                                                  |
+| `a`      | the largest amount printed on the row, in the city's currency; 0 for none                                                                                                                                                   |
+| `t`      | the record's own words                                                                                                                                                                                                      |
+| `pl`     | optional, a plain-English reading of the record                                                                                                                                                                             |
+| `hp`     | optional outcome: `d` decided, `n` pending, `f` failed, `u` unrecorded                                                                                                                                                      |
+| `ad`     | optional, the address register's match, as `"349 E\|6TH\|AV"`                                                                                                                                                               |
+| `u`, `c` | the citation and its system: no `c`, an Internet Archive volume (`u` = `<identifier>/<leaf>`); `b`, a San Francisco Clerk PDF (`<stem>/<page>`); `l`, a Legistar meeting (`<id>~<guid>/<page>`); `x`, `u` is the URL itself |
+| `approx` | optional, `1` or `true` when the page link may be a page or two off                                                                                                                                                         |
+
+Other fields in qipu.org's rows are ignored by the viewer.
+
+When the viewer is given a `decisions.jsonl` instead (`CityConfig.data.decisions`), it builds the same index and rows from
+it: `date` gives `y` and `d`, `kind` is the series, `quote` the words, `summary` the plain reading, the largest `money` amount
+`a`, `outcome` the outcome (`passed`, `submitted to voters` and `veto overridden` are decided; `refused`, `vetoed` and
+`withdrawn` failed; `unknown` unrecorded), and `source.page_url` (or `item_url`) the link. Each place with `lat` and `lon`
+placed as an `address` or `intersection` puts the row on the block it falls in, or the nearest within 25 m; places placed
+only as an `area`, and rows with no date, are left out.
