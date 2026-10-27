@@ -238,11 +238,6 @@ def private_names(item: ModelItem, officials: set[str]) -> set[str]:
     subjects = [party.get("name") or "" for party in parties if party.get("role") in SUBJECT_ROLES]
     if _settles(item):
         subjects += _settlement_payees(item)
-        subjects += [
-            party.get("name") or ""
-            for party in parties
-            if party.get("role") == "payee" and party.get("name") in _settlement_payees(item)
-        ]
     subject_surnames = {surname(person) for name in subjects for person in people_in(name)}
     candidates = subjects + [party.get("name") or "" for party in parties if party.get("role") not in PUBLIC_ROLES]
     for text in texts:
