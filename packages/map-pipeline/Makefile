@@ -34,7 +34,7 @@ e2e:
 check: lint typecheck test
 
 # The whole chain on the bundled sample, on a CPU: the preview renderer and the identity painter stand in for Blender and
-# the AI model, so it runs anywhere in about two minutes.
+# the AI model, so it runs anywhere in about three minutes.
 sample:
 	$(BIN)/qipu-map sample --work $(SAMPLE_WORK)
 

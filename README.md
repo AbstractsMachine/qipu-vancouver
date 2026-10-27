@@ -39,7 +39,7 @@ git clone https://github.com/AbstractsMachine/qipu-vancouver && cd qipu-vancouve
 
 make -C packages/records demo                 # read 9 pages with recorded model answers, check them: build/demo/
 make -C packages/updates install demo         # two scheduled runs a week apart; the second processes only the new meeting
-make -C packages/map-pipeline install sample  # every map stage on a CPU: build/sample/release/ (3 to 4 minutes after the first install of numpy, shapely and Pillow)
+make -C packages/map-pipeline install sample  # every map stage on a CPU: build/sample/release/sample/ (about three minutes, plus the first install of numpy, shapely and Pillow)
 make -C packages/viewer install demo          # the web map at http://localhost:5173 (Ctrl-C to stop)
 ```
 
