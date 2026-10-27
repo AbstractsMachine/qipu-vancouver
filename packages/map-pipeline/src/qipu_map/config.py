@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from qipu_map.errors import StageError
 from qipu_map.geo.boxes import GeoBox
 
 WORK_ENV = "QIPU_MAP_WORK"
@@ -119,17 +120,28 @@ class City:
         try:
             return self.areas[name]
         except KeyError:
-            raise KeyError(f"{self.id} has no area {name!r}; known: {', '.join(sorted(self.areas))}") from None
+            raise StageError(f"{self.id} has no area {name!r}; known: {', '.join(sorted(self.areas))}") from None
 
 
 def load_city(name_or_path: str | Path) -> City:
-    """Load a city by name (a file in the package's `cities/`) or by path."""
+    """Load a city by name (a file in the package's `cities/`) or by path. Raises `StageError` if it is missing or
+    malformed."""
     path = Path(name_or_path)
     if not path.suffix:
         path = CITIES_DIR / f"{name_or_path}.toml"
-    with path.open("rb") as f:
-        raw = tomllib.load(f)
-    return city_from_dict(raw)
+    if not path.is_file():
+        known = ", ".join(sorted(p.stem for p in CITIES_DIR.glob("*.toml")))
+        raise StageError(f"no city file {path}; the bundled cities are: {known}")
+    try:
+        with path.open("rb") as f:
+            raw = tomllib.load(f)
+        return city_from_dict(raw)
+    except tomllib.TOMLDecodeError as e:
+        raise StageError(f"{path}: not valid TOML: {e}") from e
+    except KeyError as e:
+        raise StageError(f"{path}: missing {e.args[0]!r}") from e
+    except TypeError as e:  # a section with a key the dataclass does not have, or without one it needs
+        raise StageError(f"{path}: {e}") from e
 
 
 def city_from_dict(raw: dict[str, Any]) -> City:
