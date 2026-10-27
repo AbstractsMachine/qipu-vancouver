@@ -1,0 +1,252 @@
+{
+  "now": {
+    "zmax": 9,
+    "key": "render",
+    "v": "r20261001-10171833"
+  },
+  "years": {
+    "1887": {
+      "zmax": 9,
+      "key": "_preview_eras/1887",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1896": {
+      "zmax": 9,
+      "key": "_preview_eras/1896",
+      "v": "pv10160316",
+      "public": true
+    },
+    "1900": {
+      "zmax": 9,
+      "key": "_preview_eras/1900",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1905": {
+      "zmax": 9,
+      "key": "_preview_eras/1905",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1906": {
+      "zmax": 9,
+      "key": "_preview_eras/1906",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1913": {
+      "zmax": 9,
+      "key": "_preview_eras/1913",
+      "v": "pv10170623",
+      "public": true
+    },
+    "1915": {
+      "zmax": 9,
+      "key": "_preview_eras/1915",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1919": {
+      "zmax": 9,
+      "key": "_preview_eras/1919",
+      "v": "pv10170623",
+      "public": true
+    },
+    "1938": {
+      "zmax": 9,
+      "key": "_preview_eras/1938",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1940": {
+      "zmax": 9,
+      "key": "_preview_eras/1940",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1959": {
+      "zmax": 9,
+      "key": "_preview_eras/1959",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1970": {
+      "zmax": 9,
+      "key": "_preview_eras/1970",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1985": {
+      "zmax": 9,
+      "key": "_preview_eras/1985",
+      "v": "pv10140125",
+      "public": true
+    },
+    "1995": {
+      "zmax": 9,
+      "key": "_preview_eras/1995",
+      "v": "pv10140125",
+      "public": true
+    },
+    "2006": {
+      "zmax": 9,
+      "key": "_preview_eras/2006",
+      "v": "pv10140125",
+      "public": true
+    }
+  },
+  "min": 1887,
+  "public": true,
+  "quarters": {
+    "haight": {
+      "name": "Haight-Ashbury",
+      "l9": [66560, 45056, 76800, 52224],
+      "years": [
+        {
+          "year": 1900,
+          "real": true
+        },
+        {
+          "year": 1905,
+          "real": true
+        },
+        {
+          "year": 1906,
+          "real": true
+        },
+        {
+          "year": 1915,
+          "real": true
+        },
+        {
+          "year": 1959,
+          "real": true
+        },
+        {
+          "year": 1985,
+          "real": true
+        },
+        {
+          "year": 2026,
+          "real": true
+        }
+      ],
+      "keys": {
+        "1900": {
+          "key": "_preview_eras/area/haight/1900",
+          "zmax": 9,
+          "v": "wtrfwe14"
+        },
+        "1905": {
+          "key": "_preview_eras/area/haight/1905",
+          "zmax": 9,
+          "v": "wtrfwe14"
+        },
+        "1906": {
+          "key": "_preview_eras/area/haight/1906",
+          "zmax": 9,
+          "v": "wtrfwe14"
+        },
+        "1915": {
+          "key": "_preview_eras/area/haight/1915",
+          "zmax": 9,
+          "v": "wtrfwe14"
+        },
+        "1959": {
+          "key": "_preview_eras/area/haight/1959",
+          "zmax": 9,
+          "v": "wtrfwe14"
+        },
+        "1985": {
+          "key": "_preview_eras/area/haight/1985",
+          "zmax": 9,
+          "v": "wtrfwe14"
+        }
+      },
+      "switch": {
+        "1900-1905": {
+          "key": "_preview_eras/area/haight/switch/1900-1905",
+          "zmax": 9,
+          "v": "pv10171650",
+          "enc": "c3c",
+          "offset": 1800.0,
+          "scale": 100.0
+        },
+        "1906-1915": {
+          "key": "_preview_eras/area/haight/switch/1906-1915",
+          "zmax": 9,
+          "v": "pv10171650",
+          "enc": "c3c",
+          "offset": 1800.0,
+          "scale": 100.0,
+          "leadStep": 0.4
+        },
+        "1915-1959": {
+          "key": "_preview_eras/area/haight/switch/1915-1959",
+          "zmax": 9,
+          "v": "pv10171650",
+          "enc": "c3c",
+          "offset": 1800.0,
+          "scale": 100.0,
+          "leadStep": 0.4
+        },
+        "1959-1985": {
+          "key": "_preview_eras/area/haight/switch/1959-1985",
+          "zmax": 9,
+          "v": "pv10171650",
+          "enc": "c3c",
+          "offset": 1800.0,
+          "scale": 100.0,
+          "leadStep": 0.4
+        },
+        "1985-2026": {
+          "key": "_preview_eras/area/haight/switch/1985-2026",
+          "zmax": 9,
+          "v": "pv10171650",
+          "enc": "c3c",
+          "offset": 1800.0,
+          "scale": 100.0,
+          "leadStep": 0.4
+        }
+      }
+    },
+    "cf_gg0": {
+      "name": "Golden Gate Bridge (north half)",
+      "l9": [36864, 13312, 47104, 21504],
+      "years": [
+        {
+          "year": 1900,
+          "real": true
+        },
+        {
+          "year": 2026,
+          "real": true
+        }
+      ],
+      "keys": {
+        "1900": {
+          "key": "_preview_eras/area/cf_gg0/1900",
+          "zmax": 9,
+          "v": "wttswt14"
+        }
+      },
+      "switch": {
+        "1900-2026": {
+          "key": "_preview_eras/area/cf_gg0/switch/1900-2026",
+          "zmax": 9,
+          "v": "pv10171650",
+          "enc": "c3d",
+          "offset": 1800.0,
+          "scale": 100.0,
+          "leadStep": 1.0,
+          "clear": {
+            "key": "_preview_eras/area/cf_gg0/clear/1900-2026",
+            "zmax": 9,
+            "v": "wttswt14"
+          }
+        }
+      }
+    }
+  }
+}
