@@ -15,6 +15,8 @@ USER_AGENT = "qipu-map/0.1 (+https://github.com/AbstractsMachine/qipu-vancouver)
 
 
 class Http(Protocol):
+    """The network edge the fetchers use: a GET with query parameters and a form POST, each returning the body."""
+
     def get(self, url: str, params: Mapping[str, str] | None = None) -> bytes: ...
 
     def post(self, url: str, form: Mapping[str, str]) -> bytes: ...

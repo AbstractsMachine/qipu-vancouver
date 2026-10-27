@@ -115,6 +115,8 @@ def _trees(scene: Scene, terrain: Raster) -> list[dict[str, Any]]:
 
 @dataclass(frozen=True)
 class JobInputs:
+    """Everything `write_job` needs to describe one year's render to Blender."""
+
     scene: Scene
     plan: FramePlan
     terrain: Raster

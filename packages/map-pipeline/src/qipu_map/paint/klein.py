@@ -22,6 +22,8 @@ from qipu_map.paint.noise import CELL_PX, noise_field
 
 
 class DiffusersKlein:
+    """The real painter: FLUX.2 klein through diffusers on a CUDA GPU. Needs the `paint` extra."""
+
     name = "diffusers"
 
     def __init__(self, model: str, steps: int, guidance: float) -> None:

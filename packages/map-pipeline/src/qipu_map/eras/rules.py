@@ -18,6 +18,8 @@ RULES_DIR = Path(__file__).parent / "rules"
 
 
 class Basis(StrEnum):
+    """Whether a rule's date is read from a dated record (SOURCED) or is a period choice (CONVENTION)."""
+
     SOURCED = "sourced"
     CONVENTION = "convention"
 
@@ -144,6 +146,9 @@ class AreaOverride:
 
 @dataclass(frozen=True)
 class EraRules:
+    """All the era rules of one city, as loaded by `load_rules`; `evidence_for` picks the air-photo mask that speaks for
+    a year."""
+
     city: str
     undated: UndatedRule
     improved: ImprovedRule

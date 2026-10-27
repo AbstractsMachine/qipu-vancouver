@@ -11,6 +11,8 @@ from enum import IntEnum
 
 
 class SurfaceClass(IntEnum):
+    """The id of the surface a pixel shows in the class pass. The values are part of the file format."""
+
     NONE = 0
     GROUND = 1
     ROAD = 2

@@ -51,6 +51,8 @@ class Layer:
 
 @dataclass(frozen=True)
 class Layers:
+    """Every pyramid of a release: today's, each past year's and each date-map segment's."""
+
     today: Layer
     years: Mapping[int, Layer]
     switch: Mapping[tuple[int, int], Layer]

@@ -39,6 +39,8 @@ EARLY_BEFORE = 1960
 
 
 class Key(StrEnum):
+    """The prompt a tile gets, chosen from what its class pass shows."""
+
     BASE = "base"
     TOWERS = "towers"
     MEADOW = "meadow"
@@ -79,6 +81,8 @@ class Content:
 
 @dataclass(frozen=True)
 class Choice:
+    """A tile's prompt key and whether it gets the rail clause."""
+
     key: Key
     rail: bool
 

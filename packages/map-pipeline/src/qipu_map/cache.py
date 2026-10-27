@@ -34,11 +34,13 @@ def stage_key(stage: str, inputs: Iterable[Path], params: Any) -> str:
 
 
 def is_fresh(out_dir: Path, key: str) -> bool:
+    """True when `out_dir` holds a stamp equal to `key`: the stage finished with these inputs, so it can be skipped."""
     stamp = out_dir / STAMP
     return stamp.is_file() and stamp.read_text().strip() == key
 
 
 def mark_done(out_dir: Path, key: str) -> None:
+    """Write the stamp for `key` into `out_dir`, creating it. A stage calls this last, once all its outputs exist."""
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / STAMP).write_text(key + "\n")
 

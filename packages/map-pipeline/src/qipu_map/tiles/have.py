@@ -12,6 +12,8 @@ from typing import TypedDict
 
 
 class Have(TypedDict):
+    """The `have` entry of the manifest: the box of tiles (x0, y0, cols, rows) and its base64 bitmap."""
+
     x0: int
     y0: int
     cols: int

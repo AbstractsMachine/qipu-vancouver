@@ -22,6 +22,9 @@ from qipu_map.paint.backends import RGB
 
 @dataclass
 class TileCache:
+    """The painted-tile cache: one PNG per model call in `folder`, named by digest; `also` lists other folders to copy a
+    hit from."""
+
     folder: Path
     also: Sequence[Path] = ()
     hits: int = field(default=0, init=False)

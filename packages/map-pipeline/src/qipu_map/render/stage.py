@@ -35,6 +35,8 @@ VERSION = 1
 
 @dataclass(frozen=True)
 class RenderSettings:
+    """The render stage's settings: backend, frame size and overlap in pixels, light and Cycles options."""
+
     backend: Backend = "preview"
     frame_w: int = 2048
     frame_h: int = 1536

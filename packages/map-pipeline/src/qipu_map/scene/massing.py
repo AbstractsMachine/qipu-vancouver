@@ -69,6 +69,7 @@ class RoofShape:
 
 
 def building_mesh(b: Building) -> Mesh:
+    """The closed mesh of a building: roof, one wall per footprint edge, and a floor, in world metres."""
     ring = ccw(b.footprint)
     shape = roof_shape(b, ring)
     builder = _MeshBuilder()

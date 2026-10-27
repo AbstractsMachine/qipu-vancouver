@@ -117,6 +117,8 @@ def roadway_width(kind: StreetKind, width_m: float) -> float:
 
 
 def ground_shapes(scene: Scene) -> GroundShapes:
+    """The scene's ground as shapes in drawing order, clipped to its box: parks, sidewalks, roadways and water, for
+    streets open in the scene's year."""
     area = box(*scene.box)
     streets = [s for s in scene.streets if len(s.line) > 1 and (s.year_closed is None or s.year_closed > scene.year)]
     streets = [s for s in streets if s.year_opened is None or s.year_opened <= scene.year]

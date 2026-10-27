@@ -15,6 +15,9 @@ from qipu_map.paths import WorkDir
 
 @dataclass(frozen=True)
 class Context:
+    """The city, the area and the work folder a command runs on, with the projection, camera and boxes derived from
+    them."""
+
     city: City
     area: str
     work: WorkDir
@@ -49,6 +52,8 @@ def add_common(parser: argparse.ArgumentParser, *, explicit: bool = False) -> No
 
 
 def context_from_args(args: argparse.Namespace) -> Context:
+    """The `Context` for parsed `--city`, `--area` and `--work` options. Raises `StageError` for a missing city file or
+    an unknown area."""
     city = load_city(args.city)
     city.area(args.area)  # raises StageError for an area the city file does not name
     return Context(city=city, area=args.area, work=WorkDir(work_root(args.work), city.id, args.area))

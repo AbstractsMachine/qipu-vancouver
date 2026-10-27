@@ -26,10 +26,12 @@ def elements(raw: dict[str, Any]) -> Iterator[Element]:
 
 
 def osm_id(el: Element) -> str:
+    """The layer id of an OSM element: `osm-` plus the first letter of its type and its number, such as `osm-w123`."""
     return f"osm-{el['type'][0]}{el['id']}"
 
 
 def way_line(el: Element) -> shapely.LineString | None:
+    """The way's geometry as a line string in degrees, or None when it has fewer than two points."""
     pts = [(p["lon"], p["lat"]) for p in el.get("geometry") or [] if p]
     return shapely.LineString(pts) if len(pts) >= 2 else None
 

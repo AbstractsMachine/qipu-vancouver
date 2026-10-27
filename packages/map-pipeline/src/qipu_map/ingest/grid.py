@@ -98,5 +98,6 @@ def grid_bytes(grid: LocalGrid, values: NDArray[np.float32]) -> bytes:
 
 
 def load_grid(path: Path) -> Raster:
+    """Read a grid written by `grid_bytes` as a `Raster` of heights in metres, NaN where the source had no data."""
     with np.load(path) as z:
         return Raster(float(z["x0"]), float(z["y0"]), float(z["cell"]), from_decimetres(z["dm"]))

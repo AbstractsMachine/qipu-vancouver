@@ -20,6 +20,8 @@ RETRIEVED = "retrieved.json"
 
 
 class RawStore:
+    """The raw folder of one run: each source's answer kept as fetched, with the date it was retrieved."""
+
     def __init__(self, root: Path, today: Callable[[], date] = date.today) -> None:
         self.root = root
         self._today = today

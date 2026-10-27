@@ -22,6 +22,8 @@ _F = NDArray[np.float64]
 
 @dataclass(frozen=True)
 class LocalProjection:
+    """Equirectangular projection around a city origin: degrees to local metres (x east, y north) and back."""
+
     lon0: float
     lat0: float
     metres_per_degree: float = 111_320.0

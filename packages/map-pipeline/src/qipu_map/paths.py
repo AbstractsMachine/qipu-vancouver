@@ -18,6 +18,8 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class WorkDir:
+    """Where each stage of one city and area reads and writes under the work folder."""
+
     root: Path
     city: str
     area: str

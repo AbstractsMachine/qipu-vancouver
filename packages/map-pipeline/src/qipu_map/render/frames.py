@@ -37,6 +37,8 @@ class Frame:
 
 @dataclass(frozen=True)
 class FramePlan:
+    """The canvas and the overlapping frames that cover it, with their size and overlap in pixels."""
+
     canvas: Canvas
     frames: tuple[Frame, ...]
     frame_w: int
@@ -81,6 +83,7 @@ def plan_frames(canvas: Canvas, frame_w: int = 2048, frame_h: int = 1536, overla
 
 
 def plan_to_json(plan: FramePlan, year: int) -> dict[str, Any]:
+    """The frame plan as a JSON-ready dict for `year`, in the `qipu-frames/1` format."""
     c = plan.canvas
     return {
         "format": FRAMES_FORMAT,
@@ -112,6 +115,7 @@ def plan_from_json(d: dict[str, Any]) -> FramePlan:
 
 
 def save_plan(plan: FramePlan, year: int, out_dir: Path) -> Path:
+    """Write the plan to `frames.json` in `out_dir` and return its path. The render stage writes it last."""
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / FRAMES_FILE
     path.write_text(json.dumps(plan_to_json(plan, year), indent=1, sort_keys=True) + "\n")
@@ -119,4 +123,5 @@ def save_plan(plan: FramePlan, year: int, out_dir: Path) -> Path:
 
 
 def load_plan(render_dir: Path) -> FramePlan:
+    """Read the frame plan from the render folder's `frames.json`."""
     return plan_from_json(json.loads((render_dir / FRAMES_FILE).read_text()))

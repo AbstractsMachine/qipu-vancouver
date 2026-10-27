@@ -25,6 +25,8 @@ from qipu_map.config import Camera
 
 @dataclass(frozen=True)
 class ObliqueCamera:
+    """The map's fixed orthographic camera: world metres to screen metres, and back for a known height."""
+
     azimuth_deg: float
     elevation_deg: float
     metres_per_px: float

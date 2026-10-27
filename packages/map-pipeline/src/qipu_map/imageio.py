@@ -51,6 +51,8 @@ def _mode_of(im: Image.Image) -> Mode:
 
 
 def array_mode(a: Pixels) -> Mode:
+    """The PIL mode of a uint8 array: L for (h, w), RGB for (h, w, 3), RGBA for (h, w, 4). Raises `ValueError` for any
+    other shape."""
     if a.ndim == 2:
         return "L"
     if a.ndim == 3 and a.shape[2] in (3, 4):
@@ -59,10 +61,12 @@ def array_mode(a: Pixels) -> Mode:
 
 
 def png_bytes(a: Pixels, compression: Compression = "default") -> bytes:
+    """The array as PNG bytes, without metadata, so the same pixels give the same bytes."""
     buf = io.BytesIO()
     Image.fromarray(np.ascontiguousarray(a), array_mode(a)).save(buf, format="PNG", **_PNG_OPTIONS[compression])
     return buf.getvalue()
 
 
 def write_png(path: Path, a: Pixels, compression: Compression = "default") -> None:
+    """Write the array as a PNG through a temporary name, so a crash never leaves a half-written file."""
     write_atomic(path, png_bytes(a, compression))

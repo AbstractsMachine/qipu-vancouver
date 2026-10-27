@@ -112,6 +112,7 @@ class BuildingLook:
 
 
 def building_look(b: Building) -> BuildingLook:
+    """The wall, roof and glass colours of a building, picked by its type and a hash of its id."""
     roofs = _PITCHED if b.kind in _HOUSES else _FLAT
     return BuildingLook(
         wall=_pick(WALLS[b.kind], b.id, "wall"),

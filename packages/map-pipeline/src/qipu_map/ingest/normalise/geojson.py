@@ -20,6 +20,8 @@ DECIMALS = 7
 
 @dataclass(frozen=True)
 class Feature:
+    """A layer feature: an id that is unique in its layer, a shapely geometry and its properties."""
+
     id: str
     geometry: BaseGeometry
     props: dict[str, Any]
@@ -39,6 +41,7 @@ def polygons(g: BaseGeometry) -> list[shapely.Polygon]:
 
 
 def lines(g: BaseGeometry) -> list[shapely.LineString]:
+    """The line strings in any geometry, skipping any with fewer than two points."""
     return [p for p in getattr(g, "geoms", [g]) if isinstance(p, shapely.LineString) and len(p.coords) >= 2]
 
 
@@ -76,6 +79,8 @@ def collection(features: Iterable[Feature]) -> dict[str, Any]:
 
 
 def write_layer(path: Path, features: Iterable[Feature]) -> int:
+    """Write the features as a compact GeoJSON file, sorted by id, and return how many. Raises `ValueError` on a
+    duplicate id."""
     fc = collection(features)
     write_json(path, fc, compact=True)
     return len(fc["features"])
