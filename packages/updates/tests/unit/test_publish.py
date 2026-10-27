@@ -205,3 +205,19 @@ def test_a_crash_while_rolling_back_leaves_latest_where_it_was(tmp_path: Path) -
     assert pointer is not None
     assert pointer.version == "2026-10-26.1"
     assert rel.rollback(good, NOW, "again", holder="run").version == "2026-10-19.1"
+
+
+@pytest.mark.parametrize(
+    "gates", [{}, {"quote_on_page": {"passed": False}}, {"quote_on_page": {"passed": True}, "date": {"passed": False}}]
+)
+def test_publish_refuses_a_release_that_did_not_pass_its_gates(tmp_path: Path, gates: dict[str, Any]) -> None:
+    """publish() checks the gates itself, whatever the caller did: none recorded or any failed, and nothing moves."""
+    store = LocalStore(tmp_path / "s")
+    control.acquire(store, "run", NOW)
+    folder, manifest = release_folder(tmp_path, "2026-10-26.1")
+    manifest.gates = gates
+    with pytest.raises(rel.PublishError, match="gates"):
+        rel.publish(store, folder, manifest, NOW, "run")
+    assert rel.current(store) is None
+    assert rel.versions(store) == []  # refused before the upload
+    assert rel.history(store) == []
