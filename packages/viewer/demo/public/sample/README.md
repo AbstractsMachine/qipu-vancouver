@@ -8,6 +8,11 @@ Built with `scripts/build-sample.mjs` from the site's data folders on 26 October
 | `sf/` | 343 | 10,473 | Mission, Haight Ashbury, Chinatown | qipu data, CC0. The records quoted are San Francisco Board of Supervisors proceedings, public domain. |
 | `vancouver/` | 287 | 1,711 | Strathcona, Mount Pleasant | City of Vancouver records, CC BY 3.0 and the Open Government Licence – Vancouver: © City of Vancouver. |
 
+Names follow this repository's privacy rule ([docs/privacy.md](../../../../../docs/privacy.md)): a name is withheld
+in every field of a record or in none. Three SF rows cut from the site had a contractor ("Dr. Bach-Y-Rita") and an
+organisation ("Colonial Dames") masked in `pl` but printed in `t`; both are public under the rule and are shown, and
+`src/data/sample-privacy.test.ts` fails if a rebuilt sample masks a name in one field and prints it in another.
+
 Geometry (`base/`) and the block index are whole; only the decisions are cut, and blocks outside the
 sample have a count of zero. The money file (`blocks/block-money.json`) names its amounts `agreed`, `paid` and
 `payees_paid` and states their `currency` (USD for San Francisco, CAD for Vancouver); qipu.org's own files call
