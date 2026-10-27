@@ -1,4 +1,4 @@
-import { FormatError, int, list, record, str } from "./validate";
+import { FormatError, list, natural, record, str } from "./validate";
 
 /**
  * QCT1, the city data's binary chunk container:
@@ -59,8 +59,8 @@ export function decodeChunk(buffer: ArrayBuffer): Chunk {
     const t = str(field.t, `${p}.t`);
     if (!isDType(t)) throw new FormatError(`${p}.t`, `a dtype (got "${t}")`);
     const Ctor = ARRAYS[t];
-    const offset = int(field.o, `${p}.o`);
-    const count = int(field.c, `${p}.c`);
+    const offset = natural(field.o, `${p}.o`);
+    const count = natural(field.c, `${p}.c`);
     if (offset % Ctor.BYTES_PER_ELEMENT !== 0 || offset + count * Ctor.BYTES_PER_ELEMENT > payloadLength) {
       throw new FormatError(p, "an aligned field inside the payload");
     }

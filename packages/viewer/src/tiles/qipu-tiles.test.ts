@@ -74,4 +74,13 @@ describe("parseQipuTiles", () => {
       }),
     ).toThrow("a 2 x 4 matrix");
   });
+
+  it("refuses a tile size or zoom that would put the map at infinity", () => {
+    expect(() => parseQipuTiles({ ...westEnd, tile_size: 0 })).toThrow(
+      "manifest.tile_size: expected a positive integer",
+    );
+    expect(() => parseQipuTiles({ ...westEnd, canvas: { ...westEnd.canvas, zmax: -1 } })).toThrow(
+      "manifest.canvas.zmax: expected an integer of 0 or more",
+    );
+  });
 });

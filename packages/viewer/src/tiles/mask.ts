@@ -1,4 +1,4 @@
-import { type Json, FormatError, int, isRecord, list, optional, record, str } from "../data/validate";
+import { type Json, FormatError, int, isRecord, list, optional, positiveInt, record, str } from "../data/validate";
 
 /**
  * Which tiles of a pyramid exist. Most of a city's bounding box is sea or
@@ -31,7 +31,9 @@ export function parseTileMask(json: Json, path: string, unlisted: "present" | "a
   const unlistedLevelsExist = unlisted === "present";
   for (const [key, value] of Object.entries(record(json, path))) {
     const p = `${path}.${key}`;
-    levels.set(Number(key), isRecord(value) ? objectLevel(value, p) : arrayLevel(value, p));
+    const z = Number(key);
+    if (!Number.isInteger(z) || z < 0) throw new FormatError(p, "a level number as the key");
+    levels.set(z, isRecord(value) ? objectLevel(value, p) : arrayLevel(value, p));
   }
   return {
     has(z, x, y) {
@@ -52,9 +54,9 @@ function objectLevel(o: Record<string, Json>, p: string): LevelBits {
   return {
     x0: int(o.x0, `${p}.x0`),
     y0: int(o.y0, `${p}.y0`),
-    cols: positive(o.cols, `${p}.cols`),
-    rows: optional(o.rows, (v) => positive(v, `${p}.rows`)) ?? Number.POSITIVE_INFINITY,
-    bits: decodeBase64(str(o.bits, `${p}.bits`)),
+    cols: positiveInt(o.cols, `${p}.cols`),
+    rows: optional(o.rows, (v) => positiveInt(v, `${p}.rows`)) ?? Number.POSITIVE_INFINITY,
+    bits: decodeBase64(str(o.bits, `${p}.bits`), `${p}.bits`),
     msbFirst: true,
   };
 }
@@ -65,21 +67,20 @@ function arrayLevel(value: Json, p: string): LevelBits {
   return {
     x0: int(row[0], `${p}[0]`),
     y0: int(row[1], `${p}[1]`),
-    cols: positive(row[2], `${p}[2]`),
+    cols: positiveInt(row[2], `${p}[2]`),
     rows: Number.POSITIVE_INFINITY,
-    bits: decodeBase64(str(row[3], `${p}[3]`)),
+    bits: decodeBase64(str(row[3], `${p}[3]`), `${p}[3]`),
     msbFirst: false,
   };
 }
 
-function positive(value: Json, path: string): number {
-  const n = int(value, path);
-  if (n <= 0) throw new FormatError(path, "a positive count");
-  return n;
-}
-
-function decodeBase64(text: string): Uint8Array {
-  const binary = atob(text);
+function decodeBase64(text: string, path: string): Uint8Array {
+  let binary: string;
+  try {
+    binary = atob(text);
+  } catch {
+    throw new FormatError(path, "base64 bits");
+  }
   const out = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
   return out;

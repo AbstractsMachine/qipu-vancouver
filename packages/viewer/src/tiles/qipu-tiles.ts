@@ -1,4 +1,17 @@
-import { type Json, FormatError, int, list, num, numbers, optional, record, str, strings } from "../data/validate";
+import {
+  type Json,
+  FormatError,
+  int,
+  list,
+  natural,
+  num,
+  numbers,
+  optional,
+  positiveInt,
+  record,
+  str,
+  strings,
+} from "../data/validate";
 import { type EraKey, type EraManifest, type EraSwitch, segmentName } from "../eras/model";
 import { TILE_CSS } from "./frame";
 import { parseTileMask } from "./mask";
@@ -16,9 +29,9 @@ export function parseQipuTiles(json: Json): Painting {
   const o = record(json, "manifest");
   const format = str(o.format, "manifest.format");
   if (format !== QIPU_TILES) throw new FormatError("manifest.format", `"${QIPU_TILES}" (got "${format}")`);
-  const tile = int(o.tile_size, "manifest.tile_size");
+  const tile = positiveInt(o.tile_size, "manifest.tile_size");
   const canvas = record(o.canvas, "manifest.canvas");
-  const zmax = int(canvas.zmax, "manifest.canvas.zmax");
+  const zmax = natural(canvas.zmax, "manifest.canvas.zmax");
   /* canvas pixels at zmax to level-0 CSS pixels */
   const k = TILE_CSS / tile / 2 ** zmax;
   const m = matrix(o.world_to_px);
