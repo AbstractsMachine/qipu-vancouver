@@ -20,6 +20,8 @@ from typing import Protocol
 
 
 class Store(Protocol):
+    """Files addressed by key, where releases and run reports live. LocalStore and RcloneStore implement it."""
+
     def read(self, key: str) -> bytes | None: ...
 
     def write(self, key: str, data: bytes) -> None: ...

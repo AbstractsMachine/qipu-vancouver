@@ -24,6 +24,7 @@ def _required(options: dict[str, Any], key: str, section: str) -> str:
 
 
 def make_source(config: SourceConfig, cache: Path) -> Source:
+    """The source a config names, caching under `cache`; ConfigError for an unknown kind or a missing option."""
     options = config.options
     if config.kind == "archive":
         return ArchiveSource(_required(options, "collection", "source"), cache / "archive")
@@ -35,6 +36,7 @@ def make_source(config: SourceConfig, cache: Path) -> Source:
 
 
 def make_reader(config: ReaderConfig) -> Reader:
+    """The reader a config names; ConfigError for an unknown kind or a missing option."""
     if config.kind == "replay":
         return ReplayReader(Path(_required(config.options, "readings", "reader")))
     if config.kind == "anthropic":
@@ -49,6 +51,7 @@ def make_reader(config: ReaderConfig) -> Reader:
 
 
 def make_store(config: PublishConfig, override: Path | None = None) -> Store:
+    """The store a config names, or a local folder when `override` is given; ConfigError for an unknown backend."""
     if override is not None:
         return LocalStore(override)
     if config.backend == "local":

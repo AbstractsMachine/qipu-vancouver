@@ -17,6 +17,7 @@ def run_all(
     records_before: int | None,
     limits: dict[str, int] | None = None,
 ) -> list[GateResult]:
+    """Run every gate over the draft and return their results; the caller decides from them whether to publish."""
     limit = (limits or {}).get
     records = draft.records
     return [

@@ -18,6 +18,8 @@ FAILED = ("refused", "failed")
 
 @dataclass
 class RunReport:
+    """What one run did, as numbers and a status."""
+
     run_id: str
     config: str
     as_of: str

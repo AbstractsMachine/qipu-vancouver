@@ -55,6 +55,8 @@ class ReaderConfigError(RuntimeError):
 
 
 class Reader(Protocol):
+    """What the pipeline needs of a model: a name, and a read() that turns one page into a Reading."""
+
     model: str
 
     def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading: ...
@@ -96,6 +98,8 @@ def _missing(sdk: str) -> ReaderConfigError:
 
 @dataclass
 class AnthropicReader:
+    """Reads pages with Claude through the Anthropic API. ReaderConfigError without ANTHROPIC_API_KEY or the SDK."""
+
     model: str = "claude-haiku-5-5"
     effort: Effort = "medium"
     max_tokens: int = 16000

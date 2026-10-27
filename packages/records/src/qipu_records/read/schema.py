@@ -116,6 +116,8 @@ class ModelMoney(TypedDict, total=False):
 
 
 class ModelPlace(TypedDict, total=False):
+    """One place as the model reported it, with whichever parts of the address it found."""
+
     text: str
     street: str
     number: str

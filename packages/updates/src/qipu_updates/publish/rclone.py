@@ -32,6 +32,8 @@ class StoreError(RuntimeError):
 
 
 class RcloneStore:
+    """A store on an rclone remote. Anything but "not found" from rclone raises StoreError."""
+
     def __init__(self, remote: str, runner: Runner = subprocess.run, timeout_s: float = TIMEOUT_S) -> None:
         self.remote = remote.rstrip("/")
         self._run = runner

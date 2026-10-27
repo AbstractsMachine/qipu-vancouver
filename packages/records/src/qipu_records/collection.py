@@ -24,6 +24,8 @@ from qipu_records.read.readers import Reading, load_readings
 
 @dataclass(frozen=True)
 class Page:
+    """One OCR page of an archive.org item."""
+
     page_id: str
     item: str
     n: int
@@ -32,10 +34,12 @@ class Page:
 
 
 def make_page_id(item: str, n: int) -> str:
+    """The id of an item's page: "<item>:<n>"."""
     return f"{item}:{n}"
 
 
 def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
+    """The rows of a JSON-lines file, one dict per non-blank line."""
     with path.open(encoding="utf-8") as lines:
         for line in lines:
             if line.strip():
@@ -43,6 +47,7 @@ def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
 
 
 def write_jsonl(path: Path, rows: Iterable[Mapping[str, object]]) -> int:
+    """Write the rows as JSON lines through a temporary file; returns how many were written."""
     count = 0
     tmp = path.with_suffix(path.suffix + ".tmp")
     with tmp.open("w", encoding="utf-8") as out:
@@ -54,12 +59,15 @@ def write_jsonl(path: Path, rows: Iterable[Mapping[str, object]]) -> int:
 
 
 def write_json(path: Path, data: object) -> None:
+    """Write data as indented JSON through a temporary file, so a crash never leaves half a file."""
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     tmp.replace(path)
 
 
 class Collection:
+    """The folder of files one run reads and writes, with a method to load and save each of them."""
+
     def __init__(self, folder: Path) -> None:
         self.folder = folder
         folder.mkdir(parents=True, exist_ok=True)

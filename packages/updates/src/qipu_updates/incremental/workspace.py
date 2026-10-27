@@ -25,6 +25,7 @@ def text_hash(text: str) -> str:
 
 
 def safe_name(doc_id: str) -> str:
+    """A document id as a folder name: anything but letters, digits, dot, dash and underscore becomes "_"."""
     return re.sub(r"[^A-Za-z0-9._-]", "_", doc_id)
 
 
@@ -33,6 +34,8 @@ def _hashes(collection: Collection) -> dict[str, str]:
 
 
 class Workspace:
+    """The working copy of every document, between runs: current and staged collection folders."""
+
     def __init__(self, root: Path) -> None:
         self.root = root
         (root / "docs").mkdir(parents=True, exist_ok=True)

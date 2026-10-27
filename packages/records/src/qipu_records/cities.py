@@ -13,6 +13,9 @@ from importlib import resources
 
 @dataclass(frozen=True)
 class City:
+    """One city's settings: the body whose minutes are read, its currency, its archive.org collection and
+    its privacy embargo."""
+
     key: str
     name: str
     body: str
@@ -55,6 +58,7 @@ CITIES = {city.key: city for city in (VANCOUVER, SAN_FRANCISCO)}
 
 
 def get_city(key: str) -> City:
+    """The City for a key such as "vancouver"; ValueError, naming the known keys, when there is none."""
     try:
         return CITIES[key]
     except KeyError:

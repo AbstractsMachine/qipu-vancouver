@@ -17,6 +17,8 @@ from enum import StrEnum
 
 
 class Outcome(StrEnum):
+    """What became of a decision: passed, refused, vetoed, still pending, and so on."""
+
     PASSED = "passed"
     SUBMITTED_TO_VOTERS = "submitted to voters"
     REFUSED = "refused"

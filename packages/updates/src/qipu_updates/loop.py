@@ -33,6 +33,8 @@ from qipu_updates.sources import Document, Source, SourceError
 
 @dataclass(frozen=True)
 class Options:
+    """How one run is started: its id, the day it reports as of, and whether to dry-run, force or publish."""
+
     run_id: str
     as_of: dt.date
     now: dt.datetime
@@ -49,6 +51,8 @@ BuiltDocs = dict[str, tuple[Document, list[dict[str, Any]]]]
 
 
 class Run:
+    """One scheduled run. Call it with Options to get its RunReport; failures are reported, not raised."""
+
     def __init__(
         self, config: Config, store: Store, workspace: Workspace, source: Source, extractor: Extractor
     ) -> None:

@@ -27,6 +27,8 @@ ReadPrevious = Callable[[str], bytes]
 
 @dataclass
 class Draft:
+    """A release folder being put together: its manifest, all its records and what the corrections did."""
+
     folder: Path
     manifest: Manifest
     records: list[dict[str, Any]]
@@ -39,6 +41,7 @@ class Draft:
 
 
 def stamp(records: Iterable[dict[str, Any]], doc: Document, run_id: str, page_hashes: dict[str, str]) -> None:
+    """Add a provenance block to each record built in this run, in place."""
     for record in records:
         page_id = str(record["id"]).rsplit("/", 1)[0]
         record["provenance"] = {
