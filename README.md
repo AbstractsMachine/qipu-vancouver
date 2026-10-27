@@ -7,7 +7,8 @@ They answer questions people still ask: who approved this building, when was thi
 scan is hard to search, and its OCR text is harder still.
 
 This repository turns those scans into facts anyone can check, and shows them on a painted map of the city, year by year.
-It was built for the Internet Archive and Futureproof Festival Fellowship.
+How often the facts are wrong, and how that was measured, is in [docs/accuracy.md](docs/accuracy.md). It was made through the
+Internet Archive and Futureproof Festival Fellowship.
 
 ```
 scanned minutes on archive.org ──▶ decision records ──▶ records kept current ──┐
@@ -21,8 +22,8 @@ open city data ──────────────────▶ painted
 | package | what it does | language |
 |---|---|---|
 | [`packages/records`](packages/records) | reads each scanned page with a language model, then checks every decision in plain code: the quote must be on the page, the date comes from the minutes, private names in sensitive matters are withheld, and each record links to its page in the archive.org viewer | Python 3.11+, standard library only |
-| [`packages/updates`](packages/updates) | keeps the records current on a schedule: finds new and re-scanned minutes, extracts only those, checks the release against the pages, publishes it as a new version, rolls back in one command, and opens an issue when a run fails | Python 3.11+, depends on records |
-| [`packages/map-pipeline`](packages/map-pipeline) | turns open city data into the painted map that plays through time: a 3D scene of the city, a Blender render, an AI paint pass, the past years and the tiles | Python 3.12+ (numpy, Pillow, shapely); Blender and FLUX.2 klein on a GPU |
+| [`packages/updates`](packages/updates) | keeps the records current on a schedule: finds new and re-scanned minutes, extracts only those, checks the release against the pages with its gates (automatic checks that must all pass before anything is published), publishes it as a new version, rolls back in one command, and opens an issue when a run fails | Python 3.11+, depends on records |
+| [`packages/map-pipeline`](packages/map-pipeline) | turns open city data into the painted map that plays through time: a 3D scene of the city, a Blender render, an AI paint pass, the eras (the same scene as it stood in earlier years) and the tiles, with date maps (images that record in which year each pixel changes) | Python 3.12+ (numpy, Pillow, shapely); Blender and FLUX.2 klein (an open image model that paints the map) on a GPU |
 | [`packages/viewer`](packages/viewer) | the web map: painted tiles, a year slider, and the records of each place | TypeScript, React, Leaflet |
 
 ## Quickstart
@@ -35,7 +36,7 @@ git clone https://github.com/AbstractsMachine/qipu-vancouver && cd qipu-vancouve
 
 make -C packages/records demo                 # read 9 pages with recorded model answers, check them: build/demo/
 make -C packages/updates install demo         # two scheduled runs a week apart; the second processes only the new meeting
-make -C packages/map-pipeline install sample  # every map stage on a CPU, about two minutes: build/sample/release/
+make -C packages/map-pipeline install sample  # every map stage on a CPU, 3 to 4 minutes after it first installs its heavy dependencies (numpy, shapely, Pillow): build/sample/release/
 make -C packages/viewer install demo          # the web map at http://localhost:5173 (Ctrl-C to stop)
 ```
 
@@ -71,6 +72,8 @@ own terms (City of Vancouver, LidarBC, Natural Resources Canada, OpenStreetMap).
 lines.
 
 ## Credits
+
+This work was made through the Internet Archive and Futureproof Festival Fellowship.
 
 The scans and their OCR are the work of the [Internet Archive](https://archive.org) and the archives and libraries that
 digitised the records: the [City of Vancouver Archives](https://searcharchives.vancouver.ca), whose 1970s minutes were digitised
