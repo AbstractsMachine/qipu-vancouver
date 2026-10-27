@@ -124,16 +124,22 @@ def _may_publish(store: Store, release: Manifest, run_id: str) -> None:
 
 def publish(store: Store, folder: Path, release: Manifest, now: dt.datetime, run_id: str) -> Pointer:
     """Upload a release folder, check that every file arrived, then move latest.json to it. Raises PublishError if the
+    release did not pass its gates (checked here, whatever the caller did, and again on the uploaded manifest), the
     version exists or files are missing."""
     prefix = f"{RELEASES}/{release.version}"
     if store.read(f"{prefix}/{MANIFEST}") is not None:
         raise PublishError(f"release {release.version} already exists; releases are never overwritten")
+    if not gates_passed(release):
+        raise PublishError(f"release {release.version} did not pass its gates ({_failed(release)}); not published")
     _may_publish(store, release, run_id)
     store.upload(folder, prefix)
     arrived = set(store.list(prefix))
     missing = sorted((set(release.files) | {MANIFEST}) - arrived)
     if missing:
         raise PublishError(f"{len(missing)} files missing after upload, e.g. {missing[:3]}; latest.json not moved")
+    uploaded = manifest(store, release.version)
+    if uploaded is None or not gates_passed(uploaded):
+        raise PublishError(f"the uploaded manifest of {release.version} does not record passed gates; not published")
     _may_publish(store, release, run_id)  # again: a rollback or pause may have come in during the upload
     pointer = _new_pointer(store, release.version, now)
     event = {
@@ -146,6 +152,12 @@ def publish(store: Store, folder: Path, release: Manifest, now: dt.datetime, run
     record_event(store, event)  # history first, latest.json last: see the module docstring
     _write_pointer(store, pointer)
     return pointer
+
+
+def _failed(release: Manifest) -> str:
+    if not release.gates:
+        return "none recorded"
+    return "failed: " + ", ".join(sorted(name for name, g in release.gates.items() if not g.get("passed")))
 
 
 def gates_passed(release: Manifest) -> bool:
