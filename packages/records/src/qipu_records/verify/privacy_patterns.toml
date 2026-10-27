@@ -1,0 +1,103 @@
+# The patterns of qipu_records.verify.privacy, the Vancouver rule in docs/privacy.md (BC FIPPA ss. 22 and 33).
+# Each pattern is written as a list of pieces that are joined without a separator, one alternative or so per line, so
+# that a change to one alternative shows as a one-line diff. Matching is case-insensitive except where noted.
+
+# One pattern per sensitive matter. A text matching one of them is about that matter.
+[matters]
+health = [
+  '\b(?:medical\s+(?:condition|treatment|grounds|reasons|certificate|history|report)',
+  '|hospitali[sz]ed|psychiatric|mental(?:ly)?\s+(?:ill|illness|disorder|incapab\w*|incompetent)',
+  '|illness\s+of|terminally\s+ill|compassionate\s+(?:grounds|leave|grant|assistance)',
+  '|disability\s+(?:pension|benefit)s?\s+(?:of|for|to)|long[- ]term\s+disability',
+  '|personal\s+health|health\s+reasons|medical\s+(?:and\s+\w+\s+)?circumstances',
+  '|letter\s+from\s+(?:his|her|their)\s+(?:doctor|physician)|(?:doctor',
+  '''|physician)['’]s\s+(?:letter|certificate|note))\b''',
+]
+social_assistance = [
+  '\b(?:social\s+assistance|income\s+assistance|welfare\s+(?:recipient|payment|case|appeal',
+  '|assistance|benefits?|cheque|lien)s?|on\s+welfare|relief\s+(?:recipient|payment|case)s?',
+  '|indigent|destitute|emergency\s+shelter\s+allowance|GAIN\s+(?:recipient|benefits?))\b',
+]
+police_criminal = [
+  '\b(?:charged\s+with|convicted|conviction\s+(?:of|for)|criminal\s+(?:record|charge|offence',
+  '|offense)s?|arrest(?:ed)?\s+of|prosecution\s+of\s+(?:Mr|Mrs|Ms|Miss|Dr)\b|prosecute\s+(?:Mr',
+  '|Mrs|Ms|Miss|Dr)\b|assault(?:ed)?|sexual\s+(?:assault|offence)|young\s+offenders?|probation',
+  '|parole|police\s+(?:complaint|investigation)\s+(?:against|into|of)|(?:declared|declare|is',
+  '|be)\s+(?:a\s+)?nuisance|unsightly\s+premises|remedial\s+action\s+(?:order|requirement)s?',
+  '|unsafe\s+(?:condition|building|premises)\s+(?:at|of)|method\s+of\s+enforcement',
+  '|enforcement\s+(?:action\s+)?against|be\s+(?:charged|prosecuted)\b',
+  '|charges?\s+(?:that\s+(?:has|have)\s+been\s+)?laid\s+against|defending\s+(?:himself',
+  '|herself))\b',
+]
+personal_finances = [
+  '\b(?:hardship\s+cases?|tax\s+arrears|arrears\s+of\s+(?:taxes|rent|account)',
+  '|delinquent\s+tax(?:es)?|tax\s+sale|bankrupt(?:cy)?|garnish\w*',
+  '|write[- ]off\s+of\s+(?:an?\s+)?(?:account|debt|arrears|balance)|uncollectable',
+  '|debts?\s+(?:owed|owing)\s+by|claim\s+for\s+(?:damages|compensation|injur\w+)',
+  '|personal\s+injur\w*|injured\s+(?:in|at|when|by)|wrongful\s+death|(?:lawsuit|action|suit',
+  '|claim)\s+(?:by|of)\s+(?:Mr|Mrs|Ms|Miss|Dr)\b|v\.\s+(?:the\s+)?City\s+of\s+Vancouver',
+  '|settlement\s+of\s+(?:a\s+|the\s+)?(?:claim|action|lawsuit|suit))\b',
+]
+discrimination_harassment = [
+  '\b(?:discrimination\s+complaint|complaint\s+of\s+(?:discrimination|harassment)',
+  '|human\s+rights\s+(?:complaint|tribunal|case)|harass(?:ed|ment)\s+(?:of|by|complaint)',
+  '|sexual\s+harassment)\b',
+]
+children = [
+  '\b(?:juvenile\s+(?:offender|delinquen\w*|court\s+case|record)s?|a\s+juvenile\b',
+  '|foster\s+(?:child|children|care|home|parent)s?|child(?:ren)?\s+in\s+care',
+  '|custody\s+of\s+(?:a|the|his|her|their)?\s*(?:child|children|son|daughter|infant|minor)',
+  '|adoption\s+of\s+(?:a|the)?\s*(?:child|infant|baby)|apprehension\s+of\s+(?:a\s+)?child',
+  '|ward\s+of\s+the\s+(?:court|province|crown))\b',
+]
+employment_discipline = [
+  '\b(?:dismissal\s+of|dismissed\s+from|wrongful\s+dismissal|suspen(?:ded|sion)\s+(?:of',
+  '|without\s+pay)\s+(?!the\s+(?:rules|bylaw|by-law|licence|license))|disciplinary\s+action',
+  '|discipline\s+of|grievance\s+(?:of|by|re|filed)|reprimand(?:ed)?',
+  '|termination\s+of\s+(?:the\s+)?employment|arbitration\s+award\s+(?:re',
+  '|in\s+the\s+matter\s+of))\b',
+]
+
+# A text that matches this is a public function (a rezoning, a licence, a tender, an honour) and is never sensitive,
+# even when a sensitive word appears in it.
+[public]
+function = [
+  '\b(?:rezon\w+|zoning|development\s+permit|building\s+permit|subdivision',
+  '|heritage\s+(?:designation|revitali[sz]ation|alteration)|(?:business|liquor|cabaret|taxi|vendor',
+  '|licen[cs]e)\s+(?:licen[cs]e\s+)?(?:application|hearing|renewal|transfer|amendment)',
+  '|licen[cs]e\s+(?:application|hearing|renewal)|business\s+licen[cs]e|tender|contract\s+award',
+  '|award\s+of\s+contract|freedom\s+of\s+the\s+city|civic\s+(?:merit|award)|in\s+honou?r\s+of',
+  '|proclamation|appointment\s+(?:of|to)|appointed\s+to|grant\s+to)\b',
+]
+
+# Text right before a name that makes it public: a title, a delegation, a letter writer, a payee, a firm, a namesake.
+# Case-sensitive. "8s" near the end is how the OCR often reads "&" in a firm's name.
+[names]
+keep_before = [
+  '(?:Councill?ors?|Cllrs?\.?|Coun\.?|Ald\.|Alderm[ae]n|Alderwoman|Mayor|Deputy\s+Mayor',
+  '|Acting\s+Mayor|Director|Manager|City\s+Clerk|Clerk|City\s+Engineer|Engineer|Solicitor|Chief',
+  '|Commissioner|Inspector|Officer|Superintendent|Supervisor|Chair(?:man|woman|person)?|Constable',
+  '|Sgt\.?|Sergeant|Staff\s+Sergeant|Inspector|Medical\s+Health\s+Officer|Trustee|Commissioner',
+  '|M\.?L\.?A\.?|M\.?P\.?|Premier|Minister|Hon\.|Judge|Justice|Magistrate|Architect|Planner',
+  '|Assessor|Auditor|Treasurer|Comptroller|Fire\s+Chief|delegation|delegations|speakers?|speaking',
+  '|addressed\s+(?:the\s+)?Council|appeared\s+(?:before|on\s+behalf)|petition(?:ers?)?\s+(?:from|of',
+  '|by)|submitted\s+by|letter\s+from|on\s+behalf\s+of|representing|contract(?:\s+awarded)?\s+to',
+  '|paid\s+to|payment\s+to|payable\s+to|in\s+honou?r\s+of|honouring|named\s+(?:after|for)',
+  '|memorial\s+to|Freedom\s+of\s+the\s+City|services\s+rendered\s+by|account\s+of|retained',
+  '|counsel\s+for|proprietors?(?:\s+is)?|operator|P\.\s?C\.(?:\s*\d+)?|[A-Z][a-z]+,?\s+(?:&',
+  '|8s))(?:\s+(?:of|for)\s+(?:the\s+)?(?:[A-Z][A-Za-z&]+\s*){1,3})?\W{0,4}(?:(?:Mr|Mrs|Ms|Miss',
+  '|Dr)\.?\s+)?(?:[A-Z]\.\s*){0,3}$',
+]
+
+# Text right after a name that makes it public: a firm, an organisation, a place, a role. Case-sensitive.
+keep_after = [
+  '^(?:,?\s+(?:doing|carrying\s+on)\s+business|,?\s+d\.?b\.?a\b)',
+  '|^\W{0,3}(?:,\s*)?(?:the\s+)?(?:(?:[A-Z][a-z]+|of|the|and|for|&)\s+){0,4}?(?:Ltd|Limited|Inc',
+  '|Incorporated|Corp|Corporation|Company|Co\b|Society|Association|Foundation|Holdings|Enterprises',
+  '|Investments|Developments|Properties|Construction|Contracting|Club|Church|Hospital|Centre|Center',
+  '|Council|Union|Board|Bank|Hotel|Restaurant|Cafe|Architects|Engineers|Consultants|Partnership',
+  '|& Sons|Bros|Street|St\b|Avenue|Ave\b|Road|Rd\b|Drive|Park|Bridge|Building|School|Hall|Square',
+  '|Way|Crescent|Place|Boulevard|Lane|Day|Award|Director|Manager|Engineer|Clerk|Councill?or',
+  '|Alderm[ae]n|Mayor|Solicitor|Barrister|Lawyer|Notary|Agent|Architect|Inspector|Officer|Chair',
+  '|M\.?L\.?A|M\.?P\b|Q\.C)',
+]

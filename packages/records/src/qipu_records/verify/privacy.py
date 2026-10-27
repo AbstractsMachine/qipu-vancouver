@@ -21,104 +21,28 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+import tomllib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from importlib import resources
 
 from qipu_records.read.schema import ModelItem
 
 WITHHELD = "[name withheld]"
 
-# The patterns are the rule's own (config/privacy/van.yaml of the rule, 26 October 2026), one regex per sensitive
-# matter.
-MATTER_PATTERNS = {
-    "health": (
-        r"\b(?:medical\s+(?:condition|treatment|grounds|reasons|certificate|history|report)"
-        r"|hospitali[sz]ed|psychiatric|mental(?:ly)?\s+(?:ill|illness|disorder|incapab\w*|incompetent)"
-        r"|illness\s+of|terminally\s+ill|compassionate\s+(?:grounds|leave|grant|assistance)"
-        r"|disability\s+(?:pension|benefit)s?\s+(?:of|for|to)|long[- ]term\s+disability"
-        r"|personal\s+health|health\s+reasons|medical\s+(?:and\s+\w+\s+)?circumstances"
-        r"|letter\s+from\s+(?:his|her|their)\s+(?:doctor|physician)|(?:doctor"
-        r"|physician)['’]s\s+(?:letter|certificate|note))\b"
-    ),
-    "social_assistance": (
-        r"\b(?:social\s+assistance|income\s+assistance|welfare\s+(?:recipient|payment|case|appeal"
-        r"|assistance|benefits?|cheque|lien)s?|on\s+welfare|relief\s+(?:recipient|payment|case)s?"
-        r"|indigent|destitute|emergency\s+shelter\s+allowance|GAIN\s+(?:recipient|benefits?))\b"
-    ),
-    "police_criminal": (
-        r"\b(?:charged\s+with|convicted|conviction\s+(?:of|for)|criminal\s+(?:record|charge|offence"
-        r"|offense)s?|arrest(?:ed)?\s+of|prosecution\s+of\s+(?:Mr|Mrs|Ms|Miss|Dr)\b|prosecute\s+(?:Mr"
-        r"|Mrs|Ms|Miss|Dr)\b|assault(?:ed)?|sexual\s+(?:assault|offence)|young\s+offenders?|probation"
-        r"|parole|police\s+(?:complaint|investigation)\s+(?:against|into|of)|(?:declared|declare|is"
-        r"|be)\s+(?:a\s+)?nuisance|unsightly\s+premises|remedial\s+action\s+(?:order|requirement)s?"
-        r"|unsafe\s+(?:condition|building|premises)\s+(?:at|of)|method\s+of\s+enforcement"
-        r"|enforcement\s+(?:action\s+)?against|be\s+(?:charged|prosecuted)\b"
-        r"|charges?\s+(?:that\s+(?:has|have)\s+been\s+)?laid\s+against|defending\s+(?:himself"
-        r"|herself))\b"
-    ),
-    "personal_finances": (
-        r"\b(?:hardship\s+cases?|tax\s+arrears|arrears\s+of\s+(?:taxes|rent|account)"
-        r"|delinquent\s+tax(?:es)?|tax\s+sale|bankrupt(?:cy)?|garnish\w*"
-        r"|write[- ]off\s+of\s+(?:an?\s+)?(?:account|debt|arrears|balance)|uncollectable"
-        r"|debts?\s+(?:owed|owing)\s+by|claim\s+for\s+(?:damages|compensation|injur\w+)"
-        r"|personal\s+injur\w*|injured\s+(?:in|at|when|by)|wrongful\s+death|(?:lawsuit|action|suit"
-        r"|claim)\s+(?:by|of)\s+(?:Mr|Mrs|Ms|Miss|Dr)\b|v\.\s+(?:the\s+)?City\s+of\s+Vancouver"
-        r"|settlement\s+of\s+(?:a\s+|the\s+)?(?:claim|action|lawsuit|suit))\b"
-    ),
-    "discrimination_harassment": (
-        r"\b(?:discrimination\s+complaint|complaint\s+of\s+(?:discrimination|harassment)"
-        r"|human\s+rights\s+(?:complaint|tribunal|case)|harass(?:ed|ment)\s+(?:of|by|complaint)"
-        r"|sexual\s+harassment)\b"
-    ),
-    "children": (
-        r"\b(?:juvenile\s+(?:offender|delinquen\w*|court\s+case|record)s?|a\s+juvenile\b"
-        r"|foster\s+(?:child|children|care|home|parent)s?|child(?:ren)?\s+in\s+care"
-        r"|custody\s+of\s+(?:a|the|his|her|their)?\s*(?:child|children|son|daughter|infant|minor)"
-        r"|adoption\s+of\s+(?:a|the)?\s*(?:child|infant|baby)|apprehension\s+of\s+(?:a\s+)?child"
-        r"|ward\s+of\s+the\s+(?:court|province|crown))\b"
-    ),
-    "employment_discipline": (
-        r"\b(?:dismissal\s+of|dismissed\s+from|wrongful\s+dismissal|suspen(?:ded|sion)\s+(?:of"
-        r"|without\s+pay)\s+(?!the\s+(?:rules|bylaw|by-law|licence|license))|disciplinary\s+action"
-        r"|discipline\s+of|grievance\s+(?:of|by|re|filed)|reprimand(?:ed)?"
-        r"|termination\s+of\s+(?:the\s+)?employment|arbitration\s+award\s+(?:re"
-        r"|in\s+the\s+matter\s+of))\b"
-    ),
-}
-_PUBLIC_FUNCTION = (
-    r"\b(?:rezon\w+|zoning|development\s+permit|building\s+permit|subdivision"
-    r"|heritage\s+(?:designation|revitali[sz]ation|alteration)|(?:business|liquor|cabaret|taxi|vendor"
-    r"|licen[cs]e)\s+(?:licen[cs]e\s+)?(?:application|hearing|renewal|transfer|amendment)"
-    r"|licen[cs]e\s+(?:application|hearing|renewal)|business\s+licen[cs]e|tender|contract\s+award"
-    r"|award\s+of\s+contract|freedom\s+of\s+the\s+city|civic\s+(?:merit|award)|in\s+honou?r\s+of"
-    r"|proclamation|appointment\s+(?:of|to)|appointed\s+to|grant\s+to)\b"
-)
-_KEEP_BEFORE = (  # "8s" near the end is how the OCR often reads "&" in a firm's name
-    r"(?:Councill?ors?|Cllrs?\.?|Coun\.?|Ald\.|Alderm[ae]n|Alderwoman|Mayor|Deputy\s+Mayor"
-    r"|Acting\s+Mayor|Director|Manager|City\s+Clerk|Clerk|City\s+Engineer|Engineer|Solicitor|Chief"
-    r"|Commissioner|Inspector|Officer|Superintendent|Supervisor|Chair(?:man|woman|person)?|Constable"
-    r"|Sgt\.?|Sergeant|Staff\s+Sergeant|Inspector|Medical\s+Health\s+Officer|Trustee|Commissioner"
-    r"|M\.?L\.?A\.?|M\.?P\.?|Premier|Minister|Hon\.|Judge|Justice|Magistrate|Architect|Planner"
-    r"|Assessor|Auditor|Treasurer|Comptroller|Fire\s+Chief|delegation|delegations|speakers?|speaking"
-    r"|addressed\s+(?:the\s+)?Council|appeared\s+(?:before|on\s+behalf)|petition(?:ers?)?\s+(?:from|of"
-    r"|by)|submitted\s+by|letter\s+from|on\s+behalf\s+of|representing|contract(?:\s+awarded)?\s+to"
-    r"|paid\s+to|payment\s+to|payable\s+to|in\s+honou?r\s+of|honouring|named\s+(?:after|for)"
-    r"|memorial\s+to|Freedom\s+of\s+the\s+City|services\s+rendered\s+by|account\s+of|retained"
-    r"|counsel\s+for|proprietors?(?:\s+is)?|operator|P\.\s?C\.(?:\s*\d+)?|[A-Z][a-z]+,?\s+(?:&"
-    r"|8s))(?:\s+(?:of|for)\s+(?:the\s+)?(?:[A-Z][A-Za-z&]+\s*){1,3})?\W{0,4}(?:(?:Mr|Mrs|Ms|Miss"
-    r"|Dr)\.?\s+)?(?:[A-Z]\.\s*){0,3}$"
-)
-_KEEP_AFTER = (
-    r"^(?:,?\s+(?:doing|carrying\s+on)\s+business|,?\s+d\.?b\.?a\b)"
-    r"|^\W{0,3}(?:,\s*)?(?:the\s+)?(?:(?:[A-Z][a-z]+|of|the|and|for|&)\s+){0,4}?(?:Ltd|Limited|Inc"
-    r"|Incorporated|Corp|Corporation|Company|Co\b|Society|Association|Foundation|Holdings|Enterprises"
-    r"|Investments|Developments|Properties|Construction|Contracting|Club|Church|Hospital|Centre|Center"
-    r"|Council|Union|Board|Bank|Hotel|Restaurant|Cafe|Architects|Engineers|Consultants|Partnership"
-    r"|& Sons|Bros|Street|St\b|Avenue|Ave\b|Road|Rd\b|Drive|Park|Bridge|Building|School|Hall|Square"
-    r"|Way|Crescent|Place|Boulevard|Lane|Day|Award|Director|Manager|Engineer|Clerk|Councill?or"
-    r"|Alderm[ae]n|Mayor|Solicitor|Barrister|Lawyer|Notary|Agent|Architect|Inspector|Officer|Chair"
-    r"|M\.?L\.?A|M\.?P\b|Q\.C)"
-)
+_PATTERNS = tomllib.loads(resources.files(__package__).joinpath("privacy_patterns.toml").read_text("utf-8"))
+"""The rule's regular expressions, from privacy_patterns.toml beside this file: one pattern per sensitive matter, the
+public functions, and the words before and after a name that make it public. Each is a list of pieces joined as is."""
+
+
+def _pattern(pieces: list[str]) -> str:
+    return "".join(pieces)
+
+
+MATTER_PATTERNS = {name: _pattern(pieces) for name, pieces in _PATTERNS["matters"].items()}
+_PUBLIC_FUNCTION = _pattern(_PATTERNS["public"]["function"])
+_KEEP_BEFORE = _pattern(_PATTERNS["names"]["keep_before"])
+_KEEP_AFTER = _pattern(_PATTERNS["names"]["keep_after"])
 
 MATTERS = {name: re.compile(pattern, re.I) for name, pattern in MATTER_PATTERNS.items()}
 PUBLIC_FUNCTION = re.compile(_PUBLIC_FUNCTION, re.I)
