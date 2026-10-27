@@ -51,6 +51,10 @@ export interface CityMap {
 const toLatLng = ([x, y]: Point): L.LatLng => L.latLng(-y, x);
 const toFrame = (ll: L.LatLng): Point => [ll.lng, -ll.lat];
 
+/**
+ * The Leaflet map of one painting in a container: today's tiles, the era layer for the year on the slider, and the
+ * block outlines. Returns a handle to drive it; call `destroy()` before removing the container.
+ */
 export function createCityMap(options: CityMapOptions): CityMap {
   const { painting, city } = options;
   const zmax = painting.present.zmax;

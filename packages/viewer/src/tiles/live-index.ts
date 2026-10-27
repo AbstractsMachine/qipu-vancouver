@@ -40,6 +40,7 @@ export interface PyramidIndex {
 /** The tilt every capture used before pyramids stated their own. */
 const DEFAULT_SA = 0.42;
 
+/** A live pyramid's `index.json`, checked field by field; throws a `FormatError` naming the field that is wrong. */
 export function parsePyramidIndex(json: Json): PyramidIndex {
   const o = record(json, "index");
   const ref = record(o.ref, "index.ref");
