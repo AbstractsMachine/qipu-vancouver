@@ -3,6 +3,7 @@
 import datetime as dt
 
 from qipu_records.verify.dates import DateSource, date_pages, meeting_openings, running_head
+from tests.fixtures import cvan_1967_05_30 as item_1967
 from tests.fixtures import real_pages as pages
 
 
@@ -44,4 +45,27 @@ def test_a_council_head_wins_over_the_stamp_beside_it() -> None:
 
 def test_on_a_bound_report_the_stamp_names_the_meeting() -> None:
     [page] = date_pages([pages.STAMP_OVER_REPORT_HEAD_1970], item_date=dt.date(1970, 6, 9))
-    assert (page.at_start, page.source) == (dt.date(1970, 6, 9), DateSource.RUNNING_HEAD)
+    assert (page.at_start, page.source) == (dt.date(1970, 6, 9), DateSource.REPORT)
+
+
+def test_every_page_of_a_whole_item_carries_the_meeting_it_belongs_to() -> None:
+    """Bound Board of Administration reports (May 12, May 26) belong to the May 30 council that received them."""
+    may30, june1 = dt.date(1967, 5, 30), dt.date(1967, 6, 1)
+    expected = [may30] * 20 + [june1] * 14 + [may30] * 36
+    for item_date in (None, may30):  # with and without the catalogue date the pipeline passes
+        got = [page.at_start for page in date_pages(item_1967.PAGES, item_date)]
+        assert len(got) == len(expected) == 70
+        wrong = [(n, str(date)) for n, (date, want) in enumerate(zip(got, expected, strict=True)) if date != want]
+        assert wrong == []
+
+
+def test_a_report_page_whose_stamp_is_garbled_keeps_the_meeting_date() -> None:
+    # scan page 57: the stamp reads "MAY 3 1967" and the head "Mays 12, L967"; the report came to the May 30 council.
+    dated = date_pages(item_1967.PAGES)
+    assert dated[57].at_start == dt.date(1967, 5, 30)
+    assert dated[57].source is not DateSource.RUNNING_HEAD
+
+
+def test_a_standing_committee_page_carries_the_council_that_received_it() -> None:
+    [page] = date_pages([pages.STANDING_COMMITTEE_HEAD_1974], item_date=dt.date(1974, 10, 22))
+    assert (page.at_start, page.source) == (dt.date(1974, 10, 22), DateSource.REPORT)

@@ -3,6 +3,9 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
+import pytest
+
+from qipu_records.verify.dates import DateSource, PageDates
 from qipu_records.verify.privacy import WITHHELD, mask_item
 from qipu_updates.gates import dates, integrity, outcomes, privacy, quotes
 from qipu_updates.release.corrections import Applied
@@ -134,3 +137,25 @@ def test_release_gates_catch_a_halved_release_a_zero_filled_file_and_a_bad_corre
         [Applied("c0", 1), Applied("c1", 3, "matches 3 records, more than max_rows 1: not applied")]
     )
     assert (gate.passed, gate.findings[0].record_id) == (False, "c1")
+
+
+def test_a_date_no_meeting_of_the_item_was_held_on_fails_even_when_the_reader_agrees(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # CVAN_1967-05-30 scan page 57 (https://archive.org/details/CVAN_1967-05-30): a Board of Administration report of
+    # May 12 bound into the May 30 minutes. Should the page reader ever date it by the report again, the gate still
+    # fails it, because no meeting of the item was held on May 12.
+    opening = (
+        "A Regular Meeting of the Council of the City of Vancouver was held on Tuesday, May 30, 1967, in the Council"
+    )
+    report = "MAY 3 1967 Board of Administration; Mays 12, L967 Regular Personnel\nTHAT the grant of $500 be approved."
+    pages = Pages({"c:0": opening, "c:1": report}, {"c": "1967-05-30"})
+    misread = [
+        PageDates(dt.date(1967, 5, 30), DateSource.MEETING_OPENS),
+        PageDates(dt.date(1967, 5, 12), DateSource.REPORT),
+    ]
+    monkeypatch.setattr(dates, "date_pages", lambda texts, item_date=None: misread)
+    result = dates.check([record("c:1/1", quote="the grant of $500 be approved", date="1967-05-12")], pages)
+    assert [(f.record_id, f.why) for f in result.findings] == [
+        ("c:1/1", "published 1967-05-12, but the item shows no meeting held that day (it shows 1967-05-30)")
+    ]
