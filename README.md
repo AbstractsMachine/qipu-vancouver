@@ -72,7 +72,7 @@ lines.
 
 ## Credits
 
-Built for the Internet Archive and Futureproof Festival Fellowship. The scans and their OCR are the work of the [Internet Archive](https://archive.org) and the archives and libraries that
+The scans and their OCR are the work of the [Internet Archive](https://archive.org) and the archives and libraries that
 digitised the records: the [City of Vancouver Archives](https://searcharchives.vancouver.ca), whose 1970s minutes were digitised
 with funding from the British Columbia History Digitization Program at the University of British Columbia, and the
 [San Francisco Public Library](https://sfpl.org). Addresses and neighbourhoods come from the
