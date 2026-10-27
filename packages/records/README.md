@@ -9,7 +9,7 @@ money. Plain code then checks every record before it is published:
 - every record links to the exact page in the archive.org viewer, so anyone can check it against the scan;
 - the names of private people in sensitive matters (a claim for damages, an illness, welfare) are withheld.
 
-The core uses only the Python standard library. Part of [qipu-open](../../README.md).
+The core uses only the Python standard library. Part of [qipu-vancouver](../../README.md).
 
 ![The map preview showing 1970s Vancouver council decisions](map-preview/screenshot.png)
 
@@ -164,5 +164,5 @@ replaced with `[name withheld]` in everything published, for records younger tha
 
 ## Licence
 
-Apache License 2.0, like the rest of [qipu-open](../../LICENSE). The records it produces are dedicated to the public domain
+Apache License 2.0, like the rest of [qipu-vancouver](../../LICENSE). The records it produces are dedicated to the public domain
 under [CC0 1.0](../../LICENSE-DATA).

@@ -12,7 +12,7 @@ from collections.abc import Callable
 
 from qipu_updates.sources import SourceError
 
-USER_AGENT = "qipu-updates/0.1 (+https://github.com/AbstractsMachine/qipu-open; scheduled, one request at a time)"
+USER_AGENT = "qipu-updates/0.1 (+https://github.com/AbstractsMachine/qipu-vancouver; scheduled, one request at a time)"
 
 Get = Callable[[str, dict[str, str]], bytes]
 

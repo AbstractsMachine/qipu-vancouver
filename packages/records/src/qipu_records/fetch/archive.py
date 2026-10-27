@@ -17,7 +17,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-USER_AGENT = "qipu-records/0.1 (+https://github.com/AbstractsMachine/qipu-open; cached, about one request a second)"
+USER_AGENT = (
+    "qipu-records/0.1 (+https://github.com/AbstractsMachine/qipu-vancouver; cached, about one request a second)"
+)
 PAUSE_SECONDS = 1.0
 RETRIES = 4
 IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}")
