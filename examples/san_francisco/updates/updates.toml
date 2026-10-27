@@ -1,0 +1,29 @@
+# San Francisco Board of Supervisors and its committees: the minutes posted on the Legistar calendar.
+#
+# Needs the network, pdftotext (poppler) and ANTHROPIC_API_KEY. One document per meeting with posted minutes, fingerprinted
+# by the minutes PDF, so a corrected PDF is read again. Not yet run end to end: the San Francisco prompt in qipu-records was
+# written for the printed Journal of Proceedings, and today's minutes may need their own.
+
+name = "san-francisco"
+
+[city]
+key = "san_francisco"
+
+[source]
+kind = "legistar"
+base = "https://sfgov.legistar.com/"
+every = "1d"
+
+[reader]
+kind = "anthropic"
+model = "claude-haiku-5-5"
+max_pages_per_run = 200
+
+[corrections]
+path = "corrections.jsonl"
+
+[gates]
+
+[publish]
+backend = "rclone"
+target = "r2:your-bucket/san-francisco"   # any rclone remote; credentials come from RCLONE_CONFIG_* variables

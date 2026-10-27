@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qipu-updates"
+version = "0.1.0"
+description = "Keeps published council records up to date: finds new meetings, extracts only what changed, checks, releases, rolls back"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = ["qipu-records"]
+
+[project.urls]
+Source = "https://github.com/AbstractsMachine/qipu-vancouver/tree/main/packages/updates"
+Documentation = "https://github.com/AbstractsMachine/qipu-vancouver/blob/main/docs/updates.md"
+
+[project.scripts]
+qipu-updates = "qipu_updates.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+qipu_updates = ["py.typed"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --import-mode=importlib --strict-markers"
+markers = ["e2e: runs the scheduled workflow's steps end to end, offline"]
+
+[tool.coverage.run]
+source = ["qipu_updates"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true

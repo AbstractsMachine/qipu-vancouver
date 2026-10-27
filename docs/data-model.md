@@ -27,6 +27,7 @@
 | `names_withheld` | `true` when a private person's name was withheld (see [privacy.md](privacy.md)) |
 | `source` | `item`, `title`, `ocr_page`, `page_url` (the page in the archive.org viewer, or `null` when it cannot be placed exactly), `item_url`, `licence`, `archive` |
 | `reading` | the `model` and `prompt_version` that read the page |
+| `provenance` | in a release made by packages/updates only: the `run_id` that built the record, the `document` it came from, the document's `fingerprint`, and the `page_sha256` of the page text it was read from (see [updates.md](updates.md)) |
 
 `decisions.geojson` has one point feature per placed place, with the record's `id`, `date`, `kind`, `outcome`, `summary`,
 `quote`, `zoning`, `page_url` and amounts as properties.
