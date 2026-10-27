@@ -95,7 +95,7 @@ make check    # ruff, mypy --strict, unit and integration tests with coverage (f
 make e2e      # the whole sample chain, as `make sample`, with checks on the release
 ```
 
-496 unit and integration tests run in about 40 seconds, with 98 % line coverage. The integration tests run the stages
+`make check` runs the unit and integration tests, and CI enforces a coverage floor of 85 %. The integration tests run the stages
 together on a corner of the sample; the end-to-end test runs the whole sample. Blender and the image model are not run
 in CI, because both need a GPU: their drivers are tested with the subprocess and the model mocked, and the stand-ins exercise
 everything after them. `tests/integration/test_chain_to_paint.py` runs every stage up to the paint on a CPU. The paint stage
