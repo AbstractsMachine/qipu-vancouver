@@ -114,7 +114,6 @@ def cmd_pause(args: argparse.Namespace, config: Config) -> int:
 
 
 def cmd_resume(args: argparse.Namespace, config: Config) -> int:
-    """Lift a pause."""
     control.resume(_store(args, config), _now())
     print("resumed")
     return 0
@@ -143,7 +142,6 @@ def cmd_alert(args: argparse.Namespace, config: Config) -> int:
 
 
 def parser() -> argparse.ArgumentParser:
-    """The argument parser of the `qipu-updates` command."""
     top = argparse.ArgumentParser(prog="qipu-updates", description=__doc__)
     sub = top.add_subparsers(dest="command", required=True)
 

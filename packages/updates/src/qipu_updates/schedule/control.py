@@ -43,7 +43,6 @@ class Pause:
 
 
 def paused(store: Store) -> Pause | None:
-    """The pause marker in the store, or None."""
     data = store.read(PAUSE)
     return Pause(**json.loads(data)) if data else None
 
@@ -89,7 +88,6 @@ def last_check(store: Store) -> dt.datetime | None:
 
 
 def mark_checked(store: Store, now: dt.datetime) -> None:
-    """Record that the source was checked now."""
     store.write(LAST_CHECK, json.dumps({"at": now.isoformat()}).encode("utf-8"))
 
 

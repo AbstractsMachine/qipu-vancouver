@@ -31,7 +31,6 @@ def register(sub: Any) -> None:
 
 
 def steps(work: Path, raw: Path, render_backend: str, paint_backend: str) -> list[list[str]]:
-    """The command lines of the chain, in the order they run."""
     eras = load_city(CITY).eras
     where = ["--city", CITY, "--area", AREA, "--work", str(work)]
     chain = [

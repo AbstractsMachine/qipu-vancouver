@@ -36,7 +36,6 @@ export function tilesAt(painting: Pick<Painting, "width" | "height">, z: number)
   return [Math.ceil(painting.width * k), Math.ceil(painting.height * k)];
 }
 
-/** Whether a tile of the present pyramid exists. */
 export function presentTileExists(painting: Painting, z: number, x: number, y: number): boolean {
   const [cols, rows] = tilesAt(painting, z);
   if (z < 0 || z > painting.present.zmax || x < 0 || y < 0 || x >= cols || y >= rows) return false;

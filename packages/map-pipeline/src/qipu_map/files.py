@@ -35,5 +35,4 @@ def write_json(path: Path, value: Any, *, compact: bool = False) -> None:
 
 
 def read_json(path: Path) -> Any:
-    """The JSON value in a UTF-8 file."""
     return json.loads(path.read_text(encoding="utf-8"))

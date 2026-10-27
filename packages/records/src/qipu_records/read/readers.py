@@ -181,7 +181,6 @@ class OpenAICompatibleReader:
 
 
 def reading_from_row(row: dict[str, Any]) -> Reading:
-    """A Reading from one line of a readings.jsonl file."""
     page_id = str(row["page_id"])
     return Reading(page_id, parse_items(page_id, row), str(row["model"]), str(row["prompt_version"]))
 
