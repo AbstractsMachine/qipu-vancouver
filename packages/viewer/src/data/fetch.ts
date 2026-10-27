@@ -24,6 +24,12 @@ export async function fetchOptionalJson(url: string, fetcher: Fetch = fetch): Pr
   return res.json();
 }
 
+export async function fetchText(url: string, fetcher: Fetch = fetch): Promise<string> {
+  const res = await fetcher(url);
+  if (!res.ok) throw new HttpError(url, res.status);
+  return res.text();
+}
+
 export async function fetchBuffer(url: string, fetcher: Fetch = fetch): Promise<ArrayBuffer> {
   const res = await fetcher(url);
   if (!res.ok) throw new HttpError(url, res.status);

@@ -3,9 +3,10 @@
 The web map behind [qipu.org](https://www.qipu.org/vancouver): a city painted from above, a year slider that rebuilds it as it
 stood in that year, and, on any block, what the city council decided there, with a link to the page of the minutes that says so.
 
-It reads the painted tiles that [`packages/map-pipeline`](../map-pipeline) writes, and the decision records that
-[`packages/records`](../records) produces once they are placed on the city's blocks. It runs in the browser and needs no server
-of its own.
+It reads the painted tiles that [`packages/map-pipeline`](../map-pipeline) writes, and decision records by block in one of
+two forms: the block shards qipu.org publishes (format in [docs/data-model.md](../../docs/data-model.md#block-shards)), or the
+`decisions.jsonl` that [`packages/records`](../records) writes, which the viewer places on the city's blocks itself
+(`src/data/decisions.ts`). It runs in the browser and needs no server of its own.
 
 ![The demo on Vancouver in 1972, with the 1970s decisions for one Strathcona block open beside the map](docs/screenshots/viewer-vancouver-1972.webp)
 
@@ -26,6 +27,9 @@ Pleasant in Vancouver. Try:
 - `?city=vancouver&year=1950&at=85,40,6.5`: the False Creek flats in 1950, rail yards and sawmills
 - `?gl=0`: the same pictures drawn without WebGL
 - `?tiles=<release folder>`: a release written by the map pipeline (`qipu-tiles/1`), over Vancouver's records
+- `?city=vancouver&decisions=sample&year=1974&at=85,40,6`: Vancouver's records read from the `decisions.jsonl` of
+  `make -C packages/records demo` (bundled as `demo/public/sample/vancouver/decisions.jsonl`; `make records-sample` refreshes
+  it), placed on the blocks in the browser; `?decisions=<url>` reads any other one, such as a packages/updates release
 
 ![The demo map at the False Creek flats in 1950, with rail yards, log piles and sawmills along the water](docs/screenshots/viewer-vancouver-1950.webp)
 
@@ -49,7 +53,8 @@ Pleasant in Vancouver. Try:
 
 Briefly: both tile formats are read into one model, a `Painting`, placed in one pixel frame; Leaflet shows it with
 `CRS.Simple`; the past is drawn per pixel by a WebGL compositor (with a CPU fallback that runs the same arithmetic); blocks are
-picked by placing their outlines at their own ground height; records load one shard per click. [ARCHITECTURE.md](ARCHITECTURE.md)
+picked by placing their outlines at their own ground height; records load one shard per click, or come from a records
+`decisions.jsonl` placed on the blocks at load. [ARCHITECTURE.md](ARCHITECTURE.md)
 has the diagram and the reasoning, and [docs/tiles-format.md](../../docs/tiles-format.md) the tile format agreed with the map
 pipeline.
 

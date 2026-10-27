@@ -1,6 +1,7 @@
 import type { CityConfig } from "../config";
 import { type Blocks, decodeBlocks } from "./blocks";
-import { type Fetch, fetchBuffer, fetchJson, fetchOptionalJson, memo } from "./fetch";
+import { parseDecisionsJsonl, placeOnBlocks, projectionOf } from "./decisions";
+import { type Fetch, fetchBuffer, fetchJson, fetchOptionalJson, fetchText, memo } from "./fetch";
 import { decodeChunk } from "./qct";
 import {
   type BlockIndex,
@@ -31,19 +32,27 @@ export interface CityData {
 }
 
 /**
- * A city's block geometry and index, fetched in parallel from its data folder. Block records and places load later,
- * on demand. Rejects with an `HttpError` or a `FormatError` when a file is missing or malformed.
+ * A city's block geometry and index, fetched in parallel from its data folder. The index and the records come either
+ * from the published shards (blocks/, one shard fetched per block opened) or, when the config names one, from a
+ * records `decisions.jsonl` placed on the blocks at load. Rejects with an `HttpError` or a `FormatError` when a file is
+ * missing or malformed.
  */
 export async function loadCityData(city: CityConfig, fetcher: Fetch = fetch): Promise<CityData> {
   const base = city.data.base.replace(/\/$/, "");
-  const [manifest, chunk, ids, indexJson] = await Promise.all([
+  const decisionsUrl = city.data.decisions;
+  const [manifest, chunk, ids, indexJson, decisionsText] = await Promise.all([
     fetchJson(`${base}/manifest.json`, fetcher),
     fetchBuffer(`${base}/base/blocks.qc`, fetcher),
     fetchJson(`${base}/base/blocks-id.json`, fetcher),
-    fetchJson(`${base}/blocks/block-index.json`, fetcher),
+    decisionsUrl === undefined ? fetchJson(`${base}/blocks/block-index.json`, fetcher) : null,
+    decisionsUrl === undefined ? null : fetchText(decisionsUrl, fetcher),
   ]);
   const blocks = decodeBlocks(decodeChunk(chunk), ids, neighbourhoodNames(manifest));
-  const index = parseBlockIndex(indexJson);
+
+  /* records' own output: every row placed on its block here, so nothing more is fetched per click */
+  const placed =
+    decisionsText === null ? null : placeOnBlocks(parseDecisionsJsonl(decisionsText), blocks, projectionOf(manifest));
+  const index = placed?.index ?? parseBlockIndex(indexJson);
   assertSameBlocks(blocks, index);
 
   const shard = memo((file: string) => fetchJson(`${base}/blocks/${file}`, fetcher));
@@ -67,6 +76,7 @@ export async function loadCityData(city: CityConfig, fetcher: Fetch = fetch): Pr
       const id = index.ids[position];
       if (id === undefined) throw new RangeError(`no block at position ${position}`);
       if ((index.counts[position] ?? 0) === 0) return { blockId: id, decisions: [], streets: [] };
+      if (placed) return placed.records.get(id) ?? { blockId: id, decisions: [], streets: [] };
       return parseBlockRecord(await shard(shardFile(position, index)), id);
     },
     async places(blockId) {

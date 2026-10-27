@@ -7,7 +7,8 @@ packages/updates, which runs packages/records on a schedule and publishes the sa
 ```mermaid
 flowchart LR
     IA[(archive.org<br/>scanned minutes)] -->|fetch, read, verify| R[packages/records]
-    R -->|decisions.jsonl<br/>decisions.geojson| V[packages/viewer]
+    R -->|decisions.jsonl| V[packages/viewer]
+    Q[(qipu.org<br/>block shards)] -->|blocks/block-index.json,<br/>block-NN.json| V
     U[packages/updates<br/>daily] -->|runs on new and changed minutes| R
     U -->|releases/version/,<br/>latest.json| V
     O[(open city data<br/>footprints, tax roll,<br/>LiDAR, OSM, air photos)] -->|scene, render,<br/>paint, eras, tiles| M[packages/map-pipeline]
@@ -48,14 +49,20 @@ Output: a release folder of WebP tiles per era and a `manifest.json`, in the for
 
 ## packages/viewer
 
-The web map. It draws the painted tiles for the year on the slider and shows the decision records of the place under the
-cursor, each with its quote and a link to the scanned page. It is a React component with no server of its own, plus a demo
-app. [packages/viewer/ARCHITECTURE.md](../packages/viewer/ARCHITECTURE.md) walks through its modules.
+The web map. It draws the painted tiles for the year on the slider and shows the decision records of the block under the
+cursor, each with its quote and a link to the scanned page. It reads records by block in one of two forms: the block shards
+qipu.org publishes for its whole-city maps (`blocks/block-index.json` and `blocks/block-NN.json`, specified in
+[data-model.md](data-model.md#block-shards); this repository does not write them), or a `decisions.jsonl` from
+packages/records or a packages/updates release, which the viewer places on the blocks itself. Either way it needs the city's
+block outlines and manifest (`manifest.json`, `base/blocks.qc`, `base/blocks-id.json`), also qipu.org's files. The demo
+uses a cut of the shards by default and records' own output with `?decisions=sample`. It is a React component with no
+server of its own, plus a demo app. [packages/viewer/ARCHITECTURE.md](../packages/viewer/ARCHITECTURE.md) walks through its modules.
 
 ## Boundaries
 
 - The only contracts between packages are [data-model.md](data-model.md) and [tiles-format.md](tiles-format.md). A change to
-  either is a change to every package that reads it, in the same pull request.
+  either is a change to every package that reads it, in the same pull request. The block shards in data-model.md are a
+  contract with qipu.org, not with another package here.
 - Each package owns its language, dependencies, tests and Makefile. Shared lint and format settings live at the root
   (`ruff.toml`, `.prettierrc.json`, `eslint.config.mjs`, `.editorconfig`).
 - The sample in [examples/vancouver](../examples/vancouver) is the common test bed: every package's demo runs on it.

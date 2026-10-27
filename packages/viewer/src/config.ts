@@ -7,8 +7,15 @@ export interface CityConfig {
   readonly id: string;
   readonly name: string;
   readonly tiles: LiveTiles | QipuTiles;
-  /** city data folder: manifest.json, base/blocks.qc, base/blocks-id.json, blocks/ */
-  readonly data: { readonly base: string };
+  readonly data: {
+    /** city data folder: manifest.json, base/blocks.qc, base/blocks-id.json, and blocks/ unless `decisions` is set */
+    readonly base: string;
+    /**
+     * a `decisions.jsonl` written by packages/records (or a packages/updates release); when set, the block records are
+     * read from it and placed on the blocks in the browser, and blocks/ is not read
+     */
+    readonly decisions?: string;
+  };
   readonly record: {
     /** record series by row code, as a reader should see them */
     readonly kinds: Readonly<Record<string, string>>;
@@ -73,7 +80,26 @@ export const VANCOUVER: CityConfig = {
   },
   data: { base: "https://www.qipu.org/data/ca/vancouver/city" },
   record: {
-    kinds: { C: "Council vote", N: "Council minutes", W: "Council minutes", P: "Building permit" },
+    kinds: {
+      C: "Council vote",
+      N: "Council minutes",
+      W: "Council minutes",
+      P: "Building permit",
+      /* packages/records' kinds, for a decisions.jsonl */
+      ordinance: "By-law",
+      resolution: "Resolution",
+      motion: "Motion",
+      claim: "Claim",
+      appointment: "Appointment",
+      permit: "Permit",
+      license: "Licence",
+      contract: "Contract",
+      hearing: "Hearing",
+      appeal: "Appeal",
+      charter_amendment: "Charter amendment",
+      ballot_measure: "Ballot measure",
+      other: "Council minutes",
+    },
     currency: "CAD",
     scope: "Council votes and minutes, and building permits, placed on the block they name.",
   },
@@ -86,5 +112,5 @@ export const CITIES: readonly CityConfig[] = [SAN_FRANCISCO, VANCOUVER];
 
 /** A city config with its data folder moved, for a local sample or a mirror. */
 export function withDataBase(city: CityConfig, base: string): CityConfig {
-  return { ...city, data: { base } };
+  return { ...city, data: { ...city.data, base } };
 }

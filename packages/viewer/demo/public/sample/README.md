@@ -13,3 +13,7 @@ sample have a count of zero. The money file (`blocks/block-money.json`) names it
 `payees_paid` and states their `currency` (USD for San Francisco, CAD for Vancouver); qipu.org's own files call
 them `agreed_usd` and the like in both cities, and the viewer reads either. The full files are on www.qipu.org under `/data/us/sf/city` and
 `/data/ca/vancouver/city`.
+
+`vancouver/decisions.jsonl` is different: it is the output of `make -C packages/records demo` on the Vancouver example (two
+meetings, 1970 and 1974), refreshed with `make records-sample`, and the demo reads it with `?decisions=sample`. It is the
+format packages/records writes, not a cut of qipu.org's files.
