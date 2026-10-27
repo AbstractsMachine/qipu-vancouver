@@ -122,10 +122,25 @@ def cmd_resume(args: argparse.Namespace, config: Config) -> int:
 def cmd_rollback(args: argparse.Namespace, config: Config) -> int:
     """Point the published version at an earlier release and pause publishing so the next run does not undo it."""
     store = _store(args, config)
-    pointer = rel.rollback(store, _now(), args.reason, args.to)
+    now = _now()
+    holder = f"rollback-{now.strftime('%Y%m%dT%H%M%S')}"
+    try:
+        with control.locked(store, holder, now):
+            here = rel.current(store)
+            pause_now = not args.keep_publishing and control.paused(store) is None
+            if pause_now and here is not None:  # pause first: a publish that slips past the lock still finds it
+                control.pause(store, "publish", f"rolled back from {here.version}: {args.reason}", now)
+            try:
+                pointer = rel.rollback(store, now, args.reason, args.to, holder=holder)
+            except rel.PublishError:
+                if pause_now and here is not None:
+                    control.resume(store, now)
+                raise
+    except (control.BusyError, rel.PublishError) as error:
+        print(f"rollback refused: {error}", file=sys.stderr)
+        return 1
     print(f"latest is now {pointer.version} (was {pointer.previous})")
     if not args.keep_publishing:
-        control.pause(store, "publish", f"rolled back from {pointer.previous}: {args.reason}", _now())
         print("publishing paused until `qipu-updates resume`, so the next run does not publish the same content again")
     return 0
 

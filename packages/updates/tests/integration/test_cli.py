@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 import subprocess
 from pathlib import Path
@@ -10,6 +11,8 @@ from typing import Any
 import pytest
 
 from qipu_updates import cli
+from qipu_updates.publish.local import LocalStore
+from qipu_updates.schedule import control
 
 
 def main(example: Path, tmp: Path, *args: str) -> int:
@@ -120,3 +123,17 @@ def test_a_bad_config_or_argument_is_a_message_not_a_traceback(
         with pytest.raises(SystemExit) as stop:
             main(example, tmp_path, *bad)
         assert stop.value.code == 2
+
+
+def test_rollback_refuses_while_a_run_holds_the_lock(
+    example: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    work = str(tmp_path / "work")
+    for day, run_id in (("2026-10-19", "a"), ("2026-10-26", "b")):
+        assert main(example, tmp_path, "run", "--work", work, "--as-of", day, "--run-id", run_id) == 0
+    control.acquire(LocalStore(tmp_path / "store"), "in-flight", dt.datetime.now(dt.UTC))
+    capsys.readouterr()
+    assert main(example, tmp_path, "rollback", "--reason", "a wrong date") == 1
+    assert "holds the lock" in capsys.readouterr().err
+    main(example, tmp_path, "status")
+    assert "published: 2026-10-26.1" in capsys.readouterr().out
