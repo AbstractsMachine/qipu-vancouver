@@ -142,7 +142,7 @@ def load_city(name_or_path: str | Path) -> City:
         raise StageError(f"{path}: not valid TOML: {e}") from e
     except KeyError as e:
         raise StageError(f"{path}: missing {e.args[0]!r}") from e
-    except TypeError as e:  # a section with a key the dataclass does not have, or without one it needs
+    except (TypeError, ValueError) as e:  # an unknown or missing key in a section, or a value the section refuses
         raise StageError(f"{path}: {e}") from e
 
 
