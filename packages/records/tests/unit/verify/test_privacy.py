@@ -1,10 +1,17 @@
 import datetime as dt
+import tomllib
+from importlib import resources
 from typing import Unpack
 
 import pytest
 
 from qipu_records.read.schema import ModelItem
+from qipu_records.verify import privacy
 from qipu_records.verify.privacy import (
+    KEEP_AFTER,
+    KEEP_BEFORE,
+    MATTERS,
+    PUBLIC_FUNCTION,
     WITHHELD,
     Embargo,
     is_organisation,
@@ -241,3 +248,48 @@ def test_a_claimant_who_shares_a_surname_with_an_alderman_is_still_withheld() ->
     )
     masked, _ = mask_item(item, officials={"gibson"})
     assert masked["summary"] == f"Claim of {WITHHELD} for damages, referred on the motion of Ald. Gibson."
+
+
+# One sample the pattern must match and one it must not, for every pattern in privacy_patterns.toml.
+MATTER_SAMPLES = {
+    "health": ("a letter on medical grounds for the clerk", "a letter on the grounds of the park"),
+    "social_assistance": ("an appeal on income assistance", "assistance with the parade"),
+    "police_criminal": ("Mr. Gray was charged with theft", "the charge for parking meters"),
+    "personal_finances": ("tax arrears on the lot", "arrears in the report schedule"),
+    "discrimination_harassment": ("a complaint of harassment", "a complaint about noise"),
+    "children": ("custody of a child", "a children's playground"),
+    "employment_discipline": ("disciplinary action against a clerk", "the discipline of the sport"),
+}
+
+
+def test_the_patterns_load_from_the_toml_file() -> None:
+    patterns = tomllib.loads((resources.files("qipu_records.verify") / "privacy_patterns.toml").read_text("utf-8"))
+    assert set(patterns["matters"]) == set(MATTERS) == set(MATTER_SAMPLES)
+    assert {name: "".join(pieces) for name, pieces in patterns["matters"].items()} == privacy.MATTER_PATTERNS
+    assert privacy.PUBLIC_FUNCTION.pattern == "".join(patterns["public"]["function"])
+    assert privacy.KEEP_BEFORE.pattern == "".join(patterns["names"]["keep_before"])
+    assert privacy.KEEP_AFTER.pattern == "".join(patterns["names"]["keep_after"])
+
+
+@pytest.mark.parametrize("name", sorted(MATTER_SAMPLES))
+def test_each_matter_pattern_matches_its_matter_only(name: str) -> None:
+    hit, miss = MATTER_SAMPLES[name]
+    assert MATTERS[name].search(hit)
+    assert not MATTERS[name].search(miss)
+
+
+def test_the_public_function_pattern_matches_a_rezoning_and_not_a_claim() -> None:
+    assert PUBLIC_FUNCTION.search("an application for rezoning")
+    assert not PUBLIC_FUNCTION.search("a claim for damages")
+
+
+def test_the_keep_before_pattern_matches_a_title_before_a_name_and_not_a_plain_word() -> None:
+    assert KEEP_BEFORE.search("moved by Ald. ")
+    assert KEEP_BEFORE.search("a letter from ")
+    assert not KEEP_BEFORE.search("the lot of ")
+
+
+def test_the_keep_after_pattern_matches_a_firm_or_street_after_a_name_and_not_a_plain_word() -> None:
+    assert KEEP_AFTER.match(" Construction Ltd. built")
+    assert KEEP_AFTER.match(" Street")
+    assert not KEEP_AFTER.match(" was ill")
