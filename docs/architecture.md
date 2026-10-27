@@ -1,6 +1,6 @@
 # Architecture
 
-qipu-open is three packages that hand files to each other. None of them imports another: what passes between them is a folder
+qipu-vancouver is three packages that hand files to each other. None of them imports another: what passes between them is a folder
 of plain files with a documented format, so each package can be run, tested and replaced on its own.
 
 ```mermaid
