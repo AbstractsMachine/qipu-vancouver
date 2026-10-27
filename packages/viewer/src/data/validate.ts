@@ -41,11 +41,6 @@ export function str(value: Json, path: string): string {
   return value;
 }
 
-export function bool(value: Json, path: string): boolean {
-  if (typeof value !== "boolean") throw new FormatError(path, "a boolean");
-  return value;
-}
-
 export function list(value: Json, path: string): Json[] {
   if (!Array.isArray(value)) throw new FormatError(path, "an array");
   return value;

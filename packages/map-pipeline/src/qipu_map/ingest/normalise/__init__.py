@@ -18,7 +18,6 @@ from qipu_map.ingest.normalise.geojson import write_layer
 from qipu_map.ingest.raw import RawStore
 from qipu_map.ingest.sources import Source
 
-LAYERS = ("buildings", "streets", "trees", "parks", "water")
 CLIP_INSET_DEG = 1e-6  # areas are cut a hair inside the fetch box, so a shoreline cropped to that box crosses the cut
 
 
