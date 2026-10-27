@@ -8,4 +8,4 @@ pytest-cov==7.1.0
 pyyaml==6.0.2
 ruff==0.17.2
 setuptools==80.9.0
-types-PyYAML==6.0.12.20240917
+types-PyYAML==6.0.12.20260906
