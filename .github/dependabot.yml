@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /packages/records
+    schedule: {interval: weekly}
+    groups:
+      minor-and-patch: {update-types: [minor, patch]}
+  - package-ecosystem: pip
+    directory: /packages/updates
+    schedule: {interval: weekly}
+    groups:
+      minor-and-patch: {update-types: [minor, patch]}
+  - package-ecosystem: pip
+    directory: /packages/map-pipeline
+    schedule: {interval: weekly}
+    groups:
+      minor-and-patch: {update-types: [minor, patch]}
+  - package-ecosystem: npm
+    directory: /packages/viewer
+    schedule: {interval: weekly}
+    groups:
+      minor-and-patch: {update-types: [minor, patch]}
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: {interval: weekly}
+    groups:
+      minor-and-patch: {update-types: [minor, patch]}

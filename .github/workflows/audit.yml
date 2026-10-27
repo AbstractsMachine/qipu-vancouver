@@ -1,0 +1,60 @@
+name: audit
+
+# Known vulnerabilities in the pinned dependencies. It runs when a dependency file changes and once a week, so a new
+# advisory shows up within days without failing an unrelated pull request. Only high and critical advisories fail it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/*/requirements-dev.txt"
+      - "packages/viewer/package-lock.json"
+      - ".github/workflows/audit.yml"
+      - ".github/requirements-audit.txt"
+      - ".github/scripts/audit_python.py"
+  pull_request:
+    paths:
+      - "packages/*/requirements-dev.txt"
+      - "packages/viewer/package-lock.json"
+      - ".github/workflows/audit.yml"
+      - ".github/requirements-audit.txt"
+      - ".github/scripts/audit_python.py"
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: .github/requirements-audit.txt
+      - run: pip install --require-hashes -r .github/requirements-audit.txt
+      - name: pip-audit on each Python package's pinned requirements
+        run: |
+          status=0
+          for package in records updates map-pipeline; do
+            python .github/scripts/audit_python.py "packages/$package/requirements-dev.txt" || status=1
+          done
+          exit $status
+
+  viewer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: packages/viewer
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: npm audit, production dependencies, high and critical only
+        run: npx --yes npm@10.9.2 audit --omit=dev --audit-level=high
