@@ -9,6 +9,7 @@ import { useCityMap } from "./state/use-city-map";
 import { type ViewState, writeViewState } from "./state/url";
 import { loadPainting } from "./tiles/load";
 
+/** What the `<Viewer>` component needs: the city to show and, optionally, where to open. */
 export interface ViewerProps {
   readonly city: CityConfig;
   /** where to open: usually `readViewState(location.search)` */

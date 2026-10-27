@@ -3,12 +3,7 @@ import type { EraArea, EraKey, EraManifest, EraSwitch } from "../eras/model";
 import { level9BoxToFrame } from "./frame";
 import { type PyramidRef, keyTemplate } from "./urls";
 
-/**
- * The live site's eras manifest (`_preview_eras/render-years.json`): the
- * present, the whole-city key years, and "quarters", areas painted at their
- * own key years with their own switch maps. Area boxes are in level-9 image
- * pixels; pyramids are named by key.
- */
+/** How to read a live eras manifest. */
 export interface LiveErasOptions {
   /** the pyramids' tile size in image pixels, for converting area boxes */
   readonly tile?: number;
@@ -16,6 +11,13 @@ export interface LiveErasOptions {
   readonly includeUnpublished?: boolean;
 }
 
+/**
+ * The live site's eras manifest (`_preview_eras/render-years.json`): the
+ * present, the whole-city key years, and "quarters", areas painted at their
+ * own key years with their own switch maps. Area boxes are in level-9 image
+ * pixels; pyramids are named by key. Throws a `FormatError` naming the field
+ * that is wrong.
+ */
 export function parseLiveEras(json: Json, options: LiveErasOptions = {}): EraManifest {
   const o = record(json, "eras");
   const present = pyramidRef(o.now, "eras.now", "webp");

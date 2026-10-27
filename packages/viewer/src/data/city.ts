@@ -30,6 +30,10 @@ export interface CityData {
   placePath(): Promise<string | null>;
 }
 
+/**
+ * A city's block geometry and index, fetched in parallel from its data folder. Block records and places load later,
+ * on demand. Rejects with an `HttpError` or a `FormatError` when a file is missing or malformed.
+ */
 export async function loadCityData(city: CityConfig, fetcher: Fetch = fetch): Promise<CityData> {
   const base = city.data.base.replace(/\/$/, "");
   const [manifest, chunk, ids, indexJson] = await Promise.all([

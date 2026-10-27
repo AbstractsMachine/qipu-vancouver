@@ -17,6 +17,7 @@ export interface ViewState {
 const CITY = /^[a-z][a-z0-9-]{0,31}$/;
 const BLOCK = /^[A-Za-z0-9_.-]{1,24}$/;
 
+/** The view state in a query string (`location.search`); malformed fields are dropped, never thrown. */
 export function readViewState(search: string): ViewState {
   const q = new URLSearchParams(search);
   const state: { -readonly [K in keyof ViewState]: ViewState[K] } = {};
