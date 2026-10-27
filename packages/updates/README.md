@@ -32,7 +32,7 @@ Then, on any config and store:
 | `sources/` | lists documents and reads their pages: an archive.org collection, a Legistar calendar, a local mirror |
 | `schedule/` | pause, lock, and whether a source is due |
 | `incremental/` | the plan (new, changed, unchanged), the working copy that keeps readings of unchanged pages, the call into qipu-records |
-| `gates/` | quote on page, date from header, proposed vs decided, privacy leak, over-redaction, and the release-wide checks |
+| `gates/` | the automatic checks a release must pass before it is published: quote on page, date from header, proposed vs decided, privacy leak, over-redaction, and the release-wide checks |
 | `release/` | assembles a release folder, stamps provenance, applies corrections, writes the manifest |
 | `publish/` | the store (local folder or any rclone remote), publish, rollback, history |
 | `monitor/` | the run report, metrics, and the GitHub issue on failure |

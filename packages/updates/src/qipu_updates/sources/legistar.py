@@ -38,6 +38,7 @@ PdfToText = Callable[[bytes], list[str]]
 
 
 def visible_text(fragment: str) -> str:
+    """The text a browser would show for a piece of HTML."""
     fragment = re.sub(r"<br\s*/?>", " ", fragment)
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", fragment))).replace("\xa0", " ").strip()
 
@@ -52,6 +53,7 @@ def mdy(text: str) -> str | None:
 
 
 def slug(text: str) -> str:
+    """A body's name as a lower-case word string for a document id."""
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
@@ -83,6 +85,7 @@ PDFTOTEXT_TIMEOUT_S = 120.0
 
 
 def pdftotext(data: bytes) -> list[str]:
+    """The text of each page of a PDF, using the `pdftotext` command."""
     with tempfile.NamedTemporaryFile(suffix=".pdf") as pdf:
         pdf.write(data)
         pdf.flush()
@@ -138,6 +141,7 @@ class LegistarSource:
         return sorted(found.values(), key=lambda d: d.doc_id)
 
     def content(self, doc: Document) -> Content:
+        """The minutes' text of one meeting, one string per page."""
         pdf = self._pdfs.get(doc.doc_id) or self.http.get(doc.url)
         meeting = self._meetings.get(doc.doc_id, {"body": "", "date": doc.date})
         title = f"{meeting['body']}, minutes of {meeting['date']}".strip(", ")

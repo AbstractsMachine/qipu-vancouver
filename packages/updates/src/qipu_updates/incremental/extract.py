@@ -33,11 +33,14 @@ class Budget:
     pages: int
 
     def spend(self, n: int) -> None:
+        """Use up `n` pages of the budget, never going below zero."""
         self.pages = max(0, self.pages - n)
 
 
 @dataclass
 class DocResult:
+    """The outcome of processing one document: whether it is fully read, its records, and how many were rejected."""
+
     doc: Document
     complete: bool
     pages_read: int = 0
@@ -62,10 +65,12 @@ class Extractor:
 
     @property
     def prompt_version(self) -> str:
+        """A short fingerprint of the city's system prompt."""
         return prompt_version(self.city.system_prompt())
 
     @property
     def embargo(self) -> Embargo:
+        """The city's embargo, counted from the run's date."""
         return Embargo(self.city.embargo_years, today=self.as_of)
 
     @property
@@ -82,9 +87,11 @@ class Extractor:
         )
 
     def reusable(self, reading: Reading) -> bool:
+        """True when a stored reading was made with this prompt and model, so it need not be read again."""
         return reading.prompt_version == self.prompt_version and reading.model == self.model
 
     def context(self) -> Context:
+        """What qipu-records needs to build records: the city, the embargo and the gazetteer."""
         places = Gazetteer.load(self.gazetteer_path) if self.gazetteer_path else None
         return Context(self.city, self.embargo, places)
 

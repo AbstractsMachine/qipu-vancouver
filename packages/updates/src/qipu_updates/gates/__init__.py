@@ -36,9 +36,11 @@ class GateResult:
 
     @property
     def passed(self) -> bool:
+        """True when the findings do not exceed the limit the config allows for this gate."""
         return len(self.findings) <= self.limit
 
     def to_dict(self) -> dict[str, Any]:
+        """The result as written to the manifest: counts, the limit, and the first few findings."""
         return {
             "passed": self.passed,
             "checked": self.checked,

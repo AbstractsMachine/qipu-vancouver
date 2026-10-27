@@ -23,11 +23,13 @@ RELEASES = "releases"
 
 
 class PublishError(RuntimeError):
-    pass
+    """A publish or rollback could not be done, and nothing was moved."""
 
 
 @dataclass(frozen=True)
 class Pointer:
+    """What latest.json says: the published version, the hash of its manifest, when, and the version before."""
+
     version: str
     manifest_sha256: str
     published: str
@@ -35,16 +37,19 @@ class Pointer:
 
 
 def version_key(version: str) -> tuple[str, int]:
+    """A sort key for versions such as "2026-10-26.2": by day, then by the number after the dot."""
     day, _, n = version.rpartition(".")
     return (day, int(n)) if n.isdigit() else (version, 0)
 
 
 def current(store: Store) -> Pointer | None:
+    """The published pointer, or None before the first publish."""
     data = store.read(POINTER)
     return Pointer(**json.loads(data)) if data else None
 
 
 def manifest(store: Store, version: str) -> Manifest | None:
+    """The manifest of a release in the store, or None when it is not there."""
     data = store.read(f"{RELEASES}/{version}/{MANIFEST}")
     return Manifest.from_json(data.decode("utf-8")) if data else None
 
@@ -76,6 +81,8 @@ def _move_pointer(store: Store, version: str, now: dt.datetime) -> Pointer:
 
 
 def publish(store: Store, folder: Path, release: Manifest, now: dt.datetime, run_id: str) -> Pointer:
+    """Upload a release folder, check that every file arrived, then move latest.json to it. Raises PublishError if the
+    version exists or files are missing."""
     prefix = f"{RELEASES}/{release.version}"
     if store.read(f"{prefix}/{MANIFEST}") is not None:
         raise PublishError(f"release {release.version} already exists; releases are never overwritten")
@@ -97,6 +104,7 @@ def publish(store: Store, folder: Path, release: Manifest, now: dt.datetime, run
 
 
 def gates_passed(release: Manifest) -> bool:
+    """True when the release recorded gates and every one passed."""
     return bool(release.gates) and all(g.get("passed") for g in release.gates.values())
 
 

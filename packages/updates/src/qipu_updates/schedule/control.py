@@ -30,22 +30,26 @@ SLACK = dt.timedelta(minutes=30)
 
 
 class BusyError(RuntimeError):
-    pass
+    """Another run holds the lock."""
 
 
 @dataclass(frozen=True)
 class Pause:
+    """A pause marker: its scope ("publish" or "all"), the reason, and since when."""
+
     scope: str
     reason: str
     since: str
 
 
 def paused(store: Store) -> Pause | None:
+    """The pause marker in the store, or None."""
     data = store.read(PAUSE)
     return Pause(**json.loads(data)) if data else None
 
 
 def pause(store: Store, scope: str, reason: str, now: dt.datetime) -> Pause:
+    """Write a pause marker and record it in the history."""
     if scope not in SCOPES:
         raise ValueError(f"scope must be one of {SCOPES}")
     marker = Pause(scope, reason, now.isoformat())
@@ -55,11 +59,13 @@ def pause(store: Store, scope: str, reason: str, now: dt.datetime) -> Pause:
 
 
 def resume(store: Store, now: dt.datetime) -> None:
+    """Remove the pause marker and record it in the history."""
     store.delete(PAUSE)
     record_event(store, {"event": "resume", "at": now.isoformat()})
 
 
 def acquire(store: Store, run_id: str, now: dt.datetime, ttl: dt.timedelta = dt.timedelta(hours=3)) -> None:
+    """Take the run lock for `ttl`, or raise BusyError when another run holds it."""
     data = store.read(LOCK)
     if data:
         held = json.loads(data)
@@ -70,19 +76,23 @@ def acquire(store: Store, run_id: str, now: dt.datetime, ttl: dt.timedelta = dt.
 
 
 def unlock(store: Store, run_id: str) -> None:
+    """Release the lock if this run holds it."""
     data = store.read(LOCK)
     if data and json.loads(data)["run_id"] == run_id:
         store.delete(LOCK)
 
 
 def last_check(store: Store) -> dt.datetime | None:
+    """When the source was last checked, or None if never."""
     data = store.read(LAST_CHECK)
     return dt.datetime.fromisoformat(json.loads(data)["at"]) if data else None
 
 
 def mark_checked(store: Store, now: dt.datetime) -> None:
+    """Record that the source was checked now."""
     store.write(LAST_CHECK, json.dumps({"at": now.isoformat()}).encode("utf-8"))
 
 
 def due(last: dt.datetime | None, every: dt.timedelta, now: dt.datetime) -> bool:
+    """True when the source is due: never checked, or the interval has passed (less slack for an early cron)."""
     return last is None or now - last >= every - SLACK

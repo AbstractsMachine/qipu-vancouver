@@ -16,6 +16,8 @@ FINAL_OUTCOMES = {Outcome.PASSED.value, Outcome.VETO_OVERRIDDEN.value}
 
 
 def check(records: list[dict[str, Any]], limit: int = 0) -> GateResult:
+    """Fail a record whose stage or outcome does not follow from its action, or that is shown as rezoned before a final
+    decision."""
     result = GateResult("proposed_vs_decided", limit=limit)
     for record in records:
         result.checked += 1

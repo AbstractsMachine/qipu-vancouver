@@ -34,9 +34,11 @@ class Plan:
 
     @property
     def work(self) -> tuple[Document, ...]:
+        """The documents to process this run: new first, then changed."""
         return self.new + self.changed
 
     def counts(self) -> dict[str, int]:
+        """How many documents are new, changed, unchanged and missing."""
         return {
             "new": len(self.new),
             "changed": len(self.changed),

@@ -43,19 +43,23 @@ class RunReport:
 
     @property
     def failed(self) -> bool:
+        """True when the run was refused by a gate or broke."""
         return self.status in FAILED
 
     def to_json(self) -> str:
+        """The report as the JSON written to the store."""
         return json.dumps(asdict(self), indent=1, sort_keys=True) + "\n"
 
 
 def save(store: Store, report: RunReport) -> None:
+    """Write the report as runs/<run id>.json and append it to metrics.jsonl."""
     store.write(f"runs/{report.run_id}.json", report.to_json().encode("utf-8"))
     line = json.dumps(asdict(report), sort_keys=True) + "\n"
     store.write(METRICS, (store.read(METRICS) or b"") + line.encode("utf-8"))
 
 
 def markdown(report: RunReport) -> str:
+    """The report as a Markdown summary for the job log and the failure issue."""
     lines = [
         f"### {report.config}: {report.status}",
         "",

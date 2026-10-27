@@ -18,6 +18,7 @@ Get = Callable[[str, dict[str, str]], bytes]
 
 
 def urlopen_get(url: str, headers: dict[str, str]) -> bytes:
+    """GET an https URL and return the body. Raises SourceError for any other scheme."""
     if not url.startswith("https://"):
         raise SourceError(f"only https is fetched: {url}")
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})  # noqa: S310 - https checked above
@@ -36,6 +37,8 @@ class Polite:
         self.requests = 0
 
     def get(self, url: str, headers: dict[str, str] | None = None) -> bytes:
+        """GET a URL, pausing before each request after the first and backing off between retries; SourceError when all
+        fail."""
         for attempt in range(self.retries + 1):
             if self.requests:
                 self._sleep(self.pause * (2**attempt))

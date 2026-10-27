@@ -31,6 +31,9 @@ ACTIONS = ("drop", "replace_text")
 
 @dataclass(frozen=True)
 class Rule:
+    """One correction: drop the records that match `where`, or replace text in some of their fields. min_rows and
+    max_rows guard against a rule that matches too little or too much."""
+
     rule_id: str
     action: str
     reason: str
@@ -43,6 +46,7 @@ class Rule:
 
     @classmethod
     def from_row(cls, row: dict[str, Any]) -> Rule:
+        """A rule from one line of the corrections file; ValueError when the line is malformed."""
         if row.get("action") not in ACTIONS:
             raise ValueError(f"correction {row.get('rule_id')!r}: action must be one of {ACTIONS}")
         if row["action"] == "drop" and not row.get("where"):
@@ -73,12 +77,15 @@ class Applied:
 
 @dataclass
 class Outcome:
+    """The records after the corrections, those withdrawn by a drop, and what each rule did."""
+
     records: list[dict[str, Any]]
     withdrawn: list[dict[str, Any]]
     applied: list[Applied]
 
 
 def load(path: Path | None) -> list[Rule]:
+    """The rules in a corrections file (one JSON object per line); none when the file is absent."""
     if path is None or not path.exists():
         return []
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -86,6 +93,7 @@ def load(path: Path | None) -> list[Rule]:
 
 
 def digest(path: Path | None) -> str:
+    """The sha256 of the corrections file, or "none" when it is absent."""
     return hashlib.sha256(path.read_bytes()).hexdigest() if path and path.exists() else "none"
 
 
@@ -103,6 +111,8 @@ def _matches(rule: Rule, record: dict[str, Any]) -> bool:
 
 
 def apply(records: list[dict[str, Any]], rules: Iterable[Rule], applied_before: set[str], release: str) -> Outcome:
+    """Apply the rules to the records in order. A replace edits the record dicts in place; a drop removes them and lists
+    them as withdrawn."""
     out = Outcome(list(records), [], [])
     for rule in rules:
         hits = [r for r in out.records if _matches(rule, r)]

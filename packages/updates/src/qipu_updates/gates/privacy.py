@@ -79,6 +79,7 @@ def _context(text: str, at: int) -> str:
 def leaks(
     records: list[dict[str, Any]], pages: PageTexts, as_of: dt.date, embargo_years: int, limit: int = 0
 ) -> GateResult:
+    """Fail each private name still shown in a sensitive record under the embargo."""
     result = GateResult("privacy_leak", limit=limit)
     embargo = Embargo(embargo_years, today=as_of)
     for record in records:
@@ -109,6 +110,7 @@ def _over(record: dict[str, Any], text: str, at: int, embargo: Embargo) -> str |
 
 
 def over_redaction(records: list[dict[str, Any]], as_of: dt.date, embargo_years: int, limit: int = 0) -> GateResult:
+    """Fail each mask that hides a name the rule keeps public, or sits in a field that is never masked."""
     result = GateResult("over_redaction", limit=limit)
     embargo = Embargo(embargo_years, today=as_of)
     for record in records:
