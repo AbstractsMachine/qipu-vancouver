@@ -36,6 +36,27 @@ export function int(value: Json, path: string): number {
   return n;
 }
 
+/** A number above zero: a size or a scale that is divided by. */
+export function positive(value: Json, path: string): number {
+  const n = num(value, path);
+  if (n <= 0) throw new FormatError(path, "a positive number");
+  return n;
+}
+
+/** An integer above zero: a count or a size in pixels. */
+export function positiveInt(value: Json, path: string): number {
+  const n = int(value, path);
+  if (n <= 0) throw new FormatError(path, "a positive integer");
+  return n;
+}
+
+/** An integer of zero or more: an offset, a count that may be empty, a zoom level. */
+export function natural(value: Json, path: string): number {
+  const n = int(value, path);
+  if (n < 0) throw new FormatError(path, "an integer of 0 or more");
+  return n;
+}
+
 export function str(value: Json, path: string): string {
   if (typeof value !== "string") throw new FormatError(path, "a string");
   return value;

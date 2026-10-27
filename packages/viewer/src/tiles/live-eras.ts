@@ -27,6 +27,7 @@ export function parseLiveEras(json: Json, options: LiveErasOptions = {}): EraMan
 
   const quarters = record(o.quarters ?? {}, "eras.quarters");
   const areas = Object.entries(quarters).map(([id, q]) => parseArea(id, q, options.tile ?? 512));
+  if (keyYears.length === 0 && areas.length === 0) throw new FormatError("eras", "at least one year or quarter");
   const presentYear = Math.max(...areas.map((a) => a.keys.at(-1)?.year ?? 0), ...keyYears);
   const firstYear = optional(o.min, (v) => int(v, "eras.min")) ?? Math.min(...keyYears, presentYear);
   return { present, firstYear, presentYear, keyYears, areas };
