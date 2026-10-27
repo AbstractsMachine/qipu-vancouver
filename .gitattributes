@@ -4,3 +4,5 @@
 *.webp binary
 # The reading prompts are pinned by hash: keep their bytes exactly as committed.
 packages/records/src/qipu_records/read/prompts/*.txt -text
+*.npz binary
+*.webp binary

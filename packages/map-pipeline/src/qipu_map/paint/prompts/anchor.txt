@@ -1,0 +1,1 @@
+Turn image 1, a soft aerial photograph, into a crisp, sharp, highly detailed real aerial photograph with exactly the geometry of image 2, a 3D render of the same place: every building, tower and monument of image 2 stands exactly there

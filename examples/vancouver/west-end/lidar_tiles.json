@@ -1,0 +1,14 @@
+{
+ "dsm": [
+  {
+   "filename": "bc_092g025_3_4_1_xli1m_utm10_20250826_20250826_dsm.tif",
+   "s3Url": "https://nrs.objectstore.gov.bc.ca/gdwuts/092/092g/2025/dsm/bc_092g025_3_4_1_xli1m_utm10_20250826_20250826_dsm.tif"
+  }
+ ],
+ "dem": [
+  {
+   "filename": "bc_092g025_3_4_1_xli1m_utm10_20250826_20250826.tif",
+   "s3Url": "https://nrs.objectstore.gov.bc.ca/gdwuts/092/092g/2025/dem/bc_092g025_3_4_1_xli1m_utm10_20250826_20250826.tif"
+  }
+ ]
+}

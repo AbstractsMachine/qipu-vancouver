@@ -1,0 +1,55 @@
+# Vancouver, as the map at qipu.org/vancouver is made.
+
+[city]
+id = "ca/vancouver"
+name = "Vancouver"
+attribution = [
+    "Contains information licensed under the Open Government Licence – Vancouver.",
+    "Contains information licensed under the Open Government Licence – British Columbia.",
+    "Contains information licensed under the Open Government Licence – Canada.",
+    "© OpenStreetMap contributors (ODbL).",
+]
+
+
+[projection]
+lon0 = -123.1302
+lat0 = 49.2565
+metres_per_degree = 111320.0
+
+[camera]
+azimuth_deg = 0.0           # the map looks north
+elevation_deg = 30.709      # tilt below the horizon
+metres_per_px = 0.25        # at the deepest zoom
+tile_size = 512
+
+[sun]
+azimuth_deg = 215.0
+elevation_deg = 50.0
+
+[eras]
+today = 2026
+years = [1930, 1950, 1972, 1982]
+footprint_survey_year = 2016   # the City's footprints were traced in 2015; a building they lack is taken as newer
+
+[paint]
+model = "black-forest-labs/FLUX.2-klein-4B"
+tile_px = 1024
+stride_px = 512
+steps = 4
+guidance = 1.0
+seed = 20261026
+
+[publish]
+bucket_url = "s3://qipu-tiles/ca/vancouver/city"
+public_url = "https://tiles.qipu.org/ca/vancouver/city"
+
+[areas.west-end]
+# From 1139 Pendrell Street (a park site the council bought in 1974, in the records sample) to the Sunset Beach shore:
+# houses, 1960s point towers, a park, street trees and the sea.
+bbox = [49.2782, -123.1405, 49.2836, -123.1295]
+
+[areas.city]
+bbox = [49.195, -123.23, 49.32, -123.02]
+
+# The open data the ingest stage reads is defined once, in qipu_map/ingest/sources.py (Vancouver's datasets, their
+# licences and fields, big_improvement_year included). Another city overrides it here with [sources.<id>] tables.

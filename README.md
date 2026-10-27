@@ -20,7 +20,7 @@ scanned minutes on archive.org ──▶ decision records ──▶ painted map 
 |---|---|---|
 | [`packages/records`](packages/records) | reads each scanned page with a language model, then checks every decision in plain code: the quote must be on the page, the date comes from the minutes, private names in sensitive matters are withheld, and each record links to its page in the archive.org viewer | Python, no runtime dependencies |
 | [`packages/updates`](packages/updates) | keeps the records current on a schedule: finds new and re-scanned minutes, extracts only those, checks the release against the pages, publishes it as a new version, rolls back in one command, and opens an issue when a run fails | Python, depends on records |
-| [`packages/map-pipeline`](packages/map-pipeline) | turns a rendered city into the tiles the viewer shows, one set per era | see the package |
+| [`packages/map-pipeline`](packages/map-pipeline) | turns open city data into the painted map that plays through time: a 3D scene of the city, a Blender render, an AI paint pass, the past years and the tiles | Python (numpy, Pillow, shapely); Blender and FLUX.2 klein on a GPU |
 | [`packages/viewer`](packages/viewer) | the web map: painted tiles, a year slider, and the records of each place | see the package |
 
 ## Try it
