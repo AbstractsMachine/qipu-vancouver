@@ -53,7 +53,10 @@ files = ["src", "tests"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q --import-mode=importlib --strict-markers"
-markers = ["e2e: runs make demo and drives the map page in a headless browser (needs Playwright and the network)"]
+markers = [
+    "e2e: runs make demo and drives the map page in a headless browser (needs Playwright; no network)",
+    "network: requests the live archive.org pages (`make e2e-live`; never in CI)",
+]
 
 [tool.coverage.run]
 source = ["qipu_records"]

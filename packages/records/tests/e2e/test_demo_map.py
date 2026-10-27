@@ -1,8 +1,9 @@
 """`make demo`, then the map page in a headless browser: the expected decisions are listed and placed, and their links
 work.
 
-Needs a Chromium for Playwright (`playwright install chromium`) and the network: MapLibre and the basemap load from the
-web, and two of the archive.org page links are requested to check they resolve.
+Needs a Chromium for Playwright (`playwright install chromium`) and the MapLibre copy `make e2e` downloads. The browser
+gets no network: MapLibre comes from that copy, the basemap is replaced by a plain background, and any other request
+off this machine fails the test. `make e2e-live` requests two archive.org page links for real to check they resolve.
 """
 
 from __future__ import annotations
@@ -16,18 +17,23 @@ import threading
 import urllib.request
 from collections.abc import Iterator
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
 from tests.conftest import ROOT
 
 if TYPE_CHECKING:
-    from playwright.sync_api import Page
+    from playwright.sync_api import Page, Route
 
 sync_api = pytest.importorskip("playwright.sync_api")
 
 pytestmark = pytest.mark.e2e
+
+MAPLIBRE = "https://unpkg.com/maplibre-gl@4.7.1/dist/"
+VENDOR = ROOT / "build" / "vendor" / "package" / "dist"
+BASEMAP = "https://tiles.openfreemap.org/styles/positron"
+BLANK_STYLE = {"version": 8, "sources": {}, "layers": [{"id": "land", "type": "background"}]}
 
 EXPECTED_PLACES = [
     "1139 Pendrell Street",
@@ -55,6 +61,20 @@ def site() -> Iterator[str]:
     server.shutdown()
 
 
+def _offline(site: str, errors: list[str], route: Route) -> None:
+    """Serve the page from the local server and MapLibre from the vendored copy; refuse everything else."""
+    url = route.request.url
+    if url.startswith(site):
+        route.continue_()
+    elif url.startswith(MAPLIBRE):
+        route.fulfill(path=VENDOR / url.removeprefix(MAPLIBRE))
+    elif url == BASEMAP:
+        route.fulfill(json=BLANK_STYLE)
+    else:
+        errors.append(f"request off this machine: {url}")
+        route.abort()
+
+
 class _QuietHandler(SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
         pass
@@ -67,6 +87,7 @@ def page(demo: list[dict[str, object]], site: str) -> Iterator[Page]:
         tab = browser.new_page(viewport={"width": 1280, "height": 800})
         errors: list[str] = []
         tab.on("pageerror", lambda error: errors.append(str(error)))
+        tab.route("**/*", functools.partial(_offline, site, errors))
         tab.goto(f"{site}/map-preview/")
         tab.wait_for_selector("#list li")
         tab.wait_for_function("() => window.mapReady === true", timeout=30_000)
@@ -113,7 +134,12 @@ def test_page_links_point_at_the_right_scan(page: Page, demo: list[dict[str, obj
     links = page.eval_on_selector_all("#list a", "nodes => nodes.map(n => n.href)")
     assert len(links) == len(demo)
     assert all(re.fullmatch(r"https://archive\.org/details/(19700609|19740219)/page/n\d+", link) for link in links)
-    for link in sorted(set(links))[:2]:
+
+
+@pytest.mark.network
+def test_page_links_resolve_on_archive_org(demo: list[dict[str, object]]) -> None:
+    links = sorted({str(cast("dict[str, object]", feature["properties"])["page_url"]) for feature in demo})
+    for link in links[:2]:
         request = urllib.request.Request(link, method="HEAD", headers={"User-Agent": "qipu-records-tests/0.1"})
         with urllib.request.urlopen(request, timeout=60) as response:
             assert response.status == 200
