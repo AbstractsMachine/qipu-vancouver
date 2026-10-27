@@ -1,0 +1,1 @@
+Open unbuilt ground in exactly the colours and surfaces the render shows: green grass where the render is green, bare earth and gravel where it is brown or beige, grey gravel and paving where it is grey, with the paths and trees only where the render has them; flat and open from edge to edge. It is Vancouver in {year}: nothing modern anywhere.

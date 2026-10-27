@@ -1,0 +1,1 @@
+Every roof, street, lot and track keeps exactly the surface the render shows.
