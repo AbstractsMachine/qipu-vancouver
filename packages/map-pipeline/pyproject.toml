@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qipu-map"
+version = "0.1.0"
+description = "The pipeline behind qipu's painted, time-travelling city maps: open data to 3D scene, render, paint, tiles and past years"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.0",
+    "pillow>=11.0",
+    "shapely>=2.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Multimedia :: Graphics :: 3D Rendering",
+]
+
+[project.optional-dependencies]
+lidar = ["rasterio>=1.4", "pyproj>=3.6"]
+paint = ["torch>=2.5", "diffusers>=0.36", "transformers>=4.50", "accelerate>=1.0"]
+publish = ["boto3>=1.35"]
+
+[project.scripts]
+qipu-map = "qipu_map.cli:main"
+
+[project.urls]
+Source = "https://github.com/AbstractsMachine/qipu-open"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+qipu_map = ["py.typed", "cities/*.toml", "eras/rules/*.toml", "render/blender/*.py", "paint/prompts/*.txt"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+files = ["src", "tests"]
+exclude = ["src/qipu_map/render/blender/"]
+
+[[tool.mypy.overrides]]
+module = ["rasterio.*", "pyproj.*", "torch.*", "diffusers.*", "bpy.*", "mathutils.*", "bmesh.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --import-mode=importlib --strict-markers"
+markers = [
+    "network: fetches from the live open-data portals (skipped in CI)",
+    "gpu: needs Blender or a CUDA GPU (skipped in CI)",
+    "e2e: runs the whole sample chain (about two minutes)",
+]
+
+[tool.coverage.run]
+source = ["qipu_map"]
+branch = true
+omit = ["*/render/blender/*"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
