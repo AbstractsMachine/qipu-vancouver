@@ -55,7 +55,7 @@ addopts = "-q --import-mode=importlib --strict-markers"
 markers = [
     "network: fetches from the live open-data portals (skipped in CI)",
     "gpu: needs Blender or a CUDA GPU (skipped in CI)",
-    "e2e: runs the whole sample chain (about two minutes)",
+    "e2e: runs the whole sample chain (about three minutes)",
 ]
 
 [tool.coverage.run]

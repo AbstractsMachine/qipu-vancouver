@@ -31,7 +31,7 @@ You need Python 3.12 or newer (numpy 2.5 needs it).
 
 ```sh
 make install    # a .venv with the package and the development tools
-make sample     # every stage on the bundled West End sample, CPU only, about two minutes
+make sample     # every stage on the bundled West End sample, CPU only, about three minutes
 ```
 
 `make sample` writes a complete release to `build/sample/release/sample/`: `manifest.json`, today's tiles, four past
