@@ -57,6 +57,8 @@ make install check
 
 [`examples/vancouver`](examples/vancouver) explains the sample, and each package's README says how to run it on more data.
 
+To change something, [CONTRIBUTING.md](CONTRIBUTING.md) says where each part lives, how to run one package's tests and how to add a regression fixture.
+
 ## Documentation
 
 - [docs/architecture.md](docs/architecture.md): how the packages fit together, and what passes between them (one page)
