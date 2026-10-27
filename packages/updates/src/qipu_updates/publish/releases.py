@@ -4,6 +4,11 @@ A publish uploads the release folder, checks that every file the manifest lists 
 rollback moves latest.json back to an earlier release; nothing is deleted, so a rollback can itself be undone the same
 way.
 
+The history line is written before latest.json moves, and latest.json is written last, as one object (a rename on a
+local disk, a single upload on an object store). A crash between the two leaves latest.json where it was and a history
+line for a release that never went live, which is harmless: rollback only goes back to releases older than latest.json.
+The other order could leave latest.json on a release the history does not list, which a rollback could not see.
+
 Runs, publishes and rollbacks share one lock (control/lock.json), and both a publish and a rollback refuse unless the
 caller holds it. The pause marker (control/pause.json) is authoritative: a publish refuses while it is there, checked
 just before latest.json moves, and also refuses when latest.json no longer points at the release it was built on (a
@@ -91,14 +96,16 @@ def _require_lock(store: Store, holder: str, what: str) -> None:
         )
 
 
-def _move_pointer(store: Store, version: str, now: dt.datetime) -> Pointer:
+def _new_pointer(store: Store, version: str, now: dt.datetime) -> Pointer:
     data = store.read(f"{RELEASES}/{version}/{MANIFEST}")
     if data is None:
         raise PublishError(f"release {version} is not in the store")
     before = current(store)
-    pointer = Pointer(version, hashlib.sha256(data).hexdigest(), now.isoformat(), before.version if before else None)
+    return Pointer(version, hashlib.sha256(data).hexdigest(), now.isoformat(), before.version if before else None)
+
+
+def _write_pointer(store: Store, pointer: Pointer) -> None:
     store.write(POINTER, (json.dumps(asdict(pointer), indent=1) + "\n").encode("utf-8"))
-    return pointer
 
 
 def _may_publish(store: Store, release: Manifest, run_id: str) -> None:
@@ -128,7 +135,7 @@ def publish(store: Store, folder: Path, release: Manifest, now: dt.datetime, run
     if missing:
         raise PublishError(f"{len(missing)} files missing after upload, e.g. {missing[:3]}; latest.json not moved")
     _may_publish(store, release, run_id)  # again: a rollback or pause may have come in during the upload
-    pointer = _move_pointer(store, release.version, now)
+    pointer = _new_pointer(store, release.version, now)
     event = {
         "event": "publish",
         "version": release.version,
@@ -136,7 +143,8 @@ def publish(store: Store, folder: Path, release: Manifest, now: dt.datetime, run
         "at": now.isoformat(),
         "run_id": run_id,
     }
-    record_event(store, event)
+    record_event(store, event)  # history first, latest.json last: see the module docstring
+    _write_pointer(store, pointer)
     return pointer
 
 
@@ -163,8 +171,9 @@ def rollback(store: Store, now: dt.datetime, reason: str, to: str | None = None,
     target = manifest(store, to)
     if to not in published or target is None or not gates_passed(target):
         raise PublishError(f"release {to} was never published or did not pass its gates")
-    pointer = _move_pointer(store, to, now)
+    pointer = _new_pointer(store, to, now)
     record_event(
         store, {"event": "rollback", "version": to, "from": here.version, "at": now.isoformat(), "reason": reason}
     )
+    _write_pointer(store, pointer)
     return pointer

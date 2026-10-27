@@ -271,7 +271,7 @@ def test_a_rollback_that_comes_in_mid_run_is_not_published_over(
         calls["n"] += 1
         if calls["n"] == 2:  # the loop's check just before publishing: the rollback comes in right after it
             when = dt.datetime(2026, 10, 27, 14, 18, tzinfo=dt.UTC)
-            rel._move_pointer(store(tmp_path), "2026-10-19.1", when)
+            rel._write_pointer(store(tmp_path), rel._new_pointer(store(tmp_path), "2026-10-19.1", when))
             rel.record_event(store(tmp_path), {"event": "rollback", "version": "2026-10-19.1", "at": when.isoformat()})
             control.pause(store(tmp_path), "publish", "rolled back", when)
         return found
