@@ -1,9 +1,13 @@
-# qipu-updates
+# updates
 
 Keeps the published council records up to date by itself. On a schedule, it lists what the source holds, extracts records
 from only the new and changed meetings (with [qipu-records](../records)), checks the whole release against the page text,
 publishes it as a new version, and keeps every earlier version for rollback. How it works, how to pause it, how to roll back
 and how to add a source: [docs/updates.md](../../docs/updates.md).
+
+## Quickstart
+
+You need Python 3.11 or newer. From this folder:
 
 ```sh
 make install     # .venv with qipu-records from ../records and the pinned dev tools
@@ -11,6 +15,8 @@ make demo        # two scheduled runs a week apart on the Vancouver sample; the 
 make check       # lint, types, unit and integration tests with coverage (fails under 85%)
 make e2e         # the scheduled workflow's run step, executed as GitHub runs it, offline
 ```
+
+Then, on any config and store:
 
 ```
 .venv/bin/qipu-updates run       --config ../../examples/vancouver/updates/updates.toml --store /tmp/store
@@ -34,3 +40,8 @@ make e2e         # the scheduled workflow's run step, executed as GitHub runs it
 | `cli.py` | the `qipu-updates` command |
 
 The one runtime dependency is qipu-records. The scheduled job is [.github/workflows/updates.yml](../../.github/workflows/updates.yml).
+
+## Licence
+
+Apache License 2.0, like the rest of the repository ([LICENSE](LICENSE)). The records it publishes are CC0 1.0
+([LICENSE-DATA](../../LICENSE-DATA)).

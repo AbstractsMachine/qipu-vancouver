@@ -11,9 +11,11 @@ of its own.
 
 ## Quickstart
 
+You need Node 20 or newer. From this folder:
+
 ```sh
-cd packages/viewer
-npm i && npm run demo        # Node 20+; opens http://localhost:5173
+make install    # npm ci: exactly the versions in package-lock.json
+make demo       # the demo app at http://localhost:5173
 ```
 
 The demo draws the live tiles from tiles.qipu.org (read only) and the block records from a sample in
