@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from qipu_records.fetch import http
 from qipu_records.fetch.archive import (
     ArchiveClient,
     Item,
@@ -112,3 +113,8 @@ def test_a_timeout_is_retried(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -
     monkeypatch.setattr(time, "sleep", lambda seconds: None)
     assert ArchiveClient(tmp_path, pause=0).get_text("https://archive.org/x", "x") == "ok"
     assert len(calls) == 2
+
+
+def test_only_https_urls_are_fetched() -> None:
+    with pytest.raises(ValueError, match="only https"):
+        http.get("http://archive.org/metadata/19740219", user_agent="test", timeout=1)

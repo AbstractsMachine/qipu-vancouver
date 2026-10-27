@@ -11,17 +11,16 @@ import gzip
 import json
 import re
 import time
-import urllib.error
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from qipu_records.fetch import http
 
 USER_AGENT = (
     "qipu-records/0.1 (+https://github.com/AbstractsMachine/qipu-vancouver; cached, about one request a second)"
 )
 PAUSE_SECONDS = 1.0
-RETRIES = 4
 IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}")
 """What archive.org accepts as an item identifier. Anything else is refused before it reaches a URL or a file name."""
 
@@ -89,23 +88,9 @@ class ArchiveClient:
         return self.get_bytes(url, cache_name).decode("utf-8", errors="replace")
 
     def _download(self, url: str) -> bytes:
-        if not url.startswith("https://"):
-            raise ValueError(f"only https URLs are fetched, not {url!r}")
-        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})  # noqa: S310 - https checked above
-        for attempt in range(RETRIES):
-            try:
-                with urllib.request.urlopen(request, timeout=300) as response:  # noqa: S310 - https checked above
-                    body: bytes = response.read()
-                time.sleep(self.pause)
-                return body
-            except urllib.error.HTTPError as error:
-                if error.code in (403, 404) or attempt == RETRIES - 1:
-                    raise
-            except (urllib.error.URLError, TimeoutError, ConnectionError):
-                if attempt == RETRIES - 1:
-                    raise
-            time.sleep(4 * (attempt + 1))
-        raise AssertionError("unreachable")
+        body = http.get(url, user_agent=USER_AGENT, timeout=300)
+        time.sleep(self.pause)
+        return body
 
 
 def fetch_metadata(client: ArchiveClient, identifier: str) -> dict[str, Any]:

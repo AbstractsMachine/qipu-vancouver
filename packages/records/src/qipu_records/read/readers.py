@@ -29,6 +29,10 @@ if TYPE_CHECKING:
 
 Effort = Literal["low", "medium", "high", "xhigh", "max"]
 
+REQUEST_TIMEOUT_S = 300.0
+"""One page takes well under a minute to read. The SDKs' own default is ten minutes; a shorter limit lets their retries
+recover from a stalled connection before a long run loses its morning."""
+
 
 @dataclass(frozen=True)
 class Reading:
@@ -104,7 +108,7 @@ class AnthropicReader:
                 from anthropic import Anthropic  # noqa: PLC0415 - an optional extra, loaded only when this reader is used
             except ImportError:
                 raise _missing("anthropic") from None
-            self._client = Anthropic(api_key=key, max_retries=4)
+            self._client = Anthropic(api_key=key, max_retries=4, timeout=REQUEST_TIMEOUT_S)
         return self._client
 
     def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading:
@@ -148,7 +152,7 @@ class OpenAICompatibleReader:
             except ImportError:
                 raise _missing("openai") from None
             key = os.environ.get(self.api_key_env) or "not-needed"
-            self._client = OpenAI(base_url=self.base_url, api_key=key, max_retries=4)
+            self._client = OpenAI(base_url=self.base_url, api_key=key, max_retries=4, timeout=REQUEST_TIMEOUT_S)
         return self._client
 
     def read(self, page_id: str, system_prompt: str, user_message: str) -> Reading:

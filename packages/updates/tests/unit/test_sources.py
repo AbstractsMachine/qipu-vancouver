@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import shutil
+import subprocess
 import urllib.error
 import urllib.parse
 from pathlib import Path
@@ -153,3 +155,14 @@ def test_the_mirror_needs_a_listing_first_and_a_readable_index(tmp_path: Path) -
         )
     with pytest.raises(SourceError, match=r"missing\.json"):
         mirror.MirrorSource(EXAMPLE, tmp_path / "missing.json").discover(DAY)
+
+
+def test_a_pdf_that_pdftotext_cannot_read_is_a_source_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fails(command: list[str], **kwargs: object) -> object:
+        assert kwargs["timeout"] == legistar.PDFTOTEXT_TIMEOUT_S
+        raise subprocess.TimeoutExpired(command, legistar.PDFTOTEXT_TIMEOUT_S)
+
+    monkeypatch.setattr(shutil, "which", lambda _: "/usr/bin/pdftotext")
+    monkeypatch.setattr(subprocess, "run", fails)
+    with pytest.raises(SourceError, match="could not read the minutes PDF"):
+        legistar.pdftotext(b"%PDF-1.7")

@@ -78,6 +78,10 @@ def parse_calendar(page: str, base: str = SF_BASE) -> list[dict[str, Any]]:
     return meetings
 
 
+PDFTOTEXT_TIMEOUT_S = 120.0
+"""A meeting's minutes convert in a second or two; a PDF that takes minutes is broken or hostile."""
+
+
 def pdftotext(data: bytes) -> list[str]:
     with tempfile.NamedTemporaryFile(suffix=".pdf") as pdf:
         pdf.write(data)
@@ -86,7 +90,12 @@ def pdftotext(data: bytes) -> list[str]:
         if tool is None:
             raise SourceError("pdftotext is not installed (poppler-utils)")
         command = [tool, "-layout", "-enc", "UTF-8", pdf.name, "-"]
-        out = subprocess.run(command, capture_output=True, check=True).stdout  # noqa: S603 - fixed command, our own file
+        try:
+            out = subprocess.run(  # noqa: S603 - fixed command, our own file
+                command, capture_output=True, check=True, timeout=PDFTOTEXT_TIMEOUT_S
+            ).stdout
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            raise SourceError(f"pdftotext could not read the minutes PDF: {e}") from e
     pages = out.decode("utf-8", errors="replace").split("\f")
     return pages[:-1] if pages and not pages[-1].strip() else pages
 

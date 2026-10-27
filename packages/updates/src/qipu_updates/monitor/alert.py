@@ -17,6 +17,9 @@ LABEL = "workflow-failure"
 
 Runner = Callable[..., "subprocess.CompletedProcess[str]"]
 
+GH_TIMEOUT_S = 60.0
+"""Each `gh` call is one small API request; a minute means GitHub is down, and the job should end rather than hang."""
+
 
 class Issues(Protocol):
     def find_open(self, title: str) -> int | None: ...
@@ -32,7 +35,9 @@ class GhIssues:
         self._run = runner or subprocess.run
 
     def _gh(self, *args: str) -> str:
-        done = self._run(["gh", *args, "--repo", self.repo], capture_output=True, text=True, check=True)
+        done = self._run(
+            ["gh", *args, "--repo", self.repo], capture_output=True, text=True, check=True, timeout=GH_TIMEOUT_S
+        )
         return done.stdout
 
     def find_open(self, title: str) -> int | None:

@@ -120,3 +120,16 @@ def test_the_rclone_store_speaks_rclone(tmp_path: Path) -> None:
     assert [c[1] for c in fake.calls][:7] == ["cat", "cat", "rcat", "deletefile", "copy", "lsf", "lsf"]
     assert fake.calls[4][2:4] == [str(tmp_path), "r2:bucket/van/releases/v1"]
     assert "--checksum" in fake.calls[4]
+
+
+def test_a_hung_rclone_call_becomes_a_store_error() -> None:
+    seen: dict[str, Any] = {}
+
+    def hangs(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
+        seen.update(kwargs)
+        raise subprocess.TimeoutExpired(args, kwargs["timeout"])
+
+    store = RcloneStore("r2:bucket", runner=hangs, timeout_s=5)
+    with pytest.raises(StoreError, match="no answer after 5 s"):
+        store.read("latest.json")
+    assert seen["timeout"] == 5
