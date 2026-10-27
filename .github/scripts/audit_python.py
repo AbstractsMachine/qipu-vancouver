@@ -1,8 +1,8 @@
 """Audit a pinned requirements file with pip-audit and fail only on high or critical advisories.
 
 pip-audit reports every known advisory and no severity. Each advisory is looked up on OSV for its severity: HIGH and
-CRITICAL fail the run, anything lower is printed, and an advisory whose severity cannot be found is printed as a warning,
-so a new low-severity advisory or an OSV outage never blocks a pull request.
+CRITICAL fail the run, anything lower is printed, and an advisory whose severity cannot be found is printed as a
+warning, so a new low-severity advisory or an OSV outage never blocks a pull request.
 
     python .github/scripts/audit_python.py packages/records/requirements-dev.txt
 """
@@ -32,8 +32,8 @@ def severity(advisory_ids: list[str]) -> str:
 
 
 def main(requirements: str) -> int:
-    run = subprocess.run(
-        ["pip-audit", "--require-hashes", "--disable-pip", "--format", "json", "-r", requirements],
+    run = subprocess.run(  # noqa: S603 - fixed argument list; the requirements path comes from our own workflow
+        ["pip-audit", "--require-hashes", "--disable-pip", "--format", "json", "-r", requirements],  # noqa: S607
         capture_output=True,
         text=True,
         check=False,
