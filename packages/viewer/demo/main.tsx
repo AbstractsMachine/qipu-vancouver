@@ -21,7 +21,9 @@ function dataFor(city: CityConfig): CityConfig {
   return withDataBase(city, live ? path : `${import.meta.env.BASE_URL}sample/${city.id}`);
 }
 
-const initial = readViewState(window.location.search);
+/* with no link the demo opens where the README shows it: Strathcona in 1972, one block's decisions open */
+const linked = readViewState(window.location.search);
+const initial = Object.keys(linked).length > 0 ? linked : { city: "vancouver", year: 1972, block: "3565" };
 
 /* ?tiles=<release folder> opens a qipu-tiles/1 release written by packages/map-pipeline, over Vancouver's records */
 const release = new URLSearchParams(window.location.search).get("tiles");

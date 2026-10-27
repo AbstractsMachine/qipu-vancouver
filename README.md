@@ -18,9 +18,9 @@ open city data ──────────────────▶ painted
                                    packages/map-pipeline
 ```
 
-![The viewer demo on Vancouver in 1972, with the decisions for one Strathcona block open beside the map](docs/images/viewer-vancouver-1972.webp)
+![The viewer demo on Vancouver in 1972, with the 1970s decisions for one Strathcona block open beside the map](docs/images/viewer-vancouver-1972.webp)
 
-**Live demo:** https://www.qipu.org/vancouver, Vancouver City Council decisions from the 1960s to the 1980s on the map.
+**Live demo:** https://www.qipu.org/vancouver, Vancouver City Council decisions from the 1970s on, on the map.
 
 | package | what it does | language |
 |---|---|---|

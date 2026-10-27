@@ -7,7 +7,7 @@ It reads the painted tiles that [`packages/map-pipeline`](../map-pipeline) write
 [`packages/records`](../records) produces once they are placed on the city's blocks. It runs in the browser and needs no server
 of its own.
 
-![The demo on Vancouver in 1972, with the decisions for one Strathcona block open beside the map](docs/screenshots/viewer-vancouver-1972.webp)
+![The demo on Vancouver in 1972, with the 1970s decisions for one Strathcona block open beside the map](docs/screenshots/viewer-vancouver-1972.webp)
 
 ## Quickstart
 
@@ -15,7 +15,7 @@ You need Node 20 or newer. From this folder:
 
 ```sh
 make install    # npm ci: exactly the versions in package-lock.json
-make demo       # the demo app at http://localhost:5173, opening on Vancouver
+make demo       # the demo app at http://localhost:5173, opening on Strathcona in 1972 with one block's decisions open
 ```
 
 The demo draws the live tiles from tiles.qipu.org (read only) and the block records from a sample in
