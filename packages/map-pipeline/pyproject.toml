@@ -11,9 +11,9 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
-    "numpy>=2.0",
-    "pillow>=11.0",
-    "shapely>=2.0",
+    "numpy>=2.0,<3",
+    "pillow>=11.0,<14",
+    "shapely>=2.0,<3",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -22,9 +22,9 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-lidar = ["rasterio>=1.4", "pyproj>=3.6"]
-paint = ["torch>=2.5", "diffusers>=0.36", "transformers>=4.50", "accelerate>=1.0"]
-publish = ["boto3>=1.35"]
+lidar = ["rasterio>=1.4,<2", "pyproj>=3.6,<4"]
+paint = ["torch>=2.5,<3", "diffusers>=0.36,<1", "transformers>=4.50,<6", "accelerate>=1.0,<2"]
+publish = ["boto3>=1.35,<2"]
 
 [project.scripts]
 qipu-map = "qipu_map.cli:main"
