@@ -11,15 +11,16 @@ from qipu_updates.publish import releases as rel
 from qipu_updates.publish.local import LocalStore
 from qipu_updates.publish.rclone import RcloneStore, StoreError
 from qipu_updates.release.manifest import MANIFEST, Manifest, hash_files
+from qipu_updates.schedule import control
 
 NOW = dt.datetime(2026, 10, 26, 14, 17, tzinfo=dt.UTC)
 
 
-def release_folder(tmp: Path, version: str) -> tuple[Path, Manifest]:
+def release_folder(tmp: Path, version: str, parent: str | None = None) -> tuple[Path, Manifest]:
     folder = tmp / "drafts" / version
     (folder / "records").mkdir(parents=True)
     (folder / "records" / "m1.jsonl").write_text('{"id": "m1:0/1"}\n', encoding="utf-8")
-    manifest = Manifest(version, None, NOW.isoformat(), "run", "vancouver", "mirror", "c", "k", "none")
+    manifest = Manifest(version, parent, NOW.isoformat(), "run", "vancouver", "mirror", "c", "k", "none")
     manifest.gates = {"quote_on_page": {"passed": True}}
     manifest.files = hash_files(folder)
     (folder / MANIFEST).write_text(manifest.to_json(), encoding="utf-8")
@@ -42,6 +43,7 @@ def test_the_local_store_reads_writes_lists_and_deletes(tmp_path: Path) -> None:
 def test_publish_uploads_then_moves_the_pointer_and_never_overwrites(tmp_path: Path) -> None:
     store = LocalStore(tmp_path / "s")
     folder, manifest = release_folder(tmp_path, "2026-10-26.1")
+    control.acquire(store, "run-1", NOW)
     pointer = rel.publish(store, folder, manifest, NOW, "run-1")
     assert (pointer.version, pointer.previous) == ("2026-10-26.1", None)
     assert rel.current(store) == pointer
@@ -55,6 +57,7 @@ def test_publish_refuses_to_move_the_pointer_when_files_are_missing(tmp_path: Pa
     store = LocalStore(tmp_path / "s")
     folder, manifest = release_folder(tmp_path, "2026-10-26.1")
     manifest.files["records/lost.jsonl"] = "0" * 64
+    control.acquire(store, "run", NOW)
     with pytest.raises(rel.PublishError, match="1 files missing"):
         rel.publish(store, folder, manifest, NOW, "run")
     assert rel.current(store) is None
@@ -62,14 +65,15 @@ def test_publish_refuses_to_move_the_pointer_when_files_are_missing(tmp_path: Pa
 
 def test_rollback_goes_to_the_newest_earlier_release_that_was_published(tmp_path: Path) -> None:
     store = LocalStore(tmp_path / "s")
+    control.acquire(store, "run", NOW)
     with pytest.raises(rel.PublishError, match="nothing is published"):
-        rel.rollback(store, NOW, "r")
-    for version in ("2026-10-19.1", "2026-10-26.1"):
-        rel.publish(store, *release_folder(tmp_path, version), NOW, "run")
+        rel.rollback(store, NOW, "r", holder="run")
+    for version, parent in (("2026-10-19.1", None), ("2026-10-26.1", "2026-10-19.1")):
+        rel.publish(store, *release_folder(tmp_path, version, parent), NOW, "run")
     orphan, _ = release_folder(tmp_path, "2026-10-25.1")
     store.upload(orphan, "releases/2026-10-25.1")  # uploaded, but the run stopped before publishing it
 
-    pointer = rel.rollback(store, NOW, "wrong dates")
+    pointer = rel.rollback(store, NOW, "wrong dates", holder="run")
     assert (pointer.version, pointer.previous) == ("2026-10-19.1", "2026-10-26.1")
     assert rel.history(store)[-1] == {
         "event": "rollback",
@@ -79,10 +83,10 @@ def test_rollback_goes_to_the_newest_earlier_release_that_was_published(tmp_path
         "reason": "wrong dates",
     }
     with pytest.raises(rel.PublishError, match="no earlier release"):
-        rel.rollback(store, NOW, "again")
+        rel.rollback(store, NOW, "again", holder="run")
     with pytest.raises(rel.PublishError, match="never published"):
-        rel.rollback(store, NOW, "r", to="2026-10-25.1")
-    assert rel.rollback(store, NOW, "forward again", to="2026-10-26.1").version == "2026-10-26.1"
+        rel.rollback(store, NOW, "r", to="2026-10-25.1", holder="run")
+    assert rel.rollback(store, NOW, "forward again", to="2026-10-26.1", holder="run").version == "2026-10-26.1"
 
 
 def test_versions_sort_by_day_then_number() -> None:
@@ -133,3 +137,21 @@ def test_a_hung_rclone_call_becomes_a_store_error() -> None:
     with pytest.raises(StoreError, match="no answer after 5 s"):
         store.read("latest.json")
     assert seen["timeout"] == 5
+
+
+def test_publish_refuses_without_the_lock_while_paused_or_when_latest_moved(tmp_path: Path) -> None:
+    store = LocalStore(tmp_path / "s")
+    first, first_manifest = release_folder(tmp_path, "2026-10-19.1")
+    with pytest.raises(rel.PublishError, match="needs the run lock"):
+        rel.publish(store, first, first_manifest, NOW, "run")
+    control.acquire(store, "run", NOW)
+    rel.publish(store, first, first_manifest, NOW, "run")
+    control.pause(store, "publish", "rolled back", NOW)
+    with pytest.raises(rel.PublishError, match="paused"):
+        rel.publish(store, *release_folder(tmp_path, "2026-10-26.1", "2026-10-19.1"), NOW, "run")
+    control.resume(store, NOW)
+    with pytest.raises(rel.PublishError, match=r"latest\.json moved"):
+        rel.publish(store, *release_folder(tmp_path, "2026-10-27.1", "2026-10-12.1"), NOW, "run")
+    pointer = rel.current(store)
+    assert pointer is not None
+    assert pointer.version == "2026-10-19.1"

@@ -8,6 +8,8 @@ import datetime as dt
 import json
 from pathlib import Path
 
+import pytest
+
 from qipu_records.cities import get_city
 from qipu_updates import config as cfg
 from qipu_updates.incremental.extract import Extractor
@@ -188,8 +190,9 @@ def test_rollback_pauses_publishing_until_resumed(example: Path, tmp_path: Path)
     run(example, tmp_path, DAY1, "day1")
     run(example, tmp_path, DAY2, "day2")
     now = dt.datetime(2026, 10, 26, 18, 0, tzinfo=dt.UTC)
-    pointer = rel.rollback(store(tmp_path), now, "bad dates")
-    control.pause(store(tmp_path), "publish", "rolled back", now)
+    with control.locked(store(tmp_path), "operator", now):
+        pointer = rel.rollback(store(tmp_path), now, "bad dates", holder="operator")
+        control.pause(store(tmp_path), "publish", "rolled back", now)
     assert (pointer.version, pointer.previous) == ("2026-10-19.1", "2026-10-26.1")
 
     rescan(example, "2026-10-27", 11, "\nAdjourned.")
@@ -250,3 +253,48 @@ def test_a_first_run_with_nothing_listed_publishes_nothing(example: Path, tmp_pa
     report = run(example, tmp_path, dt.date(2026, 10, 18), "early")
     assert (report.status, report.detail) == ("no-change", "nothing to publish yet")
     assert rel.versions(store(tmp_path)) == []
+
+
+def test_a_rollback_that_comes_in_mid_run_is_not_published_over(
+    example: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Failure injection: a rollback lands after the run's last pause check and before its publish (as one did when
+    rollback took no lock). The publish itself must refuse, and latest.json must stay rolled back."""
+    run(example, tmp_path, DAY1, "day1")
+    run(example, tmp_path, DAY2, "day2")
+    rescan(example, "2026-10-27", 11, "\nAdjourned.")
+    real_paused = control.paused
+    calls = {"n": 0}
+
+    def rollback_lands_after_the_check(s: object) -> control.Pause | None:
+        found = real_paused(s)  # type: ignore[arg-type]
+        calls["n"] += 1
+        if calls["n"] == 2:  # the loop's check just before publishing: the rollback comes in right after it
+            when = dt.datetime(2026, 10, 27, 14, 18, tzinfo=dt.UTC)
+            rel._move_pointer(store(tmp_path), "2026-10-19.1", when)
+            rel.record_event(store(tmp_path), {"event": "rollback", "version": "2026-10-19.1", "at": when.isoformat()})
+            control.pause(store(tmp_path), "publish", "rolled back", when)
+        return found
+
+    monkeypatch.setattr(control, "paused", rollback_lands_after_the_check)
+    raced = run(example, tmp_path, DAY3, "day3")
+    assert raced.status == "failed"
+    assert "paused" in raced.detail
+    assert not raced.published
+    pointer = rel.current(store(tmp_path))
+    assert pointer is not None
+    assert pointer.version == "2026-10-19.1"
+
+
+def test_a_rollback_refuses_while_a_run_holds_the_lock(example: Path, tmp_path: Path) -> None:
+    run(example, tmp_path, DAY1, "day1")
+    run(example, tmp_path, DAY2, "day2")
+    now = dt.datetime(2026, 10, 27, 9, 0, tzinfo=dt.UTC)
+    control.acquire(store(tmp_path), "running", now)
+    with pytest.raises(rel.PublishError, match="lock"):
+        rel.rollback(store(tmp_path), now, "bad dates", holder="someone-else")
+    with control.locked(store(tmp_path), "running", now):
+        pass  # the holder may re-enter its own lock
+    pointer = rel.current(store(tmp_path))
+    assert pointer is not None
+    assert pointer.version == "2026-10-26.1"
