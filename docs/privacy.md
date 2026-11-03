@@ -64,7 +64,7 @@ San Francisco records follow the same matters, with San Francisco's own cutoff o
 `packages/records` applies the rule when it builds records (`qipu_records/verify/privacy.py`). The patterns for the seven
 matters, the public-function test and the words that show a name in a public role are the rule's own, kept in that one
 file. A name is looked for in the record's parties (except those in a public role: contractor, applicant, payee and so on)
-and after a title ("Mr.", "Mrs.", "Miss", "Dr.") anywhere in its text. It is kept when it belongs to an official (the
+and after a title ("Mr.", "Mrs.", "Miss", "Dr.") anywhere in its text, including what a payment is for. It is kept when it belongs to an official (the
 mover, the seconder, the roll call, anyone named next to a role on the page), an organisation, or anyone the record shows
 in a public role somewhere (after "letter from" or "delegation", before "Ltd." or "Street"). A claimant is always withheld,
 even when an alderman on the page shares the surname. A withheld name is replaced in every form it is printed: "Miss

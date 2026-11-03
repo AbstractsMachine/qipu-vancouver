@@ -183,6 +183,36 @@ def test_the_payee_of_an_injury_settlement_is_the_claimant_and_is_withheld() -> 
     assert masked["money"][0]["payee"] == WITHHELD
 
 
+def test_a_name_in_what_a_payment_is_for_is_withheld_too() -> None:
+    item = _item(
+        kind="claim",
+        quote="That the claim of Mrs. Jane Roe for injuries be paid.",
+        money=[
+            {
+                "amount": 250,
+                "purpose": "settlement of the claim of Mrs. Jane Roe for injuries",
+                "payee": "Mrs. Jane Roe",
+            }
+        ],
+        parties=[{"name": "Mrs. Jane Roe", "role": "claimant"}],
+    )
+    masked, names = mask_item(item, officials=set())
+    assert names == {"Mrs. Jane Roe"}
+    assert masked["money"] == [
+        {"amount": 250, "purpose": f"settlement of the claim of {WITHHELD} for injuries", "payee": WITHHELD}
+    ]
+
+
+def test_a_name_printed_only_in_a_payment_purpose_is_found() -> None:
+    item = _item(
+        summary="Payment for injuries suffered on a city sidewalk.",
+        money=[{"amount": 250, "purpose": "injury claim of Mr. Tom Wu, settled", "payee": "City Solicitor"}],
+    )
+    masked, names = mask_item(item, officials=set())
+    assert "Mr. Tom Wu" in names
+    assert "Wu" not in masked["money"][0]["purpose"]
+
+
 def test_a_settlement_payee_listed_as_a_payee_party_is_withheld_everywhere() -> None:
     item = _item(
         summary="Payment to Tom Wu for injuries suffered on a city sidewalk.",

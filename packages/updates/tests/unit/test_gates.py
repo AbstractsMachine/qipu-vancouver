@@ -167,3 +167,18 @@ def test_a_date_no_meeting_of_the_item_was_held_on_fails_even_when_the_reader_ag
     assert [(f.record_id, f.why) for f in result.findings] == [
         ("c:1/1", "published 1967-05-12, but the item shows no meeting held that day (it shows 1967-05-30)")
     ]
+
+
+def test_a_mask_in_a_payment_purpose_is_checked_and_a_name_left_there_is_a_leak() -> None:
+    purpose = "settlement of the claim of Mrs. Ada Brown for damages"
+    pages = Pages({"m1:0": PAGE})
+    shown = record("m1:0/1", quote=MASKED, kind="claim", money=[{"amount": 120, "purpose": purpose, "payee": WITHHELD}])
+    assert [(f.record_id, f.text) for f in privacy.leaks([shown], pages, AS_OF, 100).findings] == [
+        ("m1:0/1", "Mrs. Ada Brown")
+    ]
+    lease = record(
+        "m:0/2", quote="lease approved", money=[{"amount": 1, "purpose": f"rent from {WITHHELD}", "payee": ""}]
+    )
+    assert [f.why for f in privacy.over_redaction([lease], AS_OF, 100).findings] == [
+        "mask in a record that is not a sensitive matter (money[0].purpose)"
+    ]

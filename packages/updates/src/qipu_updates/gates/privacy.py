@@ -33,7 +33,7 @@ from qipu_records.verify.privacy import (
 )
 from qipu_updates.gates import Finding, GateResult, PageTexts, page_id_of
 
-# The text fields qipu_records.verify.privacy.mask_item masks, besides parties, places and money payees.
+# The text fields qipu_records.verify.privacy.mask_item masks, besides parties, places and money payees and purposes.
 MASKABLE = ("quote", "summary", "why")
 NEVER_MASKED = (
     "id",
@@ -71,6 +71,7 @@ def _masked_texts(record: dict[str, Any]) -> Iterator[tuple[str, str]]:
         yield f"places[{n}]", str(place.get("text") or "")
     for n, money in enumerate(record.get("money") or []):
         yield f"money[{n}]", str(money.get("payee") or "")
+        yield f"money[{n}].purpose", str(money.get("purpose") or "")
 
 
 def _context(text: str, at: int) -> str:
