@@ -235,6 +235,7 @@ def private_names(item: ModelItem, officials: set[str]) -> set[str]:
     parties = item.get("parties") or []
     texts = [item.get("quote") or "", item.get("summary") or "", item.get("why") or ""]
     texts += [p.get("text") or "" for p in item.get("places") or []]
+    texts += [m.get("purpose") or "" for m in item.get("money") or []]
     subjects = [party.get("name") or "" for party in parties if party.get("role") in SUBJECT_ROLES]
     if _settles(item):
         subjects += _settlement_payees(item)
@@ -313,6 +314,9 @@ def mask_item(item: ModelItem, officials: set[str]) -> tuple[ModelItem, set[str]
         {**party, "name": WITHHELD if party.get("name") in names else mask(party.get("name") or "", names)}
         for party in item.get("parties") or []
     ]
-    masked["money"] = [{**m, "payee": mask(m.get("payee") or "", names)} for m in item.get("money") or []]
+    masked["money"] = [
+        {**m, "payee": mask(m.get("payee") or "", names), "purpose": mask(m.get("purpose") or "", names)}
+        for m in item.get("money") or []
+    ]
     masked["places"] = [{**p, "text": mask(p.get("text") or "", names)} for p in item.get("places") or []]
     return masked, names
