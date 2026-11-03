@@ -20,6 +20,12 @@ updates:
     schedule: {interval: weekly}
     groups:
       minor-and-patch: {update-types: [minor, patch]}
+    ignore:
+      # eslint-plugin-jsx-a11y does not accept eslint 10 as a peer yet, so npm ci fails; lift this when it does.
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: "@eslint/js"
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule: {interval: weekly}
