@@ -79,8 +79,7 @@ has the setup, the conventions and how to report a wrong record.
 
 Code: AGPL-3.0, data: CC0.
 
-Code is under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only). Versions before November 2026
-were released under the Apache License 2.0 and stay under it. Data the code produces, and the sample data in
+Code is under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only). Data the code produces, and the sample data in
 `examples/`, are dedicated to the public domain under [CC0 1.0](LICENSE-DATA). The exception is the third-party open data that [LICENSE-DATA](LICENSE-DATA) lists
 with its own terms: City of Vancouver, LidarBC, Natural Resources Canada and OpenStreetMap. [NOTICE](NOTICE) carries their
 attribution lines.
