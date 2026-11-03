@@ -10,4 +10,4 @@ pytest-cov==7.1.0
 ruff==0.17.2
 setuptools==84.2.1
 shapely==2.2.0
-types-shapely==2.1.0.20260728
+types-shapely==2.1.0.20261030
