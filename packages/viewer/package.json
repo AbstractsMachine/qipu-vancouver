@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "The qipu.org city map: painted tiles, a year slider and the record of each block.",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "engines": {
     "node": ">=20"

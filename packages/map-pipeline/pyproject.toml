@@ -7,7 +7,7 @@ name = "qipu-map"
 version = "0.1.0"
 description = "The pipeline behind qipu's painted, time-travelling city maps: open data to 3D scene, render, paint, tiles and past years"
 readme = "README.md"
-license = "Apache-2.0"
+license = "AGPL-3.0-only"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [

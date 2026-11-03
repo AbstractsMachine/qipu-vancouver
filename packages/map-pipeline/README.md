@@ -121,7 +121,7 @@ tests that need a GPU carry the `gpu` marker and are never selected by `make che
 
 ## Data and licences
 
-The code is under the [Apache License 2.0](LICENSE). The sample in [`examples/vancouver/west-end/`](../../examples/vancouver/west-end) keeps its sources'
+The code is under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only; versions before November 2026: Apache License 2.0). The sample in [`examples/vancouver/west-end/`](../../examples/vancouver/west-end) keeps its sources'
 licences, listed file by file in its [README](../../examples/vancouver/west-end/README.md):
 
 - City of Vancouver Open Data (footprints, parcels, tax roll, trees, parks, streets, shoreline): Open Government Licence – Vancouver.

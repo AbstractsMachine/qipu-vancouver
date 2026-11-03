@@ -47,5 +47,5 @@ The one runtime dependency is qipu-records. The scheduled job is [.github/workfl
 
 ## Licence
 
-Apache License 2.0, like the rest of the repository ([LICENSE](LICENSE)). The records it publishes are CC0 1.0
+Code: AGPL-3.0-only, like the rest of the repository ([LICENSE](LICENSE); versions before November 2026: Apache License 2.0). The records it publishes are CC0 1.0
 ([LICENSE-DATA](../../LICENSE-DATA)).

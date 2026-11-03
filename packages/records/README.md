@@ -172,5 +172,5 @@ stay visible.
 
 ## Licence
 
-Apache License 2.0, like the rest of [qipu-vancouver](../../LICENSE). The records it produces are dedicated to the public domain
+Code: AGPL-3.0-only, like the rest of [qipu-vancouver](../../LICENSE) (versions before November 2026: Apache License 2.0). The records it produces are dedicated to the public domain
 under [CC0 1.0](../../LICENSE-DATA).
