@@ -22,7 +22,7 @@ open city data ──────────────────▶ painted
 
 *Vancouver today on qipu.org: the painted city, and what council decided at each address.*
 
-**Live demo:** https://www.qipu.org/vancouver (going live 27 Oct), Vancouver City Council decisions from the 1970s on, on the map.
+**Live demo:** https://www.qipu.org/vancouver: Vancouver City Council decisions from the 1970s on, on the map.
 
 | package | what it does | language |
 |---|---|---|
