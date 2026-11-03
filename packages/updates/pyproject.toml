@@ -7,7 +7,7 @@ name = "qipu-updates"
 version = "0.1.0"
 description = "Keeps published council records up to date: finds new meetings, extracts only what changed, checks, releases, rolls back"
 readme = "README.md"
-license = "Apache-2.0"
+license = "AGPL-3.0-only"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = ["qipu-records"]

@@ -7,7 +7,7 @@ name = "qipu-records"
 version = "0.1.0"
 description = "Decision records from scanned council minutes on the Internet Archive"
 readme = "README.md"
-license = "Apache-2.0"
+license = "AGPL-3.0-only"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = []

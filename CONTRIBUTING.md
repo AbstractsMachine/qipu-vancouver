@@ -96,4 +96,4 @@ itself, say so: that is archive.org's text, and we can only work around it.
 ## Pull requests
 
 Keep them small and say why the change is needed. The `ci-ok` check must pass. By contributing you agree that your code is
-licensed under the Apache License 2.0 and any data under CC0 1.0.
+licensed under the GNU Affero General Public License v3.0 (AGPL-3.0-only) and any data under CC0 1.0.
