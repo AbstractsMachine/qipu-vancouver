@@ -26,8 +26,8 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-anthropic = ["anthropic==2.3.0"]
-openai = ["openai==3.38.0"]
+anthropic = ["anthropic==2.6.0"]
+openai = ["openai==3.46.0"]
 
 [project.scripts]
 qipu-records = "qipu_records.cli:main"
