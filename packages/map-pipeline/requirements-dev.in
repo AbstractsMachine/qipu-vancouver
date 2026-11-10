@@ -1,13 +1,13 @@
 # Development and CI tools, and the package's core dependencies. requirements-dev.txt pins these and everything they
 # need, with hashes:
 #   make lock
-coverage==7.17.0
-mypy==2.4.0
+coverage==7.17.2
+mypy==2.4.1
 numpy==2.5.4
 pillow==13.0.0
-pytest==9.1.1
+pytest==9.2.0
 pytest-cov==7.1.0
-ruff==0.17.2
+ruff==0.17.4
 setuptools==84.2.1
 shapely==2.2.0
 types-shapely==2.1.0.20260728
